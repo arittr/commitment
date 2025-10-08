@@ -7,7 +7,7 @@ import type { CommitTask } from './generator.js';
 import type { CLIProviderConfig, ProviderConfig } from './providers/index.js';
 
 import { CommitMessageGenerator } from './generator.js';
-import { createProvider } from './providers/index.js';
+import { createProvider, detectAvailableProvider } from './providers/index.js';
 
 /**
  * Get git status and check for staged changes
@@ -154,16 +154,20 @@ async function main(): Promise<void> {
     )
     .option('--list-providers', 'List all available AI providers')
     .option('--check-provider', 'Check if selected provider is available')
+    .option('--auto-detect', 'Auto-detect first available AI provider')
+    .option('--fallback <provider...>', 'Fallback providers (can specify multiple)')
     .parse();
 
   const options = program.opts<{
     ai: boolean;
     aiCommand: string;
+    autoDetect?: boolean;
     checkProvider?: boolean;
     claudeCommand?: string;
     claudeTimeout?: string;
     cwd: string;
     dryRun?: boolean;
+    fallback?: string[];
     listProviders?: boolean;
     messageOnly?: boolean;
     provider?: string;
@@ -251,6 +255,57 @@ async function main(): Promise<void> {
     }
   }
 
+  // Handle --auto-detect
+  if (options.autoDetect === true) {
+    const detectedProvider = await detectAvailableProvider();
+
+    if (detectedProvider !== null) {
+      console.log(chalk.green(`✅ Auto-detected provider: ${detectedProvider.getName()}`));
+      // Override providerConfig with detected provider instance
+      providerConfig = detectedProvider as unknown as ProviderConfig;
+    } else {
+      console.log(chalk.yellow('⚠️ No AI providers detected, will use rule-based generation'));
+    }
+  }
+
+  // Handle provider fallback chain
+  let providerChain: ProviderConfig[] | undefined;
+
+  if (options.fallback !== undefined && options.fallback.length > 0) {
+    // Build provider chain from --provider + --fallback flags
+    const providers: ProviderConfig[] = [];
+
+    // Add main provider if specified
+    if (providerConfig !== undefined) {
+      providers.push(providerConfig);
+    }
+
+    // Add fallback providers
+    for (const fallbackName of options.fallback) {
+      const name = fallbackName.toLowerCase();
+
+      if (name === 'claude') {
+        providers.push({
+          type: 'cli',
+          provider: 'claude',
+        } satisfies CLIProviderConfig);
+      } else {
+        console.error(chalk.red(`❌ Fallback provider '${name}' is not yet implemented`));
+        console.log(chalk.gray('   Available providers: claude'));
+        process.exit(1);
+      }
+    }
+
+    if (providers.length > 0) {
+      providerChain = providers;
+      console.log(
+        chalk.cyan(
+          `📋 Provider fallback chain: ${providers.map((p) => (p as CLIProviderConfig).provider).join(' → ')}`,
+        ),
+      );
+    }
+  }
+
   try {
     // Check for staged changes
     const gitStatus = await getGitStatus(options.cwd);
@@ -281,10 +336,15 @@ async function main(): Promise<void> {
 
     const generator = new CommitMessageGenerator({
       enableAI: options.ai,
-      provider: providerConfig,
+      provider: providerChain === undefined ? providerConfig : undefined,
+      providerChain,
       // Backward compatibility with deprecated flags
-      aiCommand: providerConfig === undefined ? options.aiCommand : undefined,
-      aiTimeout: providerConfig === undefined ? Number.parseInt(options.timeout, 10) : undefined,
+      aiCommand:
+        providerConfig === undefined && providerChain === undefined ? options.aiCommand : undefined,
+      aiTimeout:
+        providerConfig === undefined && providerChain === undefined
+          ? Number.parseInt(options.timeout, 10)
+          : undefined,
       signature: options.signature,
       logger: {
         warn: (warningMessage: string) => {
