@@ -1,0 +1,3 @@
+#!/bin/sh
+# Run build to ensure dist is up to date
+pnpm run build

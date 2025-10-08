@@ -23,7 +23,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm run clean && pnpm run build"
+    "prepublishOnly": "pnpm run clean && pnpm run build",
+    "prepare": "pnpm run build && husky"
   },
   "keywords": [
     "git",
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "husky": "^9.1.7",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
   }

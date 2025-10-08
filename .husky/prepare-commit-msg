@@ -1,0 +1,6 @@
+#!/bin/sh
+# Use commitment to generate its own commit messages (dogfooding!)
+# Only run for regular commits (not merge, squash, etc.)
+if [ -z "$2" ]; then
+  ./dist/cli.js --message-only > "$1"
+fi
