@@ -197,24 +197,84 @@ Two categories with distinct patterns:
 
 ## 7. Git and Version Control
 
-### 7.1 Commit Standards
+### 7.1 git-spice Workflow (MANDATORY)
+All branch and commit operations MUST use [git-spice](https://abhinav.github.io/git-spice/) for stacked branch workflows. Direct `git` commands for branching and committing are **prohibited** in feature development.
+
+**Required Commands**:
+- **Branch creation**: `gs branch create <name>` (alias: `gs bc`) - NEVER use `git checkout -b`
+- **Branch amendments**: `gs branch amend` - NEVER use `git commit --amend` directly
+- **Restacking**: `gs stack restack` or `gs upstack restack` after any changes to lower branches
+- **PR submission**: `gs stack submit` for submitting entire stacks
+- **Branch tracking**: `gs branch track` for existing branches
+
+**Prohibited Commands** (during feature development):
+- ❌ `git checkout -b` - Use `gs branch create` instead
+- ❌ `git commit --amend` - Use `gs branch amend` instead
+- ❌ `git rebase` (manual) - Use `gs stack restack` instead
+- ❌ Creating commits without stacking context
+
+**Allowed git Commands**:
+- ✅ `git add` for staging changes
+- ✅ `git status` for checking status
+- ✅ `git diff` for reviewing changes
+- ✅ `git log` for viewing history
+- ✅ `git checkout <branch>` for switching branches (but prefer `gs branch checkout`)
+
+**Stacked Workflow Pattern**:
+```bash
+# 1. Create first feature branch
+gs branch create snu-123-add-feature-x
+
+# 2. Make changes and commit (using commitment itself)
+git add .
+./dist/cli.js
+
+# 3. Create second feature stacked on first
+gs branch create snu-124-add-feature-y
+
+# 4. Make changes and commit
+git add .
+./dist/cli.js
+
+# 5. If you need to modify the first branch:
+git checkout snu-123-add-feature-x
+git add .
+gs branch amend
+gs stack restack  # Automatically rebases snu-124 on top
+
+# 6. Submit entire stack as PRs
+gs stack submit
+```
+
+### 7.2 Commit Standards
 - **Conventional commits** format: `type(scope): description`
 - **Types**: feat, fix, docs, style, refactor, test, chore
 - **Scopes**: provider, cli, generator, config, test, build
 - **Breaking changes** marked with `BREAKING CHANGE:` in body
 - **AI co-authorship** credited: `Co-Authored-By: Claude <noreply@anthropic.com>`
+- **Commit generation**: Use commitment itself (`./dist/cli.js`) for all commits
 
-### 7.2 Branch Strategy
+### 7.3 Branch Strategy
 - **Main branch**: production-ready code only
-- **Feature branches**: `snu-123-description` or `feature/description`
-- **Linear history** preferred via rebase or squash merges
-- **Clean PRs**: one concept per PR, rebased on main
+- **Stacked branches**: All feature work done in stacks using git-spice
+- **Branch naming**: `snu-<issue>-<description>` or `<type>/<description>`
+- **Linear history** enforced via git-spice restacking
+- **One logical change per branch** - keep branches focused and small
+- **Clean PRs**: Each branch becomes one PR, reviewable independently but tested as a stack
 
-### 7.3 Release Process
+### 7.4 Branch Management Rules
+- **Never force-push** to shared branches without team coordination
+- **Always restack** after modifying lower branches in a stack
+- **Squash commits** within a branch before submission if needed (`gs branch squash`)
+- **Track external branches** with `gs branch track` when collaborating
+- **Delete branches** after merge - git-spice handles cleanup automatically
+
+### 7.5 Release Process
 - **Semantic versioning** strictly followed
 - **Changelog generated** from conventional commits
 - **Tests must pass** on main at all times
 - **Build artifacts committed** for npm distribution
+- **Release branches** may use standard git (not subject to git-spice requirement)
 
 ## 8. Dependency Management
 

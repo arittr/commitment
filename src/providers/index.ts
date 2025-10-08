@@ -24,6 +24,7 @@ export {
 
 // Concrete provider implementations
 export { ClaudeProvider } from './implementations/claude-provider';
+export { CodexProvider } from './implementations/codex-provider';
 
 // Provider chain for fallback support
 export {

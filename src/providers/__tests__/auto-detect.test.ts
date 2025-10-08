@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { detectAvailableProvider, getAllAvailableProviders } from '../auto-detect';
 import { ClaudeProvider } from '../implementations/claude-provider';
+import { CodexProvider } from '../implementations/codex-provider';
 
-// Mock ClaudeProvider
+// Mock both providers
 vi.mock('../implementations/claude-provider');
+vi.mock('../implementations/codex-provider');
 
 describe('auto-detect', () => {
   beforeEach(() => {
@@ -43,6 +45,17 @@ describe('auto-detect', () => {
           }) as any,
       );
 
+      // Mock Codex as unavailable
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockResolvedValue(false),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: vi.fn(),
+          }) as any,
+      );
+
       const result = await detectAvailableProvider();
 
       expect(result).toBeNull();
@@ -55,6 +68,17 @@ describe('auto-detect', () => {
           ({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Claude CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: vi.fn(),
+          }) as any,
+      );
+
+      // Mock Codex to also throw during isAvailable
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
             getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: vi.fn(),
           }) as any,
@@ -120,10 +144,22 @@ describe('auto-detect', () => {
           }) as any,
       );
 
+      // Mock Codex as available
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockResolvedValue(true),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: vi.fn(),
+          }) as any,
+      );
+
       const result = await getAllAvailableProviders();
 
-      expect(result).toHaveLength(1);
+      expect(result).toHaveLength(2);
       expect(result[0]?.getName()).toBe('Claude CLI');
+      expect(result[1]?.getName()).toBe('Codex CLI');
     });
 
     it('should return empty array when no providers available', async () => {
@@ -133,6 +169,17 @@ describe('auto-detect', () => {
           ({
             isAvailable: vi.fn().mockResolvedValue(false),
             getName: vi.fn().mockReturnValue('Claude CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: vi.fn(),
+          }) as any,
+      );
+
+      // Mock Codex as unavailable
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockResolvedValue(false),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
             getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: vi.fn(),
           }) as any,
@@ -150,6 +197,17 @@ describe('auto-detect', () => {
           ({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Claude CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: vi.fn(),
+          }) as any,
+      );
+
+      // Mock Codex to also throw during isAvailable
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
             getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: vi.fn(),
           }) as any,
@@ -238,9 +296,19 @@ describe('auto-detect', () => {
           }) as any,
       );
 
+      vi.mocked(CodexProvider).mockImplementation(
+        () =>
+          ({
+            isAvailable: vi.fn().mockResolvedValue(true),
+            getName: vi.fn().mockReturnValue('Codex CLI'),
+            getProviderType: vi.fn().mockReturnValue('cli'),
+            generateCommitMessage: mockGenerateCommitMessage,
+          }) as any,
+      );
+
       const providers = await getAllAvailableProviders();
 
-      expect(providers).toHaveLength(1);
+      expect(providers).toHaveLength(2);
 
       // Verify we can use the returned providers
       const message = await providers[0]!.generateCommitMessage('test prompt', {});

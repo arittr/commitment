@@ -3,6 +3,7 @@ import { match } from 'ts-pattern';
 import type { AIProvider, ProviderConfig } from './types';
 
 import { ClaudeProvider } from './implementations/claude-provider';
+import { CodexProvider } from './implementations/codex-provider';
 
 /**
  * Error thrown when trying to create a provider that is not yet implemented
@@ -50,8 +51,11 @@ export function createProvider(config: ProviderConfig): AIProvider {
         });
       })
       .with({ type: 'cli', provider: 'codex' }, (cfg) => {
-        // TODO: Import and instantiate CodexProvider once implemented
-        throw new ProviderNotImplementedError(cfg.provider, cfg.type);
+        return new CodexProvider({
+          command: cfg.command,
+          args: cfg.args,
+          timeout: cfg.timeout,
+        });
       })
       .with({ type: 'cli', provider: 'cursor' }, (cfg) => {
         // TODO: Import and instantiate CursorProvider once implemented

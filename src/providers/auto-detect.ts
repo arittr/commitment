@@ -1,10 +1,11 @@
 import type { AIProvider } from './types';
 
 import { ClaudeProvider } from './implementations/claude-provider';
+import { CodexProvider } from './implementations/codex-provider';
 
 /**
  * Auto-detect the first available AI provider
- * Checks providers in priority order: Claude CLI -> (more to come)
+ * Checks providers in priority order: Claude CLI -> Codex CLI -> (more to come)
  *
  * @returns The first available provider, or null if none are available
  *
@@ -21,11 +22,14 @@ import { ClaudeProvider } from './implementations/claude-provider';
 export async function detectAvailableProvider(): Promise<AIProvider | null> {
   // Define providers to check in priority order
   const providersToCheck: AIProvider[] = [
-    // 1. Claude CLI (currently the only implemented provider)
+    // 1. Claude CLI (preferred for speed and quality)
     new ClaudeProvider(),
 
+    // 2. Codex CLI (Anthropic's alternative CLI)
+    new CodexProvider(),
+
     // Future providers will be added here:
-    // new CodexProvider(),
+    // new CursorProvider(),
     // new OpenAIAPIProvider() if process.env.OPENAI_API_KEY exists
     // new GeminiAPIProvider() if process.env.GEMINI_API_KEY exists
   ];
@@ -63,6 +67,7 @@ export async function detectAvailableProvider(): Promise<AIProvider | null> {
 export async function getAllAvailableProviders(): Promise<AIProvider[]> {
   const providersToCheck: AIProvider[] = [
     new ClaudeProvider(),
+    new CodexProvider(),
     // More providers will be added as they're implemented
   ];
 

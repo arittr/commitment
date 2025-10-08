@@ -2,11 +2,12 @@
 
 > AI-powered commit message generator with intelligent fallback
 
-`commitment` uses Claude CLI to analyze your git diffs and generate professional, conventional commit messages. When AI is unavailable, it falls back to intelligent rule-based generation.
+`commitment` analyzes your git diffs using AI (Claude CLI or Codex CLI) and generates professional, conventional commit messages. When AI is unavailable, it falls back to intelligent rule-based generation.
 
 ## Features
 
-- 🤖 **AI-powered generation** using Claude CLI for accurate, context-aware messages
+- 🤖 **AI-powered generation** using Claude CLI or Codex CLI for accurate, context-aware messages
+- 🔄 **Multiple AI providers** with automatic fallback (Claude → Codex → rule-based)
 - 🎯 **Intelligent fallback** to rule-based generation when AI fails
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
 - ✨ **Conventional commits** follows standard format (feat:, fix:, etc.)
@@ -31,7 +32,7 @@ yarn add -D commitment
 
 - Node.js >= 18
 - Git repository
-- [Claude CLI](https://claude.ai/code) installed and configured (for AI generation)
+- Optional: [Claude CLI](https://claude.ai/code) or [Codex CLI](https://developers.openai.com/codex) for AI generation
 
 ## Quick Start
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { APIProviderConfig, CLIProviderConfig } from '../types';
 
 import { ClaudeProvider } from '../implementations/claude-provider';
+import { CodexProvider } from '../implementations/codex-provider';
 import { createProvider, createProviders, ProviderNotImplementedError } from '../provider-factory';
 
 describe('ProviderFactory', () => {
@@ -19,16 +20,15 @@ describe('ProviderFactory', () => {
         expect(provider.getName()).toBe('Claude CLI');
       });
 
-      it('should throw ProviderNotImplementedError for codex provider', () => {
+      it('should create CodexProvider for codex config', () => {
         const config: CLIProviderConfig = {
           type: 'cli',
           provider: 'codex',
         };
 
-        expect(() => createProvider(config)).toThrow(ProviderNotImplementedError);
-        expect(() => createProvider(config)).toThrow(
-          /Provider 'codex' \(cli\) is not yet implemented/,
-        );
+        const provider = createProvider(config);
+        expect(provider).toBeInstanceOf(CodexProvider);
+        expect(provider.getName()).toBe('Codex CLI');
       });
 
       it('should throw ProviderNotImplementedError for cursor provider', () => {
@@ -46,7 +46,7 @@ describe('ProviderFactory', () => {
       it('should include helpful message in NotImplementedError for unimplemented providers', () => {
         const config: CLIProviderConfig = {
           type: 'cli',
-          provider: 'codex',
+          provider: 'cursor',
         };
 
         try {
@@ -54,7 +54,7 @@ describe('ProviderFactory', () => {
         } catch (error) {
           expect(error).toBeInstanceOf(ProviderNotImplementedError);
           if (error instanceof ProviderNotImplementedError) {
-            expect(error.providerName).toBe('codex');
+            expect(error.providerName).toBe('cursor');
             expect(error.providerType).toBe('cli');
             expect(error.message).toContain('contribute an implementation');
           }
@@ -123,28 +123,22 @@ describe('ProviderFactory', () => {
     it('should create multiple providers from configs', () => {
       const configs = [
         { type: 'cli' as const, provider: 'claude' as const },
-        { type: 'api' as const, provider: 'openai' as const, apiKey: 'test' },
         { type: 'cli' as const, provider: 'codex' as const },
       ];
 
-      // All should throw NotImplementedError
-      expect(() => createProviders(configs)).toThrow(ProviderNotImplementedError);
+      const providers = createProviders(configs);
+      expect(providers).toHaveLength(2);
+      expect(providers[0]).toBeInstanceOf(ClaudeProvider);
+      expect(providers[1]).toBeInstanceOf(CodexProvider);
     });
 
     it('should throw on first unimplemented provider', () => {
       const configs = [
         { type: 'cli' as const, provider: 'claude' as const },
-        { type: 'cli' as const, provider: 'codex' as const },
+        { type: 'cli' as const, provider: 'cursor' as const },
       ];
 
-      try {
-        createProviders(configs);
-      } catch (error) {
-        expect(error).toBeInstanceOf(ProviderNotImplementedError);
-        if (error instanceof ProviderNotImplementedError) {
-          expect(error.providerName).toBe('codex');
-        }
-      }
+      expect(() => createProviders(configs)).toThrow(ProviderNotImplementedError);
     });
 
     it('should return empty array for empty config array', () => {

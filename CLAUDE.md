@@ -192,15 +192,113 @@ import { hasContent } from './utils/guards.js';
 
 - **CLI** (`src/cli.ts`): Command-line interface for generating and creating commits
 - **Generator** (`src/generator.ts`): CommitMessageGenerator class with AI and rule-based generation
+- **Providers** (`src/providers/`): Modular AI provider system supporting multiple backends
 - **Guards** (`src/utils/guards.ts`): Type guard utilities for safer code
 
 ### Key Design Patterns
 
 1. **AI-First with Fallback**: Always try AI generation first, fall back to rule-based
 2. **Conventional Commits**: All messages follow conventional commit format
-3. **ESM-Only**: Built as ESM modules using latest TypeScript and Node.js features
-4. **Strict TypeScript**: All strict compiler options enabled
-5. **Self-Dogfooding**: commitment uses itself via git hooks
+3. **Provider Abstraction**: Pluggable AI providers (Claude CLI, Codex CLI, etc.)
+4. **ESM-Only**: Built as ESM modules using latest TypeScript and Node.js features
+5. **Strict TypeScript**: All strict compiler options enabled
+6. **Self-Dogfooding**: commitment uses itself via git hooks
+
+## Adding a New AI Provider
+
+The provider system is designed to make adding new AI providers trivial. Follow these steps:
+
+### Step 1: Create Provider Class
+
+Create a new file in `src/providers/implementations/`:
+
+```typescript
+import type { CLIProviderConfig } from '../types';
+import { BaseCLIProvider } from '../base/base-cli-provider';
+import { CLIResponseParser } from '../utils/cli-response-parser';
+
+export class MyProvider extends BaseCLIProvider {
+  constructor(config: Omit<CLIProviderConfig, 'type' | 'provider'> = {}) {
+    super({
+      type: 'cli',
+      provider: 'my-provider',
+      ...config,
+    });
+  }
+
+  protected getCommand(): string {
+    return this.config.command ?? 'my-cli';
+  }
+
+  protected getArgs(): string[] {
+    return this.config.args ?? ['--print'];
+  }
+
+  getName(): string {
+    return 'My CLI';
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return this.checkCommandAvailable();
+  }
+
+  protected override parseResponse(output: string): string {
+    const cleaned = CLIResponseParser.cleanAIArtifacts(output);
+    return CLIResponseParser.parse(cleaned);
+  }
+}
+```
+
+### Step 2: Update Types
+
+Add your provider to the enum in `src/providers/types.ts`:
+
+```typescript
+provider: z.enum(['claude', 'codex', 'my-provider', 'cursor']),
+```
+
+### Step 3: Update Factory
+
+Import and instantiate in `src/providers/provider-factory.ts`:
+
+```typescript
+import { MyProvider } from './implementations/my-provider';
+
+// ... in createProvider():
+.with({ type: 'cli', provider: 'my-provider' }, (cfg) => {
+  return new MyProvider({
+    command: cfg.command,
+    args: cfg.args,
+    timeout: cfg.timeout,
+  });
+})
+```
+
+### Step 4: Update Auto-Detection
+
+Add to `src/providers/auto-detect.ts`:
+
+```typescript
+const providersToCheck: AIProvider[] = [
+  new ClaudeProvider(),
+  new CodexProvider(),
+  new MyProvider(), // Add here
+];
+```
+
+### Step 5: Export Provider
+
+Add to `src/providers/index.ts`:
+
+```typescript
+export { MyProvider } from './implementations/my-provider';
+```
+
+### Step 6: Add Tests
+
+Create `src/providers/implementations/__tests__/my-provider.test.ts` following the pattern in `codex-provider.test.ts`.
+
+That's it! Your provider is now fully integrated and can be used with `--provider my-provider`.
 
 ## Self-Dogfooding
 
