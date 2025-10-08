@@ -1,9 +1,9 @@
 import { execa } from 'execa';
 
-import type { AIProvider, CLIProviderConfig, GenerateOptions } from './types';
+import type { AIProvider, CLIProviderConfig, GenerateOptions } from '../types';
 
-import { isProviderError, ProviderNotAvailableError, ProviderTimeoutError } from './errors';
-import { ProviderType } from './types';
+import { isProviderError, ProviderNotAvailableError, ProviderTimeoutError } from '../errors';
+import { ProviderType } from '../types';
 
 /**
  * Abstract base class for CLI-based AI providers (Claude, Codex, Cursor)

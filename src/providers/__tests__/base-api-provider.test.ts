@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { APIProviderConfig, GenerateOptions } from '../types';
 
-import { BaseAPIProvider } from '../base-api-provider';
+import { BaseAPIProvider } from '../base/base-api-provider';
 import { ProviderAPIError, ProviderTimeoutError } from '../errors';
 import { ProviderType } from '../types';
 

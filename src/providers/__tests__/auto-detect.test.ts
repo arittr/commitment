@@ -2,10 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { detectAvailableProvider, getAllAvailableProviders } from '../auto-detect';
-import { ClaudeProvider } from '../claude-provider';
+import { ClaudeProvider } from '../implementations/claude-provider';
 
 // Mock ClaudeProvider
-vi.mock('../claude-provider');
+vi.mock('../implementations/claude-provider');
 
 describe('auto-detect', () => {
   beforeEach(() => {

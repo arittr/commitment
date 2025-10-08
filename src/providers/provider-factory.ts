@@ -2,7 +2,7 @@ import { match } from 'ts-pattern';
 
 import type { AIProvider, ProviderConfig } from './types';
 
-import { ClaudeProvider } from './claude-provider';
+import { ClaudeProvider } from './implementations/claude-provider';
 
 /**
  * Error thrown when trying to create a provider that is not yet implemented

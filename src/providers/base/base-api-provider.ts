@@ -1,7 +1,7 @@
-import type { AIProvider, APIProviderConfig, GenerateOptions } from './types';
+import type { AIProvider, APIProviderConfig, GenerateOptions } from '../types';
 
-import { ProviderAPIError, ProviderTimeoutError } from './errors';
-import { ProviderType } from './types';
+import { ProviderAPIError, ProviderTimeoutError } from '../errors';
+import { ProviderType } from '../types';
 
 /**
  * Abstract base class for API-based AI providers (OpenAI, Gemini)

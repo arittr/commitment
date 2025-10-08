@@ -6,12 +6,9 @@
 // Auto-detection utilities
 export { detectAvailableProvider, getAllAvailableProviders } from './auto-detect';
 // Base classes for provider implementations
-export { BaseAPIProvider } from './base-api-provider';
+export { BaseAPIProvider } from './base/base-api-provider';
 
-export { BaseCLIProvider } from './base-cli-provider';
-
-// Concrete provider implementations
-export { ClaudeProvider } from './claude-provider';
+export { BaseCLIProvider } from './base/base-cli-provider';
 
 // Error types and utilities
 export {
@@ -24,6 +21,9 @@ export {
   isProviderNotAvailableError,
   isProviderTimeoutError,
 } from './errors';
+
+// Concrete provider implementations
+export { ClaudeProvider } from './implementations/claude-provider';
 
 // Provider chain for fallback support
 export {

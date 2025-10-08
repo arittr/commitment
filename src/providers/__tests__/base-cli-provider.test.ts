@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CLIProviderConfig } from '../types';
 
-import { BaseCLIProvider } from '../base-cli-provider';
+import { BaseCLIProvider } from '../base/base-cli-provider';
 import {
   isProviderNotAvailableError,
   isProviderTimeoutError,

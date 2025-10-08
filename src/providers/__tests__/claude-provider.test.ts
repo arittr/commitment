@@ -1,8 +1,8 @@
 import { execa } from 'execa';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ClaudeProvider } from '../claude-provider';
 import { ProviderNotAvailableError, ProviderTimeoutError } from '../errors';
+import { ClaudeProvider } from '../implementations/claude-provider';
 import { ProviderType } from '../types';
 
 // Mock execa

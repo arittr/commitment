@@ -1,6 +1,6 @@
 import type { AIProvider } from './types';
 
-import { ClaudeProvider } from './claude-provider';
+import { ClaudeProvider } from './implementations/claude-provider';
 
 /**
  * Auto-detect the first available AI provider

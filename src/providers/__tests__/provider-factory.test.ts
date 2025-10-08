@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { APIProviderConfig, CLIProviderConfig } from '../types';
 
-import { ClaudeProvider } from '../claude-provider';
+import { ClaudeProvider } from '../implementations/claude-provider';
 import { createProvider, createProviders, ProviderNotImplementedError } from '../provider-factory';
 
 describe('ProviderFactory', () => {

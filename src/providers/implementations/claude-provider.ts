@@ -1,8 +1,8 @@
 import { execa } from 'execa';
 
-import type { CLIProviderConfig, GenerateOptions } from './types';
+import type { CLIProviderConfig, GenerateOptions } from '../types';
 
-import { BaseCLIProvider } from './base-cli-provider';
+import { BaseCLIProvider } from '../base/base-cli-provider';
 
 /**
  * Claude CLI provider implementation
