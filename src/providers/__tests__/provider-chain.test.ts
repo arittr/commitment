@@ -168,7 +168,6 @@ describe('ProviderChain', () => {
         await chain.generateCommitMessage('prompt', {});
       } catch (error) {
         if (error instanceof ProviderChainError) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           expect(error.errors[0]!.message).toContain('Unknown error from provider Provider1');
         }
       }

@@ -4,8 +4,10 @@ import { execa } from 'execa';
 import ora from 'ora';
 
 import type { CommitTask } from './generator.js';
+import type { CLIProviderConfig, ProviderConfig } from './providers/index.js';
 
 import { CommitMessageGenerator } from './generator.js';
+import { createProvider, detectAvailableProvider } from './providers/index.js';
 
 /**
  * Get git status and check for staged changes
@@ -136,25 +138,177 @@ async function main(): Promise<void> {
     .option('--no-ai', 'Disable AI generation, use rule-based only')
     .option('--cwd <path>', 'Working directory', process.cwd())
     .option('--signature <text>', 'Custom signature to append')
-    .option('--ai-command <cmd>', 'AI command to use', 'claude')
-    .option('--timeout <ms>', 'AI timeout in milliseconds', '120000')
+    .option('--provider <name>', 'AI provider to use (claude, codex, openai, cursor, gemini)')
+    .option('--provider-config <json>', 'Provider configuration as JSON string')
+    .option('--claude-command <cmd>', 'Claude CLI command path')
+    .option('--claude-timeout <ms>', 'Claude CLI timeout in milliseconds')
+    .option(
+      '--ai-command <cmd>',
+      '[DEPRECATED] AI command to use (use --provider instead)',
+      'claude',
+    )
+    .option(
+      '--timeout <ms>',
+      '[DEPRECATED] AI timeout in milliseconds (use --provider instead)',
+      '120000',
+    )
+    .option('--list-providers', 'List all available AI providers')
+    .option('--check-provider', 'Check if selected provider is available')
+    .option('--auto-detect', 'Auto-detect first available AI provider')
+    .option('--fallback <provider...>', 'Fallback providers (can specify multiple)')
     .parse();
 
   const options = program.opts<{
     ai: boolean;
     aiCommand: string;
+    autoDetect?: boolean;
+    checkProvider?: boolean;
+    claudeCommand?: string;
+    claudeTimeout?: string;
     cwd: string;
     dryRun?: boolean;
+    fallback?: string[];
+    listProviders?: boolean;
     messageOnly?: boolean;
+    provider?: string;
+    providerConfig?: string;
     signature?: string;
     timeout: string;
   }>();
 
-  const { ai, aiCommand, cwd, dryRun, messageOnly, signature, timeout } = options;
+  // Handle --list-providers
+  if (options.listProviders === true) {
+    console.log(chalk.cyan('📋 Available AI Providers:\n'));
+    console.log(chalk.white('  claude    ') + chalk.gray('- Claude CLI (default)'));
+    console.log(
+      chalk.white('  codex     ') + chalk.gray('- OpenAI Codex CLI (not yet implemented)'),
+    );
+    console.log(chalk.white('  openai    ') + chalk.gray('- OpenAI API (not yet implemented)'));
+    console.log(chalk.white('  cursor    ') + chalk.gray('- Cursor (not yet implemented)'));
+    console.log(
+      chalk.white('  gemini    ') + chalk.gray('- Google Gemini API (not yet implemented)'),
+    );
+    console.log(chalk.gray('\nExample usage: commitment --provider claude'));
+    process.exit(0);
+  }
+
+  // Parse provider configuration from CLI flags
+  let providerConfig: ProviderConfig | undefined;
+
+  if (options.providerConfig !== undefined) {
+    // Parse JSON config
+    try {
+      providerConfig = JSON.parse(options.providerConfig) as ProviderConfig;
+    } catch (error) {
+      console.error(
+        chalk.red('❌ Invalid provider config JSON:'),
+        error instanceof Error ? error.message : String(error),
+      );
+      process.exit(1);
+    }
+  } else if (options.provider !== undefined) {
+    // Build config from provider name and provider-specific flags
+    const providerName = options.provider.toLowerCase();
+
+    if (providerName === 'claude') {
+      providerConfig = {
+        type: 'cli',
+        provider: 'claude',
+        command: options.claudeCommand,
+        timeout:
+          options.claudeTimeout !== undefined
+            ? Number.parseInt(options.claudeTimeout, 10)
+            : undefined,
+      } satisfies CLIProviderConfig;
+    } else {
+      console.error(chalk.red(`❌ Provider '${providerName}' is not yet implemented`));
+      console.log(chalk.gray('   Available providers: claude'));
+      console.log(chalk.gray('   Run `commitment --list-providers` for more info'));
+      process.exit(1);
+    }
+  }
+
+  // Handle --check-provider
+  if (options.checkProvider === true) {
+    try {
+      const provider =
+        providerConfig !== undefined
+          ? createProvider(providerConfig)
+          : createProvider({ type: 'cli', provider: 'claude' });
+
+      const isAvailable = await provider.isAvailable();
+
+      if (isAvailable) {
+        console.log(chalk.green(`✅ Provider '${provider.getName()}' is available`));
+        process.exit(0);
+      } else {
+        console.log(chalk.red(`❌ Provider '${provider.getName()}' is not available`));
+        console.log(chalk.gray('   Make sure the CLI tool is installed and in your PATH'));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(
+        chalk.red('❌ Error checking provider:'),
+        error instanceof Error ? error.message : String(error),
+      );
+      process.exit(1);
+    }
+  }
+
+  // Handle --auto-detect
+  if (options.autoDetect === true) {
+    const detectedProvider = await detectAvailableProvider();
+
+    if (detectedProvider !== null) {
+      console.log(chalk.green(`✅ Auto-detected provider: ${detectedProvider.getName()}`));
+      // Override providerConfig with detected provider instance
+      providerConfig = detectedProvider as unknown as ProviderConfig;
+    } else {
+      console.log(chalk.yellow('⚠️ No AI providers detected, will use rule-based generation'));
+    }
+  }
+
+  // Handle provider fallback chain
+  let providerChain: ProviderConfig[] | undefined;
+
+  if (options.fallback !== undefined && options.fallback.length > 0) {
+    // Build provider chain from --provider + --fallback flags
+    const providers: ProviderConfig[] = [];
+
+    // Add main provider if specified
+    if (providerConfig !== undefined) {
+      providers.push(providerConfig);
+    }
+
+    // Add fallback providers
+    for (const fallbackName of options.fallback) {
+      const name = fallbackName.toLowerCase();
+
+      if (name === 'claude') {
+        providers.push({
+          type: 'cli',
+          provider: 'claude',
+        } satisfies CLIProviderConfig);
+      } else {
+        console.error(chalk.red(`❌ Fallback provider '${name}' is not yet implemented`));
+        console.log(chalk.gray('   Available providers: claude'));
+        process.exit(1);
+      }
+    }
+
+    if (providers.length > 0) {
+      providerChain = providers;
+      console.log(
+        chalk.cyan(
+          `📋 Provider fallback chain: ${providers.map((p) => (p as CLIProviderConfig).provider).join(' → ')}`,
+        ),
+      );
+    }
+  }
 
   try {
     // Check for staged changes
-    const gitStatus = await getGitStatus(cwd);
+    const gitStatus = await getGitStatus(options.cwd);
 
     if (!gitStatus.hasChanges) {
       console.log(chalk.yellow('No staged changes to commit'));
@@ -163,7 +317,7 @@ async function main(): Promise<void> {
     }
 
     // Show what will be committed
-    if (messageOnly !== true) {
+    if (options.messageOnly !== true) {
       console.log(chalk.cyan('📝 Staged changes:'));
       for (const line of gitStatus.statusLines) {
         const status = line.slice(0, 2);
@@ -178,13 +332,20 @@ async function main(): Promise<void> {
 
     // Generate commit message
     const spinner =
-      messageOnly === true ? null : ora('Generating commit message with AI...').start();
+      options.messageOnly === true ? null : ora('Generating commit message with AI...').start();
 
     const generator = new CommitMessageGenerator({
-      enableAI: ai,
-      aiCommand,
-      aiTimeout: Number.parseInt(timeout, 10),
-      signature,
+      enableAI: options.ai,
+      provider: providerChain === undefined ? providerConfig : undefined,
+      providerChain,
+      // Backward compatibility with deprecated flags
+      aiCommand:
+        providerConfig === undefined && providerChain === undefined ? options.aiCommand : undefined,
+      aiTimeout:
+        providerConfig === undefined && providerChain === undefined
+          ? Number.parseInt(options.timeout, 10)
+          : undefined,
+      signature: options.signature,
       logger: {
         warn: (warningMessage: string) => {
           if (spinner !== null) {
@@ -197,7 +358,7 @@ async function main(): Promise<void> {
     });
 
     const message = await generator.generateCommitMessage(task, {
-      workdir: cwd,
+      workdir: options.cwd,
       files: gitStatus.stagedFiles,
     });
 
@@ -206,7 +367,7 @@ async function main(): Promise<void> {
     }
 
     // Output the message
-    if (messageOnly === true) {
+    if (options.messageOnly === true) {
       // Just output the message for hooks
       console.log(message);
       return;
@@ -220,11 +381,11 @@ async function main(): Promise<void> {
     console.log('');
 
     // Create commit if not dry run
-    if (dryRun === true) {
+    if (options.dryRun === true) {
       console.log(chalk.blue('🚀 DRY RUN - No commit created'));
       console.log(chalk.gray('   Remove --dry-run to create the commit'));
     } else {
-      await createCommit(message, cwd);
+      await createCommit(message, options.cwd);
       console.log(chalk.green('✅ Commit created successfully'));
     }
   } catch (error) {
