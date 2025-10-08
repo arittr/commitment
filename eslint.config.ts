@@ -7,6 +7,7 @@ import perfectionist from 'eslint-plugin-perfectionist';
 // @ts-expect-error No types for this plugin
 import promisePlugin from 'eslint-plugin-promise';
 import unicorn from 'eslint-plugin-unicorn';
+import vitest from 'eslint-plugin-vitest';
 
 const config: Record<string, unknown>[] = [
   // Base JavaScript recommendations
@@ -468,36 +469,92 @@ const config: Record<string, unknown>[] = [
 
   // Test files configuration (relaxed rules for testing)
   {
-    files: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.{test,spec}.{ts,tsx}'],
     languageOptions: {
       globals: {
+        // Node-ish globals you already allow:
         __dirname: 'readonly',
         __filename: 'readonly',
         AbortController: 'readonly',
         AbortSignal: 'readonly',
+        afterAll: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        beforeEach: 'readonly',
         Buffer: 'readonly',
         clearTimeout: 'readonly',
         console: 'readonly',
+        // Vitest (or Jest) globals:
+        describe: 'readonly',
+        expect: 'readonly',
         fetch: 'readonly',
         global: 'readonly',
+        it: 'readonly',
         process: 'readonly',
         RequestInit: 'readonly',
         Response: 'readonly',
         setTimeout: 'readonly',
+        test: 'readonly',
+        vi: 'readonly',
       },
     },
+    // requires: import vitest from 'eslint-plugin-vitest'
+    plugins: { vitest } as Record<string, unknown>,
     rules: {
-      '@typescript-eslint/naming-convention': 'off', // Allow flexible naming in tests
-      '@typescript-eslint/no-explicit-any': 'warn', // Allow any in test mocks
-      '@typescript-eslint/no-non-null-assertion': 'off', // Allow ! in tests for clarity
+      '@typescript-eslint/ban-ts-comment': [
+        'warn',
+        {
+          minimumDescriptionLength: 3,
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': 'allow-with-description',
+        },
+      ],
+      // Helpful nudges
+      '@typescript-eslint/consistent-type-assertions': ['warn', { assertionStyle: 'as' }],
+      // Ergonomics
+      '@typescript-eslint/naming-convention': 'off',
+      '@typescript-eslint/no-explicit-any': ['warn', { ignoreRestArgs: true }],
+      // Keep the important safety rails (catch flake)
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      // Visibility into unsafe spots without blocking
       '@typescript-eslint/no-unsafe-argument': 'warn',
+
       '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+
       '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/promise-function-async': 'off', // Allow non-async promise returns in mocks
-      '@typescript-eslint/require-await': 'warn', // Warn but don't error on missing await
-      'no-undef': 'off', // Disable for test files with globals
-      'promise/param-names': 'off', // Allow flexible promise param names in mocks
-      'promise/prefer-await-to-then': 'off', // Allow then/catch in tests
+      '@typescript-eslint/promise-function-async': 'off',
+      '@typescript-eslint/require-await': 'off',
+      // Use runner-aware unbound-method
+      '@typescript-eslint/unbound-method': 'off',
+
+      'no-undef': 'off',
+      'promise/param-names': 'off',
+
+      'promise/prefer-await-to-then': 'off',
+      'vitest/no-disabled-tests': 'warn',
+
+      // Prevent committed .only, but allow skipped tests as warnings
+      'vitest/no-focused-tests': 'error',
+    },
+  },
+
+  // Test support files (mocks/fixtures) can be looser without weakening real tests
+  {
+    files: [
+      '**/__mocks__/**/*.{ts,tsx}',
+      '**/__fixtures__/**/*.{ts,tsx}',
+      '**/test-utils/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
     },
   },
 
