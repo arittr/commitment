@@ -23,6 +23,10 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "lint": "pnpm run type-check && pnpm run format:check && eslint .",
     "lint:fix": "pnpm run format && eslint . --fix",
     "format": "prettier --cache --write .",
@@ -62,6 +66,7 @@
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -73,6 +78,7 @@
     "jiti": "^2.6.0",
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }

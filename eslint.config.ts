@@ -16,7 +16,7 @@ const config: Record<string, unknown>[] = [
 
   // Global ignores
   {
-    ignores: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**'],
+    ignores: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**', '.conductor/**'],
   },
 
   // TypeScript configuration
@@ -26,10 +26,17 @@ const config: Record<string, unknown>[] = [
       globals: {
         __dirname: 'readonly',
         __filename: 'readonly',
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
         Buffer: 'readonly',
+        clearTimeout: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
         global: 'readonly',
         process: 'readonly',
+        RequestInit: 'readonly',
+        Response: 'readonly',
+        setTimeout: 'readonly',
       },
       parser: tsParser,
       parserOptions: {
@@ -456,6 +463,41 @@ const config: Record<string, unknown>[] = [
     rules: {
       'no-console': 'off',
       'unicorn/no-process-exit': 'off',
+    },
+  },
+
+  // Test files configuration (relaxed rules for testing)
+  {
+    files: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        Buffer: 'readonly',
+        clearTimeout: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        global: 'readonly',
+        process: 'readonly',
+        RequestInit: 'readonly',
+        Response: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/naming-convention': 'off', // Allow flexible naming in tests
+      '@typescript-eslint/no-explicit-any': 'warn', // Allow any in test mocks
+      '@typescript-eslint/no-non-null-assertion': 'off', // Allow ! in tests for clarity
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/promise-function-async': 'off', // Allow non-async promise returns in mocks
+      '@typescript-eslint/require-await': 'warn', // Warn but don't error on missing await
+      'no-undef': 'off', // Disable for test files with globals
+      'promise/param-names': 'off', // Allow flexible promise param names in mocks
+      'promise/prefer-await-to-then': 'off', // Allow then/catch in tests
     },
   },
 
