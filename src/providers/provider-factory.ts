@@ -2,6 +2,8 @@ import { match } from 'ts-pattern';
 
 import type { AIProvider, ProviderConfig } from './types';
 
+import { ClaudeProvider } from './claude-provider';
+
 /**
  * Error thrown when trying to create a provider that is not yet implemented
  */
@@ -41,8 +43,11 @@ export function createProvider(config: ProviderConfig): AIProvider {
     match(config)
       // CLI Providers
       .with({ type: 'cli', provider: 'claude' }, (cfg) => {
-        // TODO: Import and instantiate ClaudeProvider once implemented
-        throw new ProviderNotImplementedError(cfg.provider, cfg.type);
+        return new ClaudeProvider({
+          command: cfg.command,
+          args: cfg.args,
+          timeout: cfg.timeout,
+        });
       })
       .with({ type: 'cli', provider: 'codex' }, (cfg) => {
         // TODO: Import and instantiate CodexProvider once implemented

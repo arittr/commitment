@@ -7,6 +7,9 @@
 export { BaseAPIProvider } from './base-api-provider';
 export { BaseCLIProvider } from './base-cli-provider';
 
+// Concrete provider implementations
+export { ClaudeProvider } from './claude-provider';
+
 // Error types and utilities
 export {
   ProviderAPIError,

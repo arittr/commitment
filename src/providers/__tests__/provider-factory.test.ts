@@ -2,21 +2,21 @@ import { describe, expect, it } from 'vitest';
 
 import type { APIProviderConfig, CLIProviderConfig } from '../types';
 
+import { ClaudeProvider } from '../claude-provider';
 import { createProvider, createProviders, ProviderNotImplementedError } from '../provider-factory';
 
 describe('ProviderFactory', () => {
   describe('createProvider', () => {
     describe('CLI providers', () => {
-      it('should throw ProviderNotImplementedError for claude provider', () => {
+      it('should create ClaudeProvider for claude config', () => {
         const config: CLIProviderConfig = {
           type: 'cli',
           provider: 'claude',
         };
 
-        expect(() => createProvider(config)).toThrow(ProviderNotImplementedError);
-        expect(() => createProvider(config)).toThrow(
-          /Provider 'claude' \(cli\) is not yet implemented/,
-        );
+        const provider = createProvider(config);
+        expect(provider).toBeInstanceOf(ClaudeProvider);
+        expect(provider.getName()).toBe('Claude CLI');
       });
 
       it('should throw ProviderNotImplementedError for codex provider', () => {
@@ -43,10 +43,10 @@ describe('ProviderFactory', () => {
         );
       });
 
-      it('should include helpful message in NotImplementedError', () => {
+      it('should include helpful message in NotImplementedError for unimplemented providers', () => {
         const config: CLIProviderConfig = {
           type: 'cli',
-          provider: 'claude',
+          provider: 'codex',
         };
 
         try {
@@ -54,7 +54,7 @@ describe('ProviderFactory', () => {
         } catch (error) {
           expect(error).toBeInstanceOf(ProviderNotImplementedError);
           if (error instanceof ProviderNotImplementedError) {
-            expect(error.providerName).toBe('claude');
+            expect(error.providerName).toBe('codex');
             expect(error.providerType).toBe('cli');
             expect(error.message).toContain('contribute an implementation');
           }
@@ -100,7 +100,8 @@ describe('ProviderFactory', () => {
           timeout: 10_000,
         };
 
-        expect(() => createProvider(config)).toThrow(ProviderNotImplementedError);
+        const provider = createProvider(config);
+        expect(provider).toBeInstanceOf(ClaudeProvider);
       });
 
       it('should accept valid API config with all optional fields', () => {
@@ -141,7 +142,7 @@ describe('ProviderFactory', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ProviderNotImplementedError);
         if (error instanceof ProviderNotImplementedError) {
-          expect(error.providerName).toBe('claude');
+          expect(error.providerName).toBe('codex');
         }
       }
     });
