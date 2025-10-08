@@ -3,9 +3,15 @@
  * Supports multiple AI providers (CLI and API-based) with automatic fallback
  */
 
+// Auto-detection utilities
+export { detectAvailableProvider, getAllAvailableProviders } from './auto-detect';
 // Base classes for provider implementations
 export { BaseAPIProvider } from './base-api-provider';
+
 export { BaseCLIProvider } from './base-cli-provider';
+
+// Concrete provider implementations
+export { ClaudeProvider } from './claude-provider';
 
 // Error types and utilities
 export {
@@ -18,6 +24,7 @@ export {
   isProviderNotAvailableError,
   isProviderTimeoutError,
 } from './errors';
+
 // Provider chain for fallback support
 export {
   ProviderChain,

@@ -1,5 +1,8 @@
 import { execa } from 'execa';
 
+import type { AIProvider, ProviderConfig } from './providers/index.js';
+
+import { ClaudeProvider, createProvider, ProviderChain } from './providers/index.js';
 import { hasContent } from './utils/guards.js';
 
 /**
@@ -16,16 +19,22 @@ export type CommitTask = {
  * Configuration options for commit message generation
  */
 export type CommitMessageGeneratorConfig = {
-  /** AI client command (default: 'claude') */
+  /** @deprecated Use provider config instead. AI client command (default: 'claude') */
   aiCommand?: string;
-  /** Timeout for AI generation in ms (default: 120000) */
+  /** @deprecated Use provider config instead. Timeout for AI generation in ms (default: 120000) */
   aiTimeout?: number;
+  /** Auto-detect first available provider (default: false) */
+  autoDetect?: boolean;
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
   /** Custom logger function */
   logger?: {
     warn: (message: string) => void;
   };
+  /** AI provider (config or instance) */
+  provider?: AIProvider | ProviderConfig;
+  /** Provider chain configs for fallback support */
+  providerChain?: ProviderConfig[];
   /** Custom signature to append to commits */
   signature?: string;
 };
@@ -65,18 +74,61 @@ export type CommitMessageOptions = {
  * ```
  */
 export class CommitMessageGenerator {
-  private readonly config: Required<CommitMessageGeneratorConfig>;
+  private readonly config: Required<
+    Omit<
+      CommitMessageGeneratorConfig,
+      'aiCommand' | 'aiTimeout' | 'autoDetect' | 'provider' | 'providerChain'
+    >
+  >;
+  private readonly provider: AIProvider;
 
   constructor(config: CommitMessageGeneratorConfig = {}) {
     this.config = {
-      aiCommand: config.aiCommand ?? 'claude',
-      aiTimeout: config.aiTimeout ?? 120_000,
       signature:
         config.signature ??
         '🤖 Generated with Claude via commitment\n\nCo-Authored-By: Claude <noreply@anthropic.com>',
       enableAI: config.enableAI ?? true,
       logger: config.logger ?? { warn: () => {} },
     };
+
+    // Initialize provider with priority: providerChain > provider > legacy config
+    if (config.providerChain !== undefined && config.providerChain.length > 0) {
+      // Create provider chain from configs
+      const providers = config.providerChain.map((providerConfig) =>
+        createProvider(providerConfig),
+      );
+      this.provider = new ProviderChain(providers);
+    } else if (config.provider !== undefined) {
+      // Single provider (existing behavior)
+      this.provider =
+        'generateCommitMessage' in config.provider && 'isAvailable' in config.provider
+          ? config.provider
+          : createProvider(config.provider);
+    } else {
+      // Default to Claude (backward compatibility)
+      this.provider = new ClaudeProvider({
+        command: config.aiCommand,
+        timeout: config.aiTimeout,
+      });
+    }
+
+    // Warn if using deprecated fields
+    if (
+      config.provider === undefined &&
+      config.providerChain === undefined &&
+      (config.aiCommand !== undefined || config.aiTimeout !== undefined)
+    ) {
+      this.config.logger.warn(
+        '⚠️ aiCommand and aiTimeout are deprecated. Use provider config instead.',
+      );
+    }
+
+    // Warn if autoDetect is used (should be handled by CLI before construction)
+    if (config.autoDetect === true) {
+      this.config.logger.warn(
+        '⚠️ autoDetect should be handled before creating CommitMessageGenerator. Use detectAvailableProvider() utility.',
+      );
+    }
   }
 
   /**
@@ -103,7 +155,7 @@ export class CommitMessageGenerator {
   }
 
   /**
-   * Generate commit message using AI client
+   * Generate commit message using AI provider
    */
   private async _generateAICommitMessage(
     task: CommitTask,
@@ -190,95 +242,15 @@ Change Analysis:
 ${changeAnalysis}`;
 
     try {
-      // Pass prompt via stdin to handle long prompts properly
-      const { stdout: aiResponse } = await execa(this.config.aiCommand, ['--print'], {
-        cwd: options.workdir,
-        timeout: this.config.aiTimeout,
-        stdin: 'pipe',
-        input: enhancedPrompt, // Pass the enhanced prompt via stdin
+      // Use provider to generate commit message
+      return await this.provider.generateCommitMessage(enhancedPrompt, {
+        workdir: options.workdir,
       });
-
-      return this._parseAICommitMessage(aiResponse);
     } catch (error) {
       throw new Error(
-        `${this.config.aiCommand} CLI failed: ${error instanceof Error ? error.message : String(error)}`,
+        `${this.provider.getName()} failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-  }
-
-  private _parseAICommitMessage(aiResponse: string): string {
-    // Extract content between sentinel markers
-    const startTag = '<<<COMMIT_MESSAGE_START>>>';
-    const endTag = '<<<COMMIT_MESSAGE_END>>>';
-    const startIndex = aiResponse.indexOf(startTag);
-    const endIndex = aiResponse.indexOf(endTag);
-
-    let message = '';
-    message =
-      startIndex !== -1 && endIndex !== -1 && endIndex > startIndex
-        ? aiResponse.slice(startIndex + startTag.length, endIndex).trim()
-        : aiResponse.trim();
-
-    // Clean up common AI artifacts and preamble
-    message = message
-      .replaceAll('```', '')
-      .replace(/^here's? (?:the |a )?commit message:?\s*/i, '')
-      .replace(/^based on (?:the )?git diff.*$/im, '')
-      .replace(/^looking at (?:the )?changes.*$/im, '')
-      .replace(/^analyzing (?:the )?changes.*$/im, '')
-      .replace(/^from (?:the )?changes.*$/im, '')
-      .replace(/^i can see (?:that )?this.*$/im, '')
-      .replace(/^this (?:change|commit|update).*$/im, '')
-      .replace(/^the (?:changes|modifications).*$/im, '')
-      .trim();
-
-    // Clean up any remaining preamble patterns but preserve bullet points
-    const lines = message.split('\n').filter((l) => l.trim() !== '');
-    const cleanedLines: string[] = [];
-    let foundCommitStart = false;
-
-    for (const line of lines) {
-      const cleanLine = line.trim();
-
-      // Skip obvious preamble/analysis lines
-      if (
-        !foundCommitStart &&
-        (/^(looking|analyzing|based|from|i can see|this commit|the changes|the modifications)/i.test(
-          cleanLine,
-        ) ||
-          /^(here|now|let me|first|next|then)/i.test(cleanLine) ||
-          cleanLine.length < 5)
-      ) {
-        continue;
-      }
-
-      // Once we find what looks like a commit message start, keep everything
-      if (
-        !foundCommitStart &&
-        (/^(feat|fix|docs|style|refactor|perf|test|chore|build|ci):/i.test(cleanLine) ||
-          /^(add|update|fix|remove|implement|enhance|improve|create)/i.test(cleanLine))
-      ) {
-        foundCommitStart = true;
-      }
-
-      if (foundCommitStart) {
-        cleanedLines.push(cleanLine);
-      }
-    }
-
-    // Reconstruct the message preserving structure
-    message = cleanedLines.length > 0 ? cleanedLines.join('\n') : message;
-
-    // If we still have no good message, take the first non-empty line
-    if (message === '' && lines.length > 0) {
-      message = lines[0] ?? '';
-    }
-
-    if (!this._isValidMessage(message)) {
-      throw new Error('AI generated empty or too short commit message');
-    }
-
-    return message;
   }
 
   /**
