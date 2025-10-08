@@ -896,27 +896,118 @@ commitment --providers=claude,codex,openai
 - Validates complex nested structures automatically
 - Can be used for environment variable parsing and CLI input
 
-## Open Questions
+### Provider Availability Caching
 
-1. **Should we support provider plugins?**
+**Decision**: Cache provider availability checks to avoid repeated expensive operations.
+
+**Rationale**:
+
+- API health checks can be slow (100-500ms per provider)
+- Checking availability before every message generation is wasteful
+- Availability rarely changes during a single session
+- Cache invalidation on errors provides flexibility
+
+**Implementation**:
+
+```typescript
+export class CachedAvailabilityProvider {
+  private availabilityCache: Map<string, { available: boolean; timestamp: number }> = new Map();
+  private cacheDuration: number;
+
+  constructor(
+    private provider: AIProvider,
+    cacheDuration = 30000,
+  ) {
+    // Default: 30 seconds
+    this.cacheDuration = cacheDuration;
+  }
+
+  async isAvailable(): Promise<boolean> {
+    const cacheKey = this.provider.getName();
+    const cached = this.availabilityCache.get(cacheKey);
+    const now = Date.now();
+
+    // Return cached result if still valid
+    if (cached && now - cached.timestamp < this.cacheDuration) {
+      return cached.available;
+    }
+
+    // Check availability and cache result
+    try {
+      const available = await this.provider.isAvailable();
+      this.availabilityCache.set(cacheKey, { available, timestamp: now });
+      return available;
+    } catch {
+      // On error, cache as unavailable for shorter duration
+      this.availabilityCache.set(cacheKey, { available: false, timestamp: now });
+      return false;
+    }
+  }
+
+  /**
+   * Invalidate cache for this provider (e.g., after an error)
+   */
+  invalidateCache(): void {
+    this.availabilityCache.delete(this.provider.getName());
+  }
+
+  /**
+   * Forward all other methods to the wrapped provider
+   */
+  async generateCommitMessage(prompt: string, options: GenerateOptions): Promise<string> {
+    try {
+      return await this.provider.generateCommitMessage(prompt, options);
+    } catch (error) {
+      // Invalidate cache on generation errors
+      this.invalidateCache();
+      throw error;
+    }
+  }
+
+  getName(): string {
+    return this.provider.getName();
+  }
+
+  getProviderType(): ProviderType {
+    return this.provider.getProviderType();
+  }
+}
+```
+
+**Usage**:
+
+```typescript
+// Wrap providers with caching
+const providers = configs.map((config) => {
+  const provider = ProviderFactory.createProvider(config);
+  return new CachedAvailabilityProvider(provider, 30000); // 30s cache
+});
+
+const chain = new ProviderChain(providers);
+```
+
+## Deferred to v2
+
+The following features are documented for future consideration:
+
+1. **Provider Plugins** (SNU-117)
    - External packages that implement `AIProvider`
    - Would require dynamic loading mechanism
-   - Not needed for v1, consider for v2
+   - Enables community-contributed providers
+   - See: https://linear.app/snug-labs/issue/SNU-117
 
-2. **Should we cache provider availability checks?**
-   - `isAvailable()` could be expensive for API providers
-   - Cache for X seconds to avoid repeated checks
-   - Add in performance optimization phase
-
-3. **How should we handle provider-specific options?**
-   - Some providers may have unique capabilities
+2. **Provider-Specific Options** (SNU-118)
+   - Some providers may have unique capabilities (streaming, vision, etc.)
    - Current design uses generic `metadata` field
-   - Could add `providerOptions` per provider in config
+   - Could add strongly-typed `providerOptions` per provider
+   - See: https://linear.app/snug-labs/issue/SNU-118
 
-4. **Should we expose provider statistics?**
+3. **Provider Statistics & Telemetry** (SNU-119)
    - Track success/failure rates per provider
+   - Measure response times and token usage
    - Help users optimize their fallback chains
-   - Nice-to-have for v2
+   - Enable auto-selection based on historical performance
+   - See: https://linear.app/snug-labs/issue/SNU-119
 
 ## Success Criteria
 
