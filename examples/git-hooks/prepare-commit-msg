@@ -1,0 +1,8 @@
+#!/bin/sh
+# Git hook for commitment (without Husky)
+# Place this in .git/hooks/prepare-commit-msg
+
+# Only run for regular commits
+if [ -z "$2" ]; then
+  npx commitment --message-only > "$1"
+fi

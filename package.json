@@ -1,0 +1,56 @@
+{
+  "name": "commitment",
+  "version": "0.1.0",
+  "description": "AI-powered commit message generator with intelligent fallback",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "commitment": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "claude",
+    "commit-message",
+    "conventional-commits",
+    "precommit",
+    "husky",
+    "lint-staged"
+  ],
+  "author": "Drew Ritter <drew@ritter.dev>",
+  "license": "ISC",
+  "packageManager": "pnpm@10.8.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.1",
+    "execa": "^9.6.0",
+    "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}

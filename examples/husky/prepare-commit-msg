@@ -1,0 +1,8 @@
+#!/bin/sh
+# Husky prepare-commit-msg hook for commitment
+# This hook generates commit messages using AI before you edit them
+
+# Only run for regular commits (not merge, squash, etc.)
+if [ -z "$2" ]; then
+  exec < /dev/tty && npx commitment --message-only > "$1"
+fi
