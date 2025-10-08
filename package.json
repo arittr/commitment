@@ -23,6 +23,11 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
+    "lint": "pnpm run type-check && pnpm run format:check && eslint .",
+    "lint:fix": "pnpm run format && eslint . --fix",
+    "format": "prettier --cache --write .",
+    "format:check": "prettier --cache --check .",
+    "type-check": "tsc --noEmit",
     "prepublishOnly": "pnpm run clean && pnpm run build",
     "prepare": "pnpm run build && husky"
   },
@@ -50,8 +55,21 @@
     "ora": "^9.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/eslint-config-prettier": "^6.11.3",
     "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-perfectionist": "^4.1.2",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-unicorn": "^56.0.1",
     "husky": "^9.1.7",
+    "jiti": "^2.6.0",
+    "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
   }

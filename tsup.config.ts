@@ -3,30 +3,30 @@ import { defineConfig } from 'tsup';
 export default defineConfig([
   // Library build
   {
+    clean: true,
+    dts: true,
     entry: ['src/index.ts'],
     format: ['esm'],
-    dts: true,
-    sourcemap: true,
-    clean: true,
     outDir: 'dist',
-    target: 'node18',
     platform: 'node',
+    sourcemap: true,
     splitting: false,
+    target: 'node18',
     treeshake: true,
   },
   // CLI build
   {
-    entry: ['src/cli.ts'],
-    format: ['esm'],
-    dts: false,
-    sourcemap: true,
-    outDir: 'dist',
-    target: 'node18',
-    platform: 'node',
-    splitting: false,
-    treeshake: true,
     banner: {
       js: '#!/usr/bin/env node',
     },
+    dts: false,
+    entry: ['src/cli.ts'],
+    format: ['esm'],
+    outDir: 'dist',
+    platform: 'node',
+    sourcemap: true,
+    splitting: false,
+    target: 'node18',
+    treeshake: true,
   },
 ]);

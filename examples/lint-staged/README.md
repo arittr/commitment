@@ -21,10 +21,7 @@ Add the lint-staged configuration:
     "prepare": "husky"
   },
   "lint-staged": {
-    "*": [
-      "prettier --write",
-      "eslint --fix"
-    ]
+    "*": ["prettier --write", "eslint --fix"]
   }
 }
 ```

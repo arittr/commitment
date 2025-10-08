@@ -1,10 +1,11 @@
-import { program } from 'commander';
 import chalk from 'chalk';
+import { program } from 'commander';
 import { execa } from 'execa';
 import ora from 'ora';
 
-import { CommitMessageGenerator } from './generator.js';
 import type { CommitTask } from './generator.js';
+
+import { CommitMessageGenerator } from './generator.js';
 
 /**
  * Get git status and check for staged changes
@@ -21,7 +22,7 @@ async function getGitStatus(cwd: string): Promise<{
     // Get staged changes (lines starting with M, A, D, R in first column)
     const stagedLines = lines.filter((line) => {
       const status = line.slice(0, 2);
-      return status[0] !== '?' && status[0] !== ' ';
+      return !status.startsWith('?') && !status.startsWith(' ');
     });
 
     const stagedFiles = stagedLines.map((line) => line.slice(3));
@@ -32,7 +33,9 @@ async function getGitStatus(cwd: string): Promise<{
       statusLines: stagedLines,
     };
   } catch (error) {
-    throw new Error(`Failed to get git status: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to get git status: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -43,7 +46,9 @@ async function createCommit(message: string, cwd: string): Promise<void> {
   try {
     await execa('git', ['commit', '-m', message], { cwd });
   } catch (error) {
-    throw new Error(`Failed to create commit: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to create commit: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -136,16 +141,16 @@ async function main(): Promise<void> {
     .parse();
 
   const options = program.opts<{
+    ai: boolean;
+    aiCommand: string;
+    cwd: string;
     dryRun?: boolean;
     messageOnly?: boolean;
-    ai: boolean;
-    cwd: string;
     signature?: string;
-    aiCommand: string;
     timeout: string;
   }>();
 
-  const cwd = options.cwd;
+  const { ai, aiCommand, cwd, dryRun, messageOnly, signature, timeout } = options;
 
   try {
     // Check for staged changes
@@ -158,7 +163,7 @@ async function main(): Promise<void> {
     }
 
     // Show what will be committed
-    if (!options.messageOnly) {
+    if (messageOnly !== true) {
       console.log(chalk.cyan('📝 Staged changes:'));
       for (const line of gitStatus.statusLines) {
         const status = line.slice(0, 2);
@@ -172,19 +177,20 @@ async function main(): Promise<void> {
     const task = createTaskFromGitStatus(gitStatus.statusLines, gitStatus.stagedFiles);
 
     // Generate commit message
-    const spinner = options.messageOnly ? null : ora('Generating commit message with AI...').start();
+    const spinner =
+      messageOnly === true ? null : ora('Generating commit message with AI...').start();
 
     const generator = new CommitMessageGenerator({
-      enableAI: options.ai,
-      aiCommand: options.aiCommand,
-      aiTimeout: Number.parseInt(options.timeout, 10),
-      signature: options.signature,
+      enableAI: ai,
+      aiCommand,
+      aiTimeout: Number.parseInt(timeout, 10),
+      signature,
       logger: {
-        warn: (msg: string) => {
-          if (spinner) {
-            spinner.warn(msg);
+        warn: (warningMessage: string) => {
+          if (spinner !== null) {
+            spinner.warn(warningMessage);
           } else {
-            console.error(chalk.yellow(msg));
+            console.error(chalk.yellow(warningMessage));
           }
         },
       },
@@ -195,12 +201,12 @@ async function main(): Promise<void> {
       files: gitStatus.stagedFiles,
     });
 
-    if (spinner) {
+    if (spinner !== null) {
       spinner.succeed('Generated commit message');
     }
 
     // Output the message
-    if (options.messageOnly) {
+    if (messageOnly === true) {
       // Just output the message for hooks
       console.log(message);
       return;
@@ -214,7 +220,7 @@ async function main(): Promise<void> {
     console.log('');
 
     // Create commit if not dry run
-    if (options.dryRun) {
+    if (dryRun === true) {
       console.log(chalk.blue('🚀 DRY RUN - No commit created'));
       console.log(chalk.gray('   Remove --dry-run to create the commit'));
     } else {
@@ -228,7 +234,4 @@ async function main(): Promise<void> {
 }
 
 // Run CLI
-main().catch((error) => {
-  console.error(chalk.red('Fatal error:'), error);
-  process.exit(1);
-});
+await main();

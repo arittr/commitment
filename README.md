@@ -44,6 +44,7 @@ npx commitment
 ```
 
 This will:
+
 1. Analyze your staged changes
 2. Generate a commit message using AI
 3. Create the commit
@@ -198,6 +199,7 @@ When AI fails or is disabled:
 ### Code Analysis
 
 Detects patterns in your changes:
+
 - Function/method additions and removals
 - Test cases (test, it, describe)
 - Type definitions and interfaces
@@ -301,6 +303,7 @@ Contributions welcome! Please open an issue or PR on GitHub.
 Extracted from [chopstack](https://github.com/anthropics/chopstack-mcp) - AI-powered PR stack automation tool.
 
 Built with:
+
 - [Claude CLI](https://claude.ai/code) for AI generation
 - [execa](https://github.com/sindresorhus/execa) for subprocess execution
 - [commander](https://github.com/tj/commander.js) for CLI parsing
