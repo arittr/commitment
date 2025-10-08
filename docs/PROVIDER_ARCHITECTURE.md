@@ -301,67 +301,70 @@ export interface APIProviderConfig {
 
 ### Provider Factory
 
-Factory pattern for creating provider instances:
+Factory pattern for creating provider instances using ts-pattern:
 
 ```typescript
+import { match } from 'ts-pattern';
+
 export class ProviderFactory {
   /**
    * Create a provider from configuration
-   * Uses discriminated union for type-safe provider creation
+   * Uses ts-pattern for exhaustive pattern matching
    */
   static createProvider(config: ProviderConfig): AIProvider {
-    // Type narrowing based on 'type' discriminator
-    if (config.type === 'cli') {
-      switch (config.provider) {
-        case 'claude':
-          return new ClaudeProvider({
-            command: config.command ?? 'claude',
-            args: config.args ?? ['--print'],
-            timeout: config.timeout,
-          });
-
-        case 'codex':
-          return new CodexProvider({
-            command: config.command ?? 'codex',
-            args: config.args,
-            timeout: config.timeout,
-          });
-
-        case 'cursor':
-          return new CursorProvider({
-            command: config.command ?? 'cursor-agent',
-            args: config.args,
-            timeout: config.timeout,
-          });
-
-        default:
-          // TypeScript ensures this is exhaustive
-          throw new Error(`Unknown CLI provider: ${config.provider}`);
-      }
-    } else {
-      // config.type === 'api'
-      switch (config.provider) {
-        case 'openai':
-          return new OpenAIProvider({
-            apiKey: config.apiKey, // TypeScript knows this exists
-            endpoint: config.endpoint,
-            model: config.model ?? 'gpt-4o',
-            timeout: config.timeout,
-          });
-
-        case 'gemini':
-          return new GeminiProvider({
-            apiKey: config.apiKey, // TypeScript knows this exists
-            endpoint: config.endpoint,
-            model: config.model ?? 'gemini-2.5-pro',
-            timeout: config.timeout,
-          });
-
-        default:
-          // TypeScript ensures this is exhaustive
-          throw new Error(`Unknown API provider: ${config.provider}`);
-      }
-    }
+    return (
+      match(config)
+        // CLI Providers
+        .with(
+          { type: 'cli', provider: 'claude' },
+          (cfg) =>
+            new ClaudeProvider({
+              command: cfg.command ?? 'claude',
+              args: cfg.args ?? ['--print'],
+              timeout: cfg.timeout,
+            }),
+        )
+        .with(
+          { type: 'cli', provider: 'codex' },
+          (cfg) =>
+            new CodexProvider({
+              command: cfg.command ?? 'codex',
+              args: cfg.args,
+              timeout: cfg.timeout,
+            }),
+        )
+        .with(
+          { type: 'cli', provider: 'cursor' },
+          (cfg) =>
+            new CursorProvider({
+              command: cfg.command ?? 'cursor-agent',
+              args: cfg.args,
+              timeout: cfg.timeout,
+            }),
+        )
+        // API Providers
+        .with(
+          { type: 'api', provider: 'openai' },
+          (cfg) =>
+            new OpenAIProvider({
+              apiKey: cfg.apiKey,
+              endpoint: cfg.endpoint,
+              model: cfg.model ?? 'gpt-4o',
+              timeout: cfg.timeout,
+            }),
+        )
+        .with(
+          { type: 'api', provider: 'gemini' },
+          (cfg) =>
+            new GeminiProvider({
+              apiKey: cfg.apiKey,
+              endpoint: cfg.endpoint,
+              model: cfg.model ?? 'gemini-2.5-pro',
+              timeout: cfg.timeout,
+            }),
+        )
+        .exhaustive()
+    ); // TypeScript ensures all cases are handled
   }
 
   /**
@@ -411,6 +414,52 @@ export interface APIProviderConfig {
  * TypeScript can narrow the type based on the 'type' field
  */
 export type ProviderConfig = CLIProviderConfig | APIProviderConfig;
+```
+
+#### Runtime Validation with Zod
+
+Use Zod schemas for runtime validation of provider configurations:
+
+```typescript
+import { z } from 'zod';
+
+// Base schema for common fields
+const baseProviderSchema = z.object({
+  timeout: z.number().positive().optional(),
+});
+
+// CLI provider schema
+export const cliProviderSchema = baseProviderSchema.extend({
+  type: z.literal('cli'),
+  provider: z.enum(['claude', 'codex', 'cursor']),
+  command: z.string().optional(),
+  args: z.array(z.string()).optional(),
+});
+
+// API provider schema
+export const apiProviderSchema = baseProviderSchema.extend({
+  type: z.literal('api'),
+  provider: z.enum(['openai', 'gemini']),
+  apiKey: z.string().min(1),
+  endpoint: z.string().url().optional(),
+  model: z.string().optional(),
+});
+
+// Discriminated union schema
+export const providerConfigSchema = z.discriminatedUnion('type', [
+  cliProviderSchema,
+  apiProviderSchema,
+]);
+
+// Infer TypeScript types from Zod schemas
+export type CLIProviderConfig = z.infer<typeof cliProviderSchema>;
+export type APIProviderConfig = z.infer<typeof apiProviderSchema>;
+export type ProviderConfig = z.infer<typeof providerConfigSchema>;
+
+// Validation helper
+export function validateProviderConfig(config: unknown): ProviderConfig {
+  return providerConfigSchema.parse(config);
+}
 ```
 
 #### Benefits of Discriminated Unions
@@ -810,6 +859,42 @@ commitment --providers=claude,codex,openai
 - Legacy config maps cleanly to single Claude provider
 - Can deprecate in major version bump later
 - Allows gradual migration
+
+### Discriminated Unions vs Flat Config
+
+**Decision**: Use discriminated unions with `type` field instead of flat configuration object.
+
+**Rationale**:
+
+- TypeScript enforces correctness at compile time (CLI providers can't have `apiKey`)
+- IDE autocomplete shows only relevant fields based on provider type
+- Eliminates runtime null checks for type-specific fields
+- Makes configuration intent explicit and self-documenting
+- Enables exhaustive type checking in factory
+
+### ts-pattern for Control Flow
+
+**Decision**: Use ts-pattern for pattern matching instead of switch/if-else chains.
+
+**Rationale**:
+
+- Exhaustive pattern matching catches missing cases at compile time
+- More concise and readable than nested switch statements
+- Follows chopstack's architectural pattern (already uses ts-pattern)
+- Better type narrowing than traditional control flow
+- Functional programming style aligns with project goals
+
+### Zod for Runtime Validation
+
+**Decision**: Use Zod for runtime validation of provider configurations.
+
+**Rationale**:
+
+- Provides runtime type safety for user-provided configurations
+- Single source of truth (schemas can infer TypeScript types)
+- Better error messages than manual validation
+- Validates complex nested structures automatically
+- Can be used for environment variable parsing and CLI input
 
 ## Open Questions
 
