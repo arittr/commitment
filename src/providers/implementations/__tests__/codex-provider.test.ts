@@ -1,3 +1,5 @@
+import type { Result } from 'execa';
+
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 
 import { execa } from 'execa';
@@ -16,6 +18,27 @@ vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
   rm: vi.fn(),
 }));
+
+// Helper to create properly typed execa mock result
+function createExecaResult(overrides: Partial<Result> = {}): Result {
+  return {
+    command: 'codex',
+    escapedCommand: 'codex',
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    failed: false,
+    timedOut: false,
+    isCanceled: false,
+    killed: false,
+    signal: undefined,
+    signalDescription: undefined,
+    cwd: process.cwd(),
+    durationMs: 0,
+    pipedFrom: [],
+    ...overrides,
+  } as Result;
+}
 
 describe('CodexProvider', () => {
   const mockTempDir = '/tmp/codex-abc123';
@@ -68,11 +91,11 @@ describe('CodexProvider', () => {
 
   describe('isAvailable', () => {
     it('should return true if codex command exists', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: 'codex 0.42.0',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'codex 0.42.0',
+        }),
+      );
 
       const provider = new CodexProvider();
       const result = await provider.isAvailable();
@@ -85,11 +108,12 @@ describe('CodexProvider', () => {
     });
 
     it('should return false if codex command not found', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: '',
-        stderr: 'command not found',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 1,
+          stderr: 'command not found',
+        }),
+      );
 
       const provider = new CodexProvider();
       const result = await provider.isAvailable();
@@ -107,11 +131,7 @@ describe('CodexProvider', () => {
     });
 
     it('should use custom command name from config', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(createExecaResult());
 
       const provider = new CodexProvider({ command: 'custom-codex' });
       await provider.isAvailable();
@@ -126,18 +146,18 @@ describe('CodexProvider', () => {
   describe('generateCommitMessage', () => {
     it('should generate commit message successfully', async () => {
       // Mock availability check
-      vi.mocked(execa).mockResolvedValueOnce({
-        exitCode: 0,
-        stdout: 'codex 0.42.0',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValueOnce(
+        createExecaResult({
+          stdout: 'codex 0.42.0',
+        }),
+      );
 
       // Mock codex exec command
-      vi.mocked(execa).mockResolvedValueOnce({
-        stdout: '[metadata and progress output]',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValueOnce(
+        createExecaResult({
+          stdout: '[metadata and progress output]',
+        }),
+      );
 
       vi.mocked(readFile).mockResolvedValue(
         'feat: add new feature\n\n- Implement core functionality',
@@ -167,8 +187,8 @@ describe('CodexProvider', () => {
 
     it('should create and clean up temp directory', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new CodexProvider();
       await provider.generateCommitMessage('test', {});
@@ -179,8 +199,8 @@ describe('CodexProvider', () => {
 
     it('should add -C flag for working directory', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new CodexProvider();
       await provider.generateCommitMessage('test', { workdir: '/path/to/repo' });
@@ -194,8 +214,8 @@ describe('CodexProvider', () => {
 
     it('should use custom timeout if provided', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new CodexProvider();
       await provider.generateCommitMessage('test', { timeout: 60_000 });
@@ -211,8 +231,8 @@ describe('CodexProvider', () => {
 
     it('should simplify prompt when raw diff is provided', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new CodexProvider();
       await provider.generateCommitMessage(
@@ -237,8 +257,8 @@ describe('CodexProvider', () => {
 
     it('should clean AI artifacts from response', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       vi.mocked(readFile).mockResolvedValue(
         "Here's the commit message:\nfeat: add feature\n\n- Details",
@@ -252,8 +272,8 @@ describe('CodexProvider', () => {
 
     it('should handle sentinel markers in response', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       vi.mocked(readFile).mockResolvedValue(
         '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n\n- Details<<<COMMIT_MESSAGE_END>>>',
@@ -266,11 +286,11 @@ describe('CodexProvider', () => {
     });
 
     it('should throw ProviderError with helpful message if codex not available', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 1,
+        }),
+      );
 
       const provider = new CodexProvider();
 
@@ -281,7 +301,7 @@ describe('CodexProvider', () => {
 
     it('should throw ProviderError with auth message if not authenticated', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
+        .mockResolvedValueOnce(createExecaResult())
         .mockRejectedValueOnce(new Error('Error: not authenticated'));
 
       const provider = new CodexProvider();
@@ -291,7 +311,7 @@ describe('CodexProvider', () => {
 
     it('should clean up temp directory even on error', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
+        .mockResolvedValueOnce(createExecaResult())
         .mockRejectedValueOnce(new Error('Some error'));
 
       const provider = new CodexProvider();
@@ -304,8 +324,8 @@ describe('CodexProvider', () => {
 
     it('should handle temp directory cleanup errors gracefully', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       // Cleanup fails
       vi.mocked(rm).mockRejectedValue(new Error('Permission denied'));
@@ -318,8 +338,8 @@ describe('CodexProvider', () => {
 
     it('should reject empty response from file', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       vi.mocked(readFile).mockResolvedValue('');
 
@@ -330,8 +350,8 @@ describe('CodexProvider', () => {
 
     it('should use custom args from config', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new CodexProvider({ args: ['exec', '--custom'] });
       await provider.generateCommitMessage('test', {});
@@ -345,12 +365,12 @@ describe('CodexProvider', () => {
 
     it('should read output from temp file not stdout', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({ exitCode: 0, stdout: '', stderr: '' } as any)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '[metadata] thinking... tokens: 1000',
-          stderr: '',
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: '[metadata] thinking... tokens: 1000',
+          }),
+        );
 
       vi.mocked(readFile).mockResolvedValue('feat: actual commit message');
 
@@ -363,11 +383,12 @@ describe('CodexProvider', () => {
     });
 
     it('should throw ProviderNotAvailableError if provider is unavailable', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 127,
-        stdout: '',
-        stderr: 'command not found: codex',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 127,
+          stderr: 'command not found: codex',
+        }),
+      );
 
       const provider = new CodexProvider();
 

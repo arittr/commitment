@@ -1,3 +1,5 @@
+import type { Result } from 'execa';
+
 import { execa } from 'execa';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +9,27 @@ import { ProviderType } from '../types';
 
 // Mock execa
 vi.mock('execa');
+
+// Helper to create properly typed execa mock result
+function createExecaResult(overrides: Partial<Result> = {}): Result {
+  return {
+    command: 'claude',
+    escapedCommand: 'claude',
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    failed: false,
+    timedOut: false,
+    isCanceled: false,
+    killed: false,
+    signal: undefined,
+    signalDescription: undefined,
+    cwd: process.cwd(),
+    durationMs: 0,
+    pipedFrom: [],
+    ...overrides,
+  } as Result;
+}
 
 describe('ClaudeProvider', () => {
   beforeEach(() => {
@@ -32,11 +55,7 @@ describe('ClaudeProvider', () => {
 
   describe('isAvailable', () => {
     it('should return true if claude command exists', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(createExecaResult());
 
       const provider = new ClaudeProvider();
       const result = await provider.isAvailable();
@@ -49,11 +68,11 @@ describe('ClaudeProvider', () => {
     });
 
     it('should return false if claude command not found', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 1,
+        }),
+      );
 
       const provider = new ClaudeProvider();
       const result = await provider.isAvailable();
@@ -71,11 +90,7 @@ describe('ClaudeProvider', () => {
     });
 
     it('should use custom command name from config', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(createExecaResult());
 
       const provider = new ClaudeProvider({ command: 'custom-claude' });
       await provider.isAvailable();
@@ -90,16 +105,12 @@ describe('ClaudeProvider', () => {
   describe('generateCommitMessage', () => {
     it('should generate commit message successfully', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'feat: add new feature\n\n- Implement core functionality',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'feat: add new feature\n\n- Implement core functionality',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});
@@ -117,17 +128,13 @@ describe('ClaudeProvider', () => {
 
     it('should clean response with sentinel markers', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout:
-            '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n\n- Details<<<COMMIT_MESSAGE_END>>>',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout:
+              '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n\n- Details<<<COMMIT_MESSAGE_END>>>',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});
@@ -137,16 +144,12 @@ describe('ClaudeProvider', () => {
 
     it('should remove common AI preamble', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: "Here's the commit message:\nfeat: add feature\n\n- Details",
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: "Here's the commit message:\nfeat: add feature\n\n- Details",
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});
@@ -156,16 +159,12 @@ describe('ClaudeProvider', () => {
 
     it('should handle responses with looking/analyzing preamble', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'Looking at the changes\nAnalyzing the code\nfeat: add feature\n\n- Details',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'Looking at the changes\nAnalyzing the code\nfeat: add feature\n\n- Details',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});
@@ -175,16 +174,12 @@ describe('ClaudeProvider', () => {
 
     it('should use custom workdir if provided', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'feat: add feature',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'feat: add feature',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       await provider.generateCommitMessage('test prompt', { workdir: '/test/dir' });
@@ -200,16 +195,12 @@ describe('ClaudeProvider', () => {
 
     it('should use custom timeout if provided', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'feat: add feature',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'feat: add feature',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       await provider.generateCommitMessage('test prompt', { timeout: 10_000 });
@@ -225,16 +216,12 @@ describe('ClaudeProvider', () => {
 
     it('should use custom args from config', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'feat: add feature',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'feat: add feature',
+          }),
+        );
 
       const provider = new ClaudeProvider({ args: ['--custom', '--args'] });
       await provider.generateCommitMessage('test prompt', {});
@@ -243,11 +230,11 @@ describe('ClaudeProvider', () => {
     });
 
     it('should throw ProviderNotAvailableError if provider is unavailable', async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: '',
-        stderr: '',
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 1,
+        }),
+      );
 
       const provider = new ClaudeProvider();
       await expect(provider.generateCommitMessage('test prompt', {})).rejects.toThrow(
@@ -256,15 +243,10 @@ describe('ClaudeProvider', () => {
     });
 
     it('should throw ProviderTimeoutError on timeout', async () => {
-      const timeoutError = new Error('Timeout');
-      (timeoutError as any).timedOut = true;
+      const timeoutError = Object.assign(new Error('Timeout'), { timedOut: true });
 
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
+        .mockResolvedValueOnce(createExecaResult())
         .mockRejectedValueOnce(timeoutError);
 
       const provider = new ClaudeProvider();
@@ -275,16 +257,8 @@ describe('ClaudeProvider', () => {
 
     it('should reject empty response with error', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: '',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(createExecaResult());
 
       const provider = new ClaudeProvider();
 
@@ -295,16 +269,12 @@ describe('ClaudeProvider', () => {
 
     it('should clean code blocks from response', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: '```\nfeat: add feature\n\n- Details\n```',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: '```\nfeat: add feature\n\n- Details\n```',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});
@@ -314,16 +284,12 @@ describe('ClaudeProvider', () => {
 
     it('should keep bullet points in cleaned response', async () => {
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: '',
-          stderr: '',
-        } as any)
-        .mockResolvedValueOnce({
-          stdout: 'feat: add feature\n\n- Point 1\n- Point 2\n- Point 3',
-          stderr: '',
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(createExecaResult())
+        .mockResolvedValueOnce(
+          createExecaResult({
+            stdout: 'feat: add feature\n\n- Point 1\n- Point 2\n- Point 3',
+          }),
+        );
 
       const provider = new ClaudeProvider();
       const result = await provider.generateCommitMessage('test prompt', {});

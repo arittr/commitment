@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { AIProvider } from '../types';
 
 import { detectAvailableProvider, getAllAvailableProviders } from '../auto-detect';
 import { ClaudeProvider } from '../implementations/claude-provider';
@@ -8,6 +9,22 @@ import { CodexProvider } from '../implementations/codex-provider';
 // Mock both providers
 vi.mock('../implementations/claude-provider');
 vi.mock('../implementations/codex-provider');
+
+// Helper to create a properly typed mock provider
+type MockProvider = Pick<
+  AIProvider,
+  'isAvailable' | 'getName' | 'getProviderType' | 'generateCommitMessage'
+>;
+
+function createMockProvider(overrides: Partial<MockProvider> = {}): MockProvider {
+  return {
+    isAvailable: vi.fn().mockResolvedValue(true),
+    getName: vi.fn().mockReturnValue('Mock Provider'),
+    getProviderType: vi.fn().mockReturnValue('cli'),
+    generateCommitMessage: vi.fn().mockResolvedValue('feat: mock commit'),
+    ...overrides,
+  };
+}
 
 describe('auto-detect', () => {
   beforeEach(() => {
@@ -19,12 +36,9 @@ describe('auto-detect', () => {
       // Mock Claude as available
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       const result = await detectAvailableProvider();
@@ -37,23 +51,19 @@ describe('auto-detect', () => {
       // Mock Claude as unavailable
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockResolvedValue(false),
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       // Mock Codex as unavailable
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockResolvedValue(false),
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const result = await detectAvailableProvider();
@@ -65,23 +75,19 @@ describe('auto-detect', () => {
       // Mock Claude to throw during isAvailable
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       // Mock Codex to also throw during isAvailable
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const result = await detectAvailableProvider();
@@ -94,12 +100,10 @@ describe('auto-detect', () => {
 
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: isAvailableMock,
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       await detectAvailableProvider();
@@ -112,12 +116,10 @@ describe('auto-detect', () => {
 
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: mockGenerateCommitMessage,
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       const provider = await detectAvailableProvider();
@@ -136,23 +138,17 @@ describe('auto-detect', () => {
       // Mock Claude as available
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       // Mock Codex as available
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const result = await getAllAvailableProviders();
@@ -166,23 +162,19 @@ describe('auto-detect', () => {
       // Mock Claude as unavailable
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockResolvedValue(false),
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       // Mock Codex as unavailable
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockResolvedValue(false),
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const result = await getAllAvailableProviders();
@@ -194,23 +186,19 @@ describe('auto-detect', () => {
       // Mock Claude to throw during isAvailable
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       // Mock Codex to also throw during isAvailable
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockRejectedValue(new Error('Command not found')),
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const result = await getAllAvailableProviders();
@@ -226,12 +214,10 @@ describe('auto-detect', () => {
         callCount++;
         const available = callCount === 1; // Only first instance is available
 
-        return {
+        return createMockProvider({
           isAvailable: vi.fn().mockResolvedValue(available),
           getName: vi.fn().mockReturnValue(`Claude CLI ${callCount}`),
-          getProviderType: vi.fn().mockReturnValue('cli'),
-          generateCommitMessage: vi.fn(),
-        } as any;
+        }) as unknown as ClaudeProvider;
       });
 
       const result = await getAllAvailableProviders();
@@ -246,18 +232,18 @@ describe('auto-detect', () => {
 
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
+          createMockProvider({
             isAvailable: vi.fn().mockImplementation(async () => {
               isAvailableStartTimes.push(Date.now());
               // Simulate async work
-              await new Promise((resolve) => setTimeout(resolve, 10));
+              await new Promise((resolve) => {
+                setTimeout(resolve, 10);
+              });
               isAvailableEndTimes.push(Date.now());
               return true;
             }),
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       await getAllAvailableProviders();
@@ -269,12 +255,9 @@ describe('auto-detect', () => {
     it('should return providers in priority order', async () => {
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
-            generateCommitMessage: vi.fn(),
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       const result = await getAllAvailableProviders();
@@ -288,22 +271,18 @@ describe('auto-detect', () => {
 
       vi.mocked(ClaudeProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Claude CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: mockGenerateCommitMessage,
-          }) as any,
+          }) as unknown as ClaudeProvider,
       );
 
       vi.mocked(CodexProvider).mockImplementation(
         () =>
-          ({
-            isAvailable: vi.fn().mockResolvedValue(true),
+          createMockProvider({
             getName: vi.fn().mockReturnValue('Codex CLI'),
-            getProviderType: vi.fn().mockReturnValue('cli'),
             generateCommitMessage: mockGenerateCommitMessage,
-          }) as any,
+          }) as unknown as CodexProvider,
       );
 
       const providers = await getAllAvailableProviders();

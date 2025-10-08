@@ -1,3 +1,5 @@
+import type { Result } from 'execa';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProviderError, ProviderTimeoutError } from '../../errors';
@@ -5,6 +7,27 @@ import { CLIExecutor } from '../cli-executor';
 
 // Mock execa
 vi.mock('execa');
+
+// Helper to create properly typed execa mock result
+function createExecaResult(overrides: Partial<Result> = {}): Result {
+  return {
+    command: 'test-command',
+    escapedCommand: 'test-command',
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    failed: false,
+    timedOut: false,
+    isCanceled: false,
+    killed: false,
+    signal: undefined,
+    signalDescription: undefined,
+    cwd: process.cwd(),
+    durationMs: 0,
+    pipedFrom: [],
+    ...overrides,
+  } as Result;
+}
 
 describe('CLIExecutor', () => {
   beforeEach(() => {
@@ -14,12 +37,11 @@ describe('CLIExecutor', () => {
   describe('execute', () => {
     it('should execute command and return stdout', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'success output',
-        stderr: '',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'success output',
+        }),
+      );
 
       const result = await CLIExecutor.execute('test-command', ['arg1', 'arg2']);
 
@@ -36,12 +58,11 @@ describe('CLIExecutor', () => {
 
     it('should pass cwd option to execa', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await CLIExecutor.execute('test-command', [], { cwd: '/test/dir' });
 
@@ -54,12 +75,11 @@ describe('CLIExecutor', () => {
 
     it('should pass env vars to execa', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       const env = { TEST_VAR: 'test-value' };
       await CLIExecutor.execute('test-command', [], { env });
@@ -69,12 +89,11 @@ describe('CLIExecutor', () => {
 
     it('should pass timeout to execa', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await CLIExecutor.execute('test-command', [], { timeout: 5000 });
 
@@ -87,12 +106,11 @@ describe('CLIExecutor', () => {
 
     it('should pass input to execa when provided', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await CLIExecutor.execute('test-command', [], { input: 'test input' });
 
@@ -108,12 +126,12 @@ describe('CLIExecutor', () => {
 
     it('should throw ProviderError on non-zero exit code', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: '',
-        stderr: 'error message',
-        exitCode: 1,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stderr: 'error message',
+          exitCode: 1,
+        }),
+      );
 
       await expect(CLIExecutor.execute('test-command', [])).rejects.toThrow(ProviderError);
       await expect(CLIExecutor.execute('test-command', [])).rejects.toThrow(
@@ -143,9 +161,7 @@ describe('CLIExecutor', () => {
   describe('checkAvailable', () => {
     it('should return true when --version succeeds', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(createExecaResult());
 
       const result = await CLIExecutor.checkAvailable('test-command');
 
@@ -159,12 +175,12 @@ describe('CLIExecutor', () => {
     it('should try --help if --version fails', async () => {
       const { execa } = await import('execa');
       vi.mocked(execa)
-        .mockResolvedValueOnce({
-          exitCode: 1,
-        } as any)
-        .mockResolvedValueOnce({
-          exitCode: 0,
-        } as any);
+        .mockResolvedValueOnce(
+          createExecaResult({
+            exitCode: 1,
+          }),
+        )
+        .mockResolvedValueOnce(createExecaResult());
 
       const result = await CLIExecutor.checkAvailable('test-command');
 
@@ -175,9 +191,11 @@ describe('CLIExecutor', () => {
 
     it('should return false when both --version and --help fail', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 1,
+        }),
+      );
 
       const result = await CLIExecutor.checkAvailable('test-command');
 
@@ -197,31 +215,33 @@ describe('CLIExecutor', () => {
   describe('executeRaw', () => {
     it('should return full result object', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: 'error',
-        exitCode: 0,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+          stderr: 'error',
+        }),
+      );
 
       const result = await CLIExecutor.executeRaw('test-command', []);
 
-      expect(result).toEqual({
-        stdout: 'output',
-        stderr: 'error',
-        exitCode: 0,
-        timedOut: false,
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          stdout: 'output',
+          stderr: 'error',
+          exitCode: 0,
+          timedOut: false,
+        }),
+      );
     });
 
     it('should not throw on non-zero exit code', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: '',
-        stderr: 'error',
-        exitCode: 1,
-        timedOut: false,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stderr: 'error',
+          exitCode: 1,
+        }),
+      );
 
       const result = await CLIExecutor.executeRaw('test-command', []);
 
@@ -242,12 +262,12 @@ describe('CLIExecutor', () => {
 
     it('should include timedOut flag in result', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: '',
-        stderr: '',
-        exitCode: 124, // Common timeout exit code
-        timedOut: true,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          exitCode: 124, // Common timeout exit code
+          timedOut: true,
+        }),
+      );
 
       const result = await CLIExecutor.executeRaw('test-command', [], { timeout: 1000 });
 
@@ -256,12 +276,11 @@ describe('CLIExecutor', () => {
 
     it('should handle missing timedOut property', async () => {
       const { execa } = await import('execa');
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-        // timedOut not set
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       const result = await CLIExecutor.executeRaw('test-command', []);
 

@@ -1,3 +1,5 @@
+import type { Result } from 'execa';
+
 import { execa } from 'execa';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,6 +16,27 @@ import { ProviderType } from '../types';
 
 // Mock execa
 vi.mock('execa');
+
+// Helper to create properly typed execa mock result
+function createExecaResult(overrides: Partial<Result> = {}): Result {
+  return {
+    command: 'test-cli',
+    escapedCommand: 'test-cli',
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    failed: false,
+    timedOut: false,
+    isCanceled: false,
+    killed: false,
+    signal: undefined,
+    signalDescription: undefined,
+    cwd: process.cwd(),
+    durationMs: 0,
+    pipedFrom: [],
+    ...overrides,
+  } as Result;
+}
 
 // Concrete test implementation
 class TestCLIProvider extends BaseCLIProvider {
@@ -62,11 +85,11 @@ describe('BaseCLIProvider', () => {
       const provider = new TestCLIProvider(mockConfig);
       const mockStdout = 'feat: add new feature';
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: mockStdout,
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: mockStdout,
+        }),
+      );
 
       const result = await provider.generateCommitMessage('test prompt', {});
 
@@ -92,11 +115,11 @@ describe('BaseCLIProvider', () => {
       };
       const provider = new TestCLIProvider(customConfig);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'test output',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'test output',
+        }),
+      );
 
       await provider.generateCommitMessage('prompt', {});
 
@@ -114,11 +137,11 @@ describe('BaseCLIProvider', () => {
     it('should use options workdir if provided', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await provider.generateCommitMessage('prompt', {
         workdir: '/test/dir',
@@ -136,11 +159,11 @@ describe('BaseCLIProvider', () => {
     it('should use options timeout if provided', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await provider.generateCommitMessage('prompt', {
         timeout: 10_000,
@@ -162,11 +185,11 @@ describe('BaseCLIProvider', () => {
       };
       const provider = new TestCLIProvider(configWithoutTimeout);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await provider.generateCommitMessage('prompt', {});
 
@@ -182,11 +205,11 @@ describe('BaseCLIProvider', () => {
     it('should trim whitespace from output', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: '  \n  feat: add feature  \n  ',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: '  \n  feat: add feature  \n  ',
+        }),
+      );
 
       const result = await provider.generateCommitMessage('prompt', {});
 
@@ -211,8 +234,7 @@ describe('BaseCLIProvider', () => {
     it('should throw ProviderTimeoutError on timeout', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      const timeoutError = new Error('Timeout');
-      (timeoutError as any).timedOut = true;
+      const timeoutError = Object.assign(new Error('Timeout'), { timedOut: true });
       vi.mocked(execa).mockRejectedValue(timeoutError);
 
       await expect(provider.generateCommitMessage('prompt', {})).rejects.toThrow(
@@ -278,11 +300,11 @@ describe('BaseCLIProvider', () => {
 
       const provider = new CustomInputProvider(mockConfig);
 
-      vi.mocked(execa).mockResolvedValue({
-        stdout: 'output',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
 
       await provider.generateCommitMessage('test', {});
 
