@@ -1,9 +1,9 @@
-import { execa } from 'execa';
-
 import type { AIProvider, CLIProviderConfig, GenerateOptions } from '../types';
 
-import { isProviderError, ProviderNotAvailableError, ProviderTimeoutError } from '../errors';
+import { isProviderTimeoutError, ProviderNotAvailableError, ProviderTimeoutError } from '../errors';
 import { ProviderType } from '../types';
+import { CLIExecutor } from '../utils/cli-executor';
+import { CLIResponseParser } from '../utils/cli-response-parser';
 
 /**
  * Abstract base class for CLI-based AI providers (Claude, Codex, Cursor)
@@ -50,6 +50,29 @@ export abstract class BaseCLIProvider implements AIProvider {
   }
 
   /**
+   * Check if a CLI command is available on the system
+   * Utility method that subclasses can use in their isAvailable() implementation
+   *
+   * @param command - Command to check (defaults to getCommand())
+   * @returns true if command is available
+   */
+  protected async checkCommandAvailable(command?: string): Promise<boolean> {
+    const cmd = command ?? this.getCommand();
+    return CLIExecutor.checkAvailable(cmd);
+  }
+
+  /**
+   * Parse and validate CLI response
+   * Subclasses can override to customize parsing behavior
+   *
+   * @param output - Raw output from CLI
+   * @returns Parsed and validated commit message
+   */
+  protected parseResponse(output: string): string {
+    return CLIResponseParser.parse(output);
+  }
+
+  /**
    * Generate a commit message using the CLI provider
    */
   async generateCommitMessage(prompt: string, options: GenerateOptions): Promise<string> {
@@ -66,27 +89,27 @@ export abstract class BaseCLIProvider implements AIProvider {
     const input = this.prepareInput(prompt);
 
     try {
-      const { stdout } = await execa(this.getCommand(), this.getArgs(), {
+      // Execute CLI command using CLIExecutor utility
+      const output = await CLIExecutor.execute(this.getCommand(), this.getArgs(), {
         cwd: options.workdir,
         timeout,
-        stdin: 'pipe',
         input,
-        reject: true,
       });
 
-      return stdout.trim();
+      // Parse and validate the response
+      return this.parseResponse(output);
     } catch (error) {
-      // Handle timeout specifically
-      if (error instanceof Error && 'timedOut' in error && error.timedOut === true) {
-        throw new ProviderTimeoutError(this.getName(), timeout, 'generateCommitMessage', error);
+      // Re-throw timeout errors with correct provider name
+      if (isProviderTimeoutError(error)) {
+        throw new ProviderTimeoutError(
+          this.getName(),
+          error.timeoutMs,
+          'generateCommitMessage',
+          error.cause,
+        );
       }
 
-      // Re-throw provider errors as-is
-      if (isProviderError(error)) {
-        throw error;
-      }
-
-      // Wrap other errors
+      // Wrap all other errors in ProviderNotAvailableError
       throw new ProviderNotAvailableError(
         this.getName(),
         error instanceof Error ? error.message : 'Unknown error during CLI execution',

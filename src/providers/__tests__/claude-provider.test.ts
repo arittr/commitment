@@ -273,7 +273,7 @@ describe('ClaudeProvider', () => {
       );
     });
 
-    it('should handle empty response gracefully', async () => {
+    it('should reject empty response with error', async () => {
       vi.mocked(execa)
         .mockResolvedValueOnce({
           exitCode: 0,
@@ -287,9 +287,10 @@ describe('ClaudeProvider', () => {
         } as any);
 
       const provider = new ClaudeProvider();
-      const result = await provider.generateCommitMessage('test prompt', {});
 
-      expect(result).toBe('');
+      await expect(provider.generateCommitMessage('test prompt', {})).rejects.toThrow(
+        /empty response/i,
+      );
     });
 
     it('should clean code blocks from response', async () => {

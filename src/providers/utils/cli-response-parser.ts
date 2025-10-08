@@ -57,14 +57,14 @@ export const CLIResponseParser = {
 
     // Validate non-empty
     if (!allowEmpty && result === '') {
-      throw new ProviderError('CLI Parser', 'Received empty response from provider');
+      throw new ProviderError('Received empty response from provider', 'CLI Parser');
     }
 
     // Validate commit message format
     if (!allowEmpty && !this.validateCommitMessage(result)) {
       throw new ProviderError(
-        'CLI Parser',
         `Invalid commit message format: ${result.slice(0, 100)}`,
+        'CLI Parser',
       );
     }
 
@@ -164,14 +164,14 @@ export const CLIResponseParser = {
   cleanAIArtifacts(message: string): string {
     let cleaned = message.trim();
 
-    // Remove common AI preamble patterns
+    // Remove common AI preamble patterns (with global flag to catch multiple lines)
     cleaned = cleaned
       .replace(/^here's? (?:the |a )?commit message:?\s*/i, '')
-      .replace(/^based on (?:the )?git diff.*$/im, '')
-      .replace(/^looking at (?:the )?changes.*$/im, '')
-      .replace(/^analyzing (?:the )?changes.*$/im, '')
-      .replace(/^from (?:the )?changes.*$/im, '')
-      .replace(/^i can see (?:that )?this.*$/im, '')
+      .replaceAll(/^based on (?:the )?git diff.*$/gim, '')
+      .replaceAll(/^looking at (?:the )?changes.*$/gim, '')
+      .replaceAll(/^analyzing (?:the )?(?:changes|code).*$/gim, '')
+      .replaceAll(/^from (?:the )?changes.*$/gim, '')
+      .replaceAll(/^i can see (?:that )?this.*$/gim, '')
       .trim();
 
     // Extract content between sentinel markers if present

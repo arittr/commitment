@@ -71,13 +71,15 @@ describe('BaseCLIProvider', () => {
       const result = await provider.generateCommitMessage('test prompt', {});
 
       expect(result).toBe(mockStdout);
-      expect(execa).toHaveBeenCalledWith('test-cli', ['--test-arg'], {
-        cwd: undefined,
-        timeout: 5000,
-        stdin: 'pipe',
-        input: 'test prompt',
-        reject: true,
-      });
+      expect(execa).toHaveBeenCalledWith(
+        'test-cli',
+        ['--test-arg'],
+        expect.objectContaining({
+          cwd: undefined,
+          timeout: 5000,
+          input: 'test prompt',
+        }),
+      );
     });
 
     it('should use custom command and args from config', async () => {
@@ -98,13 +100,15 @@ describe('BaseCLIProvider', () => {
 
       await provider.generateCommitMessage('prompt', {});
 
-      expect(execa).toHaveBeenCalledWith('custom-cmd', ['--custom', '--args'], {
-        cwd: undefined,
-        timeout: 3000,
-        stdin: 'pipe',
-        input: 'prompt',
-        reject: true,
-      });
+      expect(execa).toHaveBeenCalledWith(
+        'custom-cmd',
+        ['--custom', '--args'],
+        expect.objectContaining({
+          cwd: undefined,
+          timeout: 3000,
+          input: 'prompt',
+        }),
+      );
     });
 
     it('should use options workdir if provided', async () => {
