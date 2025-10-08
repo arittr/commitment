@@ -19,6 +19,12 @@ importers:
       ora:
         specifier: ^9.0.0
         version: 9.0.0
+      ts-pattern:
+        specifier: ^5.8.0
+        version: 5.8.0
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@eslint/js':
         specifier: ^9.15.0
@@ -2581,6 +2587,12 @@ packages:
         integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==,
       }
 
+  ts-pattern@5.8.0:
+    resolution:
+      {
+        integrity: sha512-kIjN2qmWiHnhgr5DAkAafF9fwb0T5OhMVSWrm8XEdTFnX6+wfXwYOFjeF86UZ54vduqiR7BfqScFmXSzSaH8oA==,
+      }
+
   tslib@2.8.1:
     resolution:
       {
@@ -2738,6 +2750,12 @@ packages:
         integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==,
       }
     engines: { node: '>=18' }
+
+  zod@4.1.12:
+    resolution:
+      {
+        integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==,
+      }
 
 snapshots:
   '@babel/code-frame@7.27.1':
@@ -4091,6 +4109,8 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
+  ts-pattern@5.8.0: {}
+
   tslib@2.8.1:
     optional: true
 
@@ -4205,3 +4225,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yoctocolors@2.1.2: {}
+
+  zod@4.1.12: {}

@@ -307,54 +307,60 @@ Factory pattern for creating provider instances:
 export class ProviderFactory {
   /**
    * Create a provider from configuration
+   * Uses discriminated union for type-safe provider creation
    */
   static createProvider(config: ProviderConfig): AIProvider {
-    switch (config.provider) {
-      case 'claude':
-        return new ClaudeProvider({
-          command: config.cliCommand ?? 'claude',
-          args: config.cliArgs ?? ['--print'],
-          timeout: config.timeout,
-        });
+    // Type narrowing based on 'type' discriminator
+    if (config.type === 'cli') {
+      switch (config.provider) {
+        case 'claude':
+          return new ClaudeProvider({
+            command: config.command ?? 'claude',
+            args: config.args ?? ['--print'],
+            timeout: config.timeout,
+          });
 
-      case 'codex':
-        return new CodexProvider({
-          command: config.cliCommand ?? 'codex',
-          args: config.cliArgs,
-          timeout: config.timeout,
-        });
+        case 'codex':
+          return new CodexProvider({
+            command: config.command ?? 'codex',
+            args: config.args,
+            timeout: config.timeout,
+          });
 
-      case 'cursor':
-        return new CursorProvider({
-          command: config.cliCommand ?? 'cursor-agent',
-          args: config.cliArgs ?? ['-m', config.model ?? 'sonnet-4'],
-          timeout: config.timeout,
-        });
+        case 'cursor':
+          return new CursorProvider({
+            command: config.command ?? 'cursor-agent',
+            args: config.args,
+            timeout: config.timeout,
+          });
 
-      case 'openai':
-        if (!config.apiKey) {
-          throw new Error('OpenAI API requires apiKey');
-        }
-        return new OpenAIProvider({
-          apiKey: config.apiKey,
-          endpoint: config.apiEndpoint,
-          model: config.model ?? 'gpt-4o',
-          timeout: config.timeout,
-        });
+        default:
+          // TypeScript ensures this is exhaustive
+          throw new Error(`Unknown CLI provider: ${config.provider}`);
+      }
+    } else {
+      // config.type === 'api'
+      switch (config.provider) {
+        case 'openai':
+          return new OpenAIProvider({
+            apiKey: config.apiKey, // TypeScript knows this exists
+            endpoint: config.endpoint,
+            model: config.model ?? 'gpt-4o',
+            timeout: config.timeout,
+          });
 
-      case 'gemini':
-        if (!config.apiKey) {
-          throw new Error('Gemini API requires apiKey');
-        }
-        return new GeminiProvider({
-          apiKey: config.apiKey,
-          endpoint: config.apiEndpoint,
-          model: config.model ?? 'gemini-2.5-pro',
-          timeout: config.timeout,
-        });
+        case 'gemini':
+          return new GeminiProvider({
+            apiKey: config.apiKey, // TypeScript knows this exists
+            endpoint: config.endpoint,
+            model: config.model ?? 'gemini-2.5-pro',
+            timeout: config.timeout,
+          });
 
-      default:
-        throw new Error(`Unknown provider: ${config.provider}`);
+        default:
+          // TypeScript ensures this is exhaustive
+          throw new Error(`Unknown API provider: ${config.provider}`);
+      }
     }
   }
 
@@ -367,23 +373,69 @@ export class ProviderFactory {
 }
 
 /**
- * Unified configuration for all provider types
+ * Configuration for CLI-based providers (Claude, Codex, Cursor)
  */
-export interface ProviderConfig {
+export interface CLIProviderConfig {
+  /** Discriminator for type narrowing */
+  type: 'cli';
   /** Provider identifier */
-  provider: 'claude' | 'codex' | 'cursor' | 'openai' | 'gemini';
-
-  // CLI-specific config
-  cliCommand?: string;
-  cliArgs?: string[];
-
-  // API-specific config
-  apiKey?: string;
-  apiEndpoint?: string;
-  model?: string;
-
-  // Common config
+  provider: 'claude' | 'codex' | 'cursor';
+  /** CLI command to execute (defaults to provider name) */
+  command?: string;
+  /** Additional CLI arguments */
+  args?: string[];
+  /** Timeout in milliseconds */
   timeout?: number;
+}
+
+/**
+ * Configuration for API-based providers (OpenAI, Gemini)
+ */
+export interface APIProviderConfig {
+  /** Discriminator for type narrowing */
+  type: 'api';
+  /** Provider identifier */
+  provider: 'openai' | 'gemini';
+  /** API key for authentication (required) */
+  apiKey: string;
+  /** Custom API endpoint URL (optional) */
+  endpoint?: string;
+  /** Model identifier (e.g., 'gpt-4o', 'gemini-2.5-pro') */
+  model?: string;
+  /** Timeout in milliseconds */
+  timeout?: number;
+}
+
+/**
+ * Discriminated union of all provider configurations
+ * TypeScript can narrow the type based on the 'type' field
+ */
+export type ProviderConfig = CLIProviderConfig | APIProviderConfig;
+```
+
+#### Benefits of Discriminated Unions
+
+This approach provides several advantages:
+
+1. **Type Safety**: TypeScript enforces that CLI providers cannot have `apiKey` and API providers must have `apiKey`
+2. **IDE Support**: Autocomplete shows only relevant fields based on the `type`
+3. **Runtime Safety**: The factory can safely access type-specific fields without null checks
+4. **Exhaustive Checking**: TypeScript ensures all provider types are handled in switch statements
+5. **Clear Intent**: The configuration explicitly declares whether it's CLI or API-based
+
+Example of type narrowing in action:
+
+```typescript
+function validateConfig(config: ProviderConfig) {
+  if (config.type === 'cli') {
+    // TypeScript knows: command, args, provider are available
+    // TypeScript error: config.apiKey does not exist
+    console.log(config.command); // ✓ Valid
+  } else {
+    // TypeScript knows: apiKey, endpoint, model are available
+    // TypeScript error: config.command does not exist
+    console.log(config.apiKey); // ✓ Valid
+  }
 }
 ```
 
@@ -517,8 +569,9 @@ const generator = new CommitMessageGenerator({
   enableAI: true,
   providers: [
     {
+      type: 'cli',
       provider: 'claude',
-      cliCommand: 'claude',
+      command: 'claude',
       timeout: 120000,
     },
   ],
@@ -532,8 +585,9 @@ const generator = new CommitMessageGenerator({
   enableAI: true,
   providers: [
     {
+      type: 'api',
       provider: 'openai',
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY!,
       model: 'gpt-4o',
       timeout: 60000,
     },
@@ -549,17 +603,19 @@ const generator = new CommitMessageGenerator({
   providers: [
     // Try Claude first
     {
+      type: 'cli',
       provider: 'claude',
-      cliCommand: 'claude',
     },
     // Fall back to Codex
     {
+      type: 'cli',
       provider: 'codex',
     },
     // Fall back to OpenAI API
     {
+      type: 'api',
       provider: 'openai',
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY!,
       model: 'gpt-4o',
     },
   ],
@@ -573,11 +629,15 @@ const generator = new CommitMessageGenerator({
 const providers: ProviderConfig[] = [];
 
 if (process.env.CLAUDE_AVAILABLE) {
-  providers.push({ provider: 'claude' });
+  providers.push({
+    type: 'cli',
+    provider: 'claude',
+  });
 }
 
 if (process.env.OPENAI_API_KEY) {
   providers.push({
+    type: 'api',
     provider: 'openai',
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL ?? 'gpt-4o',
@@ -586,6 +646,7 @@ if (process.env.OPENAI_API_KEY) {
 
 if (process.env.GEMINI_API_KEY) {
   providers.push({
+    type: 'api',
     provider: 'gemini',
     apiKey: process.env.GEMINI_API_KEY,
     model: process.env.GEMINI_MODEL ?? 'gemini-2.5-pro',
