@@ -2,7 +2,7 @@ import { execa } from 'execa';
 
 import type { AIProvider, ProviderConfig } from './providers/index.js';
 
-import { ClaudeProvider, createProvider } from './providers/index.js';
+import { ClaudeProvider, createProvider, ProviderChain } from './providers/index.js';
 import { hasContent } from './utils/guards.js';
 
 /**
@@ -23,6 +23,8 @@ export type CommitMessageGeneratorConfig = {
   aiCommand?: string;
   /** @deprecated Use provider config instead. Timeout for AI generation in ms (default: 120000) */
   aiTimeout?: number;
+  /** Auto-detect first available provider (default: false) */
+  autoDetect?: boolean;
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
   /** Custom logger function */
@@ -31,6 +33,8 @@ export type CommitMessageGeneratorConfig = {
   };
   /** AI provider (config or instance) */
   provider?: AIProvider | ProviderConfig;
+  /** Provider chain configs for fallback support */
+  providerChain?: ProviderConfig[];
   /** Custom signature to append to commits */
   signature?: string;
 };
@@ -71,7 +75,10 @@ export type CommitMessageOptions = {
  */
 export class CommitMessageGenerator {
   private readonly config: Required<
-    Omit<CommitMessageGeneratorConfig, 'provider' | 'aiCommand' | 'aiTimeout'>
+    Omit<
+      CommitMessageGeneratorConfig,
+      'aiCommand' | 'aiTimeout' | 'autoDetect' | 'provider' | 'providerChain'
+    >
   >;
   private readonly provider: AIProvider;
 
@@ -84,24 +91,42 @@ export class CommitMessageGenerator {
       logger: config.logger ?? { warn: () => {} },
     };
 
-    // Initialize provider with backward compatibility
-    this.provider =
-      config.provider !== undefined
-        ? 'generateCommitMessage' in config.provider && 'isAvailable' in config.provider
+    // Initialize provider with priority: providerChain > provider > legacy config
+    if (config.providerChain !== undefined && config.providerChain.length > 0) {
+      // Create provider chain from configs
+      const providers = config.providerChain.map((providerConfig) =>
+        createProvider(providerConfig),
+      );
+      this.provider = new ProviderChain(providers);
+    } else if (config.provider !== undefined) {
+      // Single provider (existing behavior)
+      this.provider =
+        'generateCommitMessage' in config.provider && 'isAvailable' in config.provider
           ? config.provider
-          : createProvider(config.provider)
-        : new ClaudeProvider({
-            command: config.aiCommand,
-            timeout: config.aiTimeout,
-          });
+          : createProvider(config.provider);
+    } else {
+      // Default to Claude (backward compatibility)
+      this.provider = new ClaudeProvider({
+        command: config.aiCommand,
+        timeout: config.aiTimeout,
+      });
+    }
 
     // Warn if using deprecated fields
     if (
       config.provider === undefined &&
+      config.providerChain === undefined &&
       (config.aiCommand !== undefined || config.aiTimeout !== undefined)
     ) {
       this.config.logger.warn(
         '⚠️ aiCommand and aiTimeout are deprecated. Use provider config instead.',
+      );
+    }
+
+    // Warn if autoDetect is used (should be handled by CLI before construction)
+    if (config.autoDetect === true) {
+      this.config.logger.warn(
+        '⚠️ autoDetect should be handled before creating CommitMessageGenerator. Use detectAvailableProvider() utility.',
       );
     }
   }
