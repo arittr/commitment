@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+*.tsbuildinfo
+pnpm-lock.yaml
+*.md
+*.yaml
+*.yml
+*.json
+!package.json
+!tsconfig.json
+!.prettierrc.json
