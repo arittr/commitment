@@ -772,14 +772,10 @@ describe('CLI Schemas', () => {
 
     it('should allow optional fields in CliOptions', () => {
       const options: CliOptions = {
-        // eslint-disable-next-line unicorn/no-unused-properties
         ai: true,
-        // eslint-disable-next-line unicorn/no-unused-properties
         aiCommand: 'claude',
-        // eslint-disable-next-line unicorn/no-unused-properties
         cwd: '/path',
         provider: 'claude',
-        // eslint-disable-next-line unicorn/no-unused-properties
         timeout: '120000',
       };
 
@@ -791,12 +787,9 @@ describe('CLI Schemas', () => {
       // This test demonstrates type safety at compile time
 
       const options: CliOptions = {
-        // eslint-disable-next-line unicorn/no-unused-properties
         ai: true,
-        // eslint-disable-next-line unicorn/no-unused-properties
         aiCommand: 'claude',
         cwd: '/custom',
-        // eslint-disable-next-line unicorn/no-unused-properties
         timeout: '120000',
       };
 

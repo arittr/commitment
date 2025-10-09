@@ -350,12 +350,10 @@ describe('BaseCLIProvider', () => {
     it('should throw error for undefined options', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       await expect(provider.generateCommitMessage('prompt', undefined as any)).rejects.toThrow(
         ProviderNotAvailableError,
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       await expect(provider.generateCommitMessage('prompt', undefined as any)).rejects.toThrow(
         'Options parameter is required',
       );
@@ -366,7 +364,6 @@ describe('BaseCLIProvider', () => {
     it('should throw error for null options', async () => {
       const provider = new TestCLIProvider(mockConfig);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       await expect(provider.generateCommitMessage('prompt', null as any)).rejects.toThrow(
         ProviderNotAvailableError,
       );
@@ -406,7 +403,6 @@ describe('BaseCLIProvider', () => {
       const provider = new TestCLIProvider(mockConfig);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         provider.generateCommitMessage('prompt', { timeout: 'invalid' as any }),
       ).rejects.toThrow(ProviderNotAvailableError);
 

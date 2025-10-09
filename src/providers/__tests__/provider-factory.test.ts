@@ -188,7 +188,6 @@ describe('ProviderFactory', () => {
         provider: 'claude',
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       expect(() => createProvider(config as any)).toThrow(ZodError);
     });
 
@@ -199,7 +198,6 @@ describe('ProviderFactory', () => {
         // Missing apiKey
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       expect(() => createProvider(config as any)).toThrow(ZodError);
     });
 
@@ -210,7 +208,6 @@ describe('ProviderFactory', () => {
         timeout: -1000, // Invalid negative timeout
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       expect(() => createProvider(config as any)).toThrow(ZodError);
     });
 
@@ -221,7 +218,6 @@ describe('ProviderFactory', () => {
         apiKey: '', // Empty string not allowed
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       expect(() => createProvider(config as any)).toThrow(ZodError);
     });
 
@@ -233,7 +229,6 @@ describe('ProviderFactory', () => {
         endpoint: 'not-a-url', // Invalid URL format
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       expect(() => createProvider(config as any)).toThrow(ZodError);
     });
 

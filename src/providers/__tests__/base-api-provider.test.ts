@@ -72,7 +72,6 @@ describe('BaseAPIProvider', () => {
       const provider = new TestAPIProvider(configWithoutTimeout);
 
       // Access protected field via any cast for testing
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Need to access protected property defaultTimeout to verify constructor behavior
       expect((provider as any).defaultTimeout).toBe(30_000);
     });
 
@@ -166,7 +165,6 @@ describe('BaseAPIProvider', () => {
         'https://api.test.com/endpoint',
         expect.objectContaining({
           method: 'POST',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest expect.any() returns 'any' type, but this is the correct way to assert signal type
           signal: expect.any(AbortSignal),
         }),
       );
@@ -294,7 +292,6 @@ describe('BaseAPIProvider', () => {
         'https://api.test.com/v1',
         expect.objectContaining({
           method: 'POST',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest expect.objectContaining() returns 'any' type for headers, but this is the correct assertion pattern
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
             Authorization: 'Bearer test-api-key',
@@ -352,12 +349,10 @@ describe('BaseAPIProvider', () => {
       const provider = new TestAPIProvider(mockConfig);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         provider.makeRequestPublic('https://api.test.com', undefined as any, 5000),
       ).rejects.toThrow(ProviderAPIError);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         provider.makeRequestPublic('https://api.test.com', undefined as any, 5000),
       ).rejects.toThrow('Request options are required');
     });
@@ -366,7 +361,6 @@ describe('BaseAPIProvider', () => {
       const provider = new TestAPIProvider(mockConfig);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         provider.makeRequestPublic('https://api.test.com', null as any, 5000),
       ).rejects.toThrow(ProviderAPIError);
     });
@@ -399,7 +393,6 @@ describe('BaseAPIProvider', () => {
       const provider = new TestAPIProvider(mockConfig);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         provider.makeRequestPublic('https://api.test.com', {}, 'invalid' as any),
       ).rejects.toThrow(ProviderAPIError);
     });

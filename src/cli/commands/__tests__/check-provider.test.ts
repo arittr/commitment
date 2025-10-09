@@ -12,7 +12,6 @@ vi.mock('../../../providers/index', () => ({
 describe('checkProviderCommand', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let processExitSpy: any;
 
   beforeEach(() => {

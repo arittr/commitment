@@ -398,7 +398,6 @@ describe('Core Schemas', () => {
       it('should validate config with logger', () => {
         const logger = {
           warn: (message: string) => {
-            // eslint-disable-next-line no-console
             console.warn(message);
           },
         };
@@ -446,7 +445,6 @@ describe('Core Schemas', () => {
       it('should validate config with all optional fields', () => {
         const logger = {
           warn: (message: string) => {
-            // eslint-disable-next-line no-console
             console.warn(message);
           },
         };
@@ -511,7 +509,6 @@ describe('Core Schemas', () => {
         const config = {
           logger: {
             log: (message: string) => {
-              // eslint-disable-next-line no-console
               console.log(message);
             },
           },

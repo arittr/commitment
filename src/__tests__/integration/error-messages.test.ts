@@ -50,7 +50,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validateCliOptions(invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -204,7 +203,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validateCliOptions(invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -290,7 +288,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         await generator.generateCommitMessage(invalidTask as any, { workdir: process.cwd() });
         expect.fail('Should have thrown');
       } catch (error) {
@@ -316,7 +313,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         await generator.generateCommitMessage(validTask, invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -334,7 +330,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         new CommitMessageGenerator(invalidConfig as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -353,7 +348,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         new CommitMessageGenerator(invalidConfig as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -392,7 +386,6 @@ describe('Error Message Quality Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validateCliOptions(invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {
@@ -426,7 +419,6 @@ describe('Error Message Quality Integration Tests', () => {
       const invalidInput = 'not an object';
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validateCliOptions(invalidInput as any);
         expect.fail('Should have thrown');
       } catch (error) {

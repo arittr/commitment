@@ -5,7 +5,6 @@ import { listProvidersCommand } from '../list-providers';
 describe('listProvidersCommand', () => {
   // Mock console.log and process.exit
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let processExitSpy: any;
 
   beforeEach(() => {

@@ -514,28 +514,32 @@ const config: Record<string, unknown>[] = [
     plugins: { jest: jestPlugin, vitest } as Record<string, unknown>,
     rules: {
       '@typescript-eslint/naming-convention': 'off',
-      // enforce types in tests
-      '@typescript-eslint/no-explicit-any': ['error', { ignoreRestArgs: true }],
-
+      // Relax type-safety rules for test scenarios
+      // Tests need `any` for mocking complex types and testing invalid inputs
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       // catch async flake
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
-      '@typescript-eslint/no-non-null-assertion': 'off', // set to 'error' if you want full strict
-      '@typescript-eslint/no-unsafe-argument': 'error',
-      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
 
-      '@typescript-eslint/no-unsafe-call': 'error',
-      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
       // test ergonomics
       '@typescript-eslint/promise-function-async': 'off',
       '@typescript-eslint/require-await': 'off',
       // runner-aware guardrails
       '@typescript-eslint/unbound-method': 'off',
       'jest/unbound-method': 'error',
+      'no-console': 'off',
       'no-undef': 'off',
 
       'promise/param-names': 'off',
       'promise/prefer-await-to-then': 'off',
+      // Tests may create objects with unused properties
+      'unicorn/no-unused-properties': 'off',
       'vitest/expect-expect': 'error',
       'vitest/no-focused-tests': 'error',
       'vitest/no-identical-title': 'error',

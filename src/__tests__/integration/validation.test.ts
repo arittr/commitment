@@ -120,10 +120,9 @@ describe('Validation Integration Tests', () => {
         workdir: process.cwd(),
       };
 
-      await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        generator.generateCommitMessage(invalidTask as any, options),
-      ).rejects.toThrow(/Invalid task parameter/);
+      await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
+        /Invalid task parameter/,
+      );
     });
 
     it('should catch task with title exceeding max length', async () => {
@@ -141,14 +140,12 @@ describe('Validation Integration Tests', () => {
         workdir: process.cwd(),
       };
 
-      await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        generator.generateCommitMessage(invalidTask as any, options),
-      ).rejects.toThrow(/Invalid task parameter/);
-      await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        generator.generateCommitMessage(invalidTask as any, options),
-      ).rejects.toThrow(/must not exceed 200 characters/);
+      await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
+        /Invalid task parameter/,
+      );
+      await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
+        /must not exceed 200 characters/,
+      );
     });
 
     it('should catch invalid options in generateCommitMessage', async () => {
@@ -167,7 +164,6 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         generator.generateCommitMessage(validTask, invalidOptions as any),
       ).rejects.toThrow(/Invalid options parameter/);
     });
@@ -189,7 +185,6 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         generator.generateCommitMessage(validTask, invalidOptions as any),
       ).rejects.toThrow(/Invalid options parameter/);
     });
@@ -210,7 +205,6 @@ describe('Validation Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         await generator.generateCommitMessage(invalidTask as any, options);
         expect.fail('Should have thrown error');
       } catch (error) {
@@ -230,10 +224,9 @@ describe('Validation Integration Tests', () => {
         enableAI: 'yes', // Invalid: must be boolean
       };
 
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/Invalid CommitMessageGenerator configuration/);
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /Invalid CommitMessageGenerator configuration/,
+      );
     });
 
     it('should catch negative timeout in generator config', () => {
@@ -241,14 +234,12 @@ describe('Validation Integration Tests', () => {
         aiTimeout: -1000, // Invalid: must be positive
       };
 
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/Invalid CommitMessageGenerator configuration/);
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/must be a positive number/);
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /Invalid CommitMessageGenerator configuration/,
+      );
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /must be a positive number/,
+      );
     });
 
     it('should catch mutually exclusive provider and providerChain', () => {
@@ -257,14 +248,12 @@ describe('Validation Integration Tests', () => {
         providerChain: [{ type: 'cli' as const, provider: 'codex' as const }],
       };
 
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/Invalid CommitMessageGenerator configuration/);
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/Cannot specify both "provider" and "providerChain"/);
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /Invalid CommitMessageGenerator configuration/,
+      );
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /Cannot specify both "provider" and "providerChain"/,
+      );
     });
 
     it('should catch empty provider chain', () => {
@@ -272,14 +261,12 @@ describe('Validation Integration Tests', () => {
         providerChain: [], // Invalid: must have at least 1 provider
       };
 
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/Invalid CommitMessageGenerator configuration/);
-      expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        () => new CommitMessageGenerator(invalidConfig as any),
-      ).toThrow(/must contain at least one provider/);
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /Invalid CommitMessageGenerator configuration/,
+      );
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
+        /must contain at least one provider/,
+      );
     });
 
     it('should accept valid single provider config', () => {
@@ -353,10 +340,9 @@ describe('Validation Integration Tests', () => {
         workdir: '', // Invalid: empty string
       };
 
-      await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        generator.generateCommitMessage(task, invalidOptions as any),
-      ).rejects.toThrow(/Invalid options parameter/);
+      await expect(generator.generateCommitMessage(task, invalidOptions as any)).rejects.toThrow(
+        /Invalid options parameter/,
+      );
     });
   });
 
@@ -576,7 +562,6 @@ describe('Validation Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         await generator.generateCommitMessage(invalidTask as any, { workdir: process.cwd() });
         expect.fail('Should have thrown');
       } catch (error) {
@@ -613,7 +598,6 @@ describe('Validation Integration Tests', () => {
       };
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validateCliOptions(invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {

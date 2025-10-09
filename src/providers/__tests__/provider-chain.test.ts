@@ -160,7 +160,6 @@ describe('ProviderChain', () => {
 
     it('should handle non-Error rejections', async () => {
       const mockProvider = new MockProvider('Provider1');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Testing edge case where promise rejects with non-Error value (string) to verify error handling
       vi.spyOn(mockProvider, 'generateCommitMessage').mockRejectedValue('string error' as any);
 
       const chain = new ProviderChain([mockProvider]);
@@ -311,7 +310,6 @@ describe('ProviderChain', () => {
     });
 
     it('should handle errors without messages', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument -- Testing edge case where error array contains undefined to verify error formatting handles missing errors gracefully
       const error = new ProviderChainError('Failed', ['Provider1'], [undefined as any]);
 
       const formatted = formatProviderChainError(error);
