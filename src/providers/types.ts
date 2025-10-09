@@ -61,6 +61,17 @@ const baseProviderSchema = z.object({
 
 /**
  * Configuration for CLI-based providers (Claude, Codex, Cursor)
+ *
+ * @example
+ * ```typescript
+ * const config = {
+ *   type: 'cli',
+ *   provider: 'claude',
+ *   command: 'claude-custom',
+ *   timeout: 60000
+ * };
+ * const validated = validateProviderConfig(config);
+ * ```
  */
 export const cliProviderSchema = baseProviderSchema.extend({
   type: z.literal('cli'),
@@ -71,6 +82,18 @@ export const cliProviderSchema = baseProviderSchema.extend({
 
 /**
  * Configuration for API-based providers (OpenAI, Gemini)
+ *
+ * @example
+ * ```typescript
+ * const config = {
+ *   type: 'api',
+ *   provider: 'openai',
+ *   apiKey: 'sk-test123',
+ *   endpoint: 'https://api.openai.com/v1',
+ *   model: 'gpt-4'
+ * };
+ * const validated = validateProviderConfig(config);
+ * ```
  */
 export const apiProviderSchema = baseProviderSchema.extend({
   type: z.literal('api'),
@@ -82,6 +105,30 @@ export const apiProviderSchema = baseProviderSchema.extend({
 
 /**
  * Discriminated union schema for all provider configurations
+ *
+ * Uses TypeScript discriminated unions for type-safe provider handling.
+ * The 'type' field determines which schema is used for validation.
+ *
+ * @example
+ * ```typescript
+ * // CLI provider
+ * const cliConfig = validateProviderConfig({
+ *   type: 'cli',
+ *   provider: 'claude'
+ * });
+ *
+ * // API provider
+ * const apiConfig = validateProviderConfig({
+ *   type: 'api',
+ *   provider: 'openai',
+ *   apiKey: 'sk-test'
+ * });
+ *
+ * // Type narrowing
+ * if (cliConfig.type === 'cli') {
+ *   console.log(cliConfig.command); // TypeScript knows this exists
+ * }
+ * ```
  */
 export const providerConfigSchema = z.discriminatedUnion('type', [
   cliProviderSchema,
@@ -97,9 +144,32 @@ export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 
 /**
  * Validation helper for provider configurations
+ *
+ * Validates and type-checks provider configuration objects.
+ * Throws detailed ZodError if validation fails.
+ *
  * @param config - Unknown configuration object
  * @returns Validated and typed provider configuration
- * @throws ZodError if validation fails
+ * @throws ZodError if validation fails with detailed error messages
+ *
+ * @example
+ * ```typescript
+ * // Valid config
+ * const config = validateProviderConfig({
+ *   type: 'cli',
+ *   provider: 'claude',
+ *   timeout: 30000
+ * });
+ *
+ * // Invalid config throws ZodError
+ * try {
+ *   validateProviderConfig({ type: 'invalid' });
+ * } catch (error) {
+ *   if (error instanceof z.ZodError) {
+ *     console.error(error.format());
+ *   }
+ * }
+ * ```
  */
 export function validateProviderConfig(config: unknown): ProviderConfig {
   return providerConfigSchema.parse(config);
@@ -107,6 +177,19 @@ export function validateProviderConfig(config: unknown): ProviderConfig {
 
 /**
  * Type guard to check if config is CLI provider
+ *
+ * @param config - Validated provider configuration
+ * @returns true if config is CLI provider configuration
+ *
+ * @example
+ * ```typescript
+ * const config = validateProviderConfig(unknownConfig);
+ *
+ * if (isCLIProviderConfig(config)) {
+ *   // TypeScript knows config is CLIProviderConfig
+ *   console.log('CLI command:', config.command);
+ * }
+ * ```
  */
 export function isCLIProviderConfig(config: ProviderConfig): config is CLIProviderConfig {
   return config.type === 'cli';
@@ -114,7 +197,93 @@ export function isCLIProviderConfig(config: ProviderConfig): config is CLIProvid
 
 /**
  * Type guard to check if config is API provider
+ *
+ * @param config - Validated provider configuration
+ * @returns true if config is API provider configuration
+ *
+ * @example
+ * ```typescript
+ * const config = validateProviderConfig(unknownConfig);
+ *
+ * if (isAPIProviderConfig(config)) {
+ *   // TypeScript knows config is APIProviderConfig
+ *   console.log('API key:', config.apiKey.slice(0, 8) + '...');
+ * }
+ * ```
  */
 export function isAPIProviderConfig(config: ProviderConfig): config is APIProviderConfig {
   return config.type === 'api';
+}
+
+/**
+ * Validation result types for detailed validation feedback
+ */
+export type ValidationSuccess<T> = {
+  data: T;
+  success: true;
+};
+
+export type ValidationFailure = {
+  error: z.ZodError;
+  success: false;
+};
+
+export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
+
+/**
+ * Validates provider configuration with detailed error handling
+ * Returns a result object instead of throwing
+ *
+ * @param config - Unknown configuration object to validate
+ * @returns ValidationResult with either validated config or detailed errors
+ *
+ * @example
+ * ```typescript
+ * const result = validateProviderConfigWithDetails({ type: 'cli', provider: 'claude' });
+ *
+ * if (result.success) {
+ *   const provider = createProvider(result.data);
+ * } else {
+ *   console.error('Validation failed:', result.error.format());
+ * }
+ * ```
+ */
+export function validateProviderConfigWithDetails(
+  config: unknown,
+): ValidationResult<ProviderConfig> {
+  return providerConfigSchema.safeParse(config);
+}
+
+/**
+ * Creates a provider config with validation and default values
+ * Throws on validation failure with clear error messages
+ *
+ * @param config - Partial or complete provider configuration
+ * @returns Fully validated and typed provider configuration
+ * @throws ZodError if validation fails
+ *
+ * @example
+ * ```typescript
+ * // CLI provider with defaults
+ * const cliConfig = createProviderConfig({
+ *   type: 'cli',
+ *   provider: 'claude',
+ *   timeout: 30000
+ * });
+ *
+ * // API provider with all fields
+ * const apiConfig = createProviderConfig({
+ *   type: 'api',
+ *   provider: 'openai',
+ *   apiKey: 'sk-test123',
+ *   endpoint: 'https://api.openai.com/v1'
+ * });
+ * ```
+ */
+export function createProviderConfig(config: unknown): ProviderConfig {
+  // First validate the basic structure
+  const validated = validateProviderConfig(config);
+
+  // Return the validated config (schemas already handle defaults)
+  return validated;
 }

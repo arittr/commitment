@@ -75,6 +75,54 @@ describe('BaseAPIProvider', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Need to access protected property defaultTimeout to verify constructor behavior
       expect((provider as any).defaultTimeout).toBe(30_000);
     });
+
+    it('should throw error for empty API key', () => {
+      const invalidConfig: APIProviderConfig = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: '',
+        endpoint: 'https://api.test.com',
+      };
+
+      expect(() => new TestAPIProvider(invalidConfig)).toThrow(
+        'API key must be a non-empty string',
+      );
+    });
+
+    it('should throw error for whitespace-only API key', () => {
+      const invalidConfig: APIProviderConfig = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: '   \n  ',
+        endpoint: 'https://api.test.com',
+      };
+
+      expect(() => new TestAPIProvider(invalidConfig)).toThrow(
+        'API key must be a non-empty string',
+      );
+    });
+
+    it('should throw error for negative timeout', () => {
+      const invalidConfig: APIProviderConfig = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: 'test-key',
+        timeout: -1000,
+      };
+
+      expect(() => new TestAPIProvider(invalidConfig)).toThrow('Timeout must be a positive number');
+    });
+
+    it('should throw error for zero timeout', () => {
+      const invalidConfig: APIProviderConfig = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: 'test-key',
+        timeout: 0,
+      };
+
+      expect(() => new TestAPIProvider(invalidConfig)).toThrow('Timeout must be a positive number');
+    });
   });
 
   describe('getEndpoint', () => {
@@ -219,17 +267,8 @@ describe('BaseAPIProvider', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if API key is empty', async () => {
-      const configWithEmptyKey: APIProviderConfig = {
-        type: 'api',
-        provider: 'openai',
-        apiKey: '',
-        endpoint: 'https://api.test.com',
-      };
-      const provider = new TestAPIProvider(configWithEmptyKey);
-      const result = await provider.isAvailable();
-      expect(result).toBe(false);
-    });
+    // Note: Empty API key test removed because constructor now validates API key
+    // and will throw an error before isAvailable() can be called
   });
 
   describe('getProviderType', () => {
@@ -283,6 +322,103 @@ describe('BaseAPIProvider', () => {
       // Should succeed with 1000ms timeout
       const result = await provider.generateCommitMessage('prompt', { timeout: 1000 });
       expect(result).toBe('success');
+    });
+  });
+
+  describe('makeRequest validation', () => {
+    it('should throw error for empty URL', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(provider.makeRequestPublic('', {}, 5000)).rejects.toThrow(ProviderAPIError);
+
+      await expect(provider.makeRequestPublic('', {}, 5000)).rejects.toThrow(
+        'URL must be a non-empty string',
+      );
+    });
+
+    it('should throw error for whitespace-only URL', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(provider.makeRequestPublic('   \n  ', {}, 5000)).rejects.toThrow(
+        ProviderAPIError,
+      );
+
+      await expect(provider.makeRequestPublic('   \n  ', {}, 5000)).rejects.toThrow(
+        'URL must be a non-empty string',
+      );
+    });
+
+    it('should throw error for undefined options', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        provider.makeRequestPublic('https://api.test.com', undefined as any, 5000),
+      ).rejects.toThrow(ProviderAPIError);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        provider.makeRequestPublic('https://api.test.com', undefined as any, 5000),
+      ).rejects.toThrow('Request options are required');
+    });
+
+    it('should throw error for null options', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        provider.makeRequestPublic('https://api.test.com', null as any, 5000),
+      ).rejects.toThrow(ProviderAPIError);
+    });
+
+    it('should throw error for negative timeout', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(provider.makeRequestPublic('https://api.test.com', {}, -1000)).rejects.toThrow(
+        ProviderAPIError,
+      );
+
+      await expect(provider.makeRequestPublic('https://api.test.com', {}, -1000)).rejects.toThrow(
+        'Timeout must be a positive number',
+      );
+    });
+
+    it('should throw error for zero timeout', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(provider.makeRequestPublic('https://api.test.com', {}, 0)).rejects.toThrow(
+        ProviderAPIError,
+      );
+
+      await expect(provider.makeRequestPublic('https://api.test.com', {}, 0)).rejects.toThrow(
+        'Timeout must be a positive number',
+      );
+    });
+
+    it('should throw error for non-number timeout', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        provider.makeRequestPublic('https://api.test.com', {}, 'invalid' as any),
+      ).rejects.toThrow(ProviderAPIError);
+    });
+
+    it('should accept valid inputs', async () => {
+      const provider = new TestAPIProvider(mockConfig);
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: 'success' }),
+      });
+
+      const result = await provider.makeRequestPublic<{ data: string }>(
+        'https://api.test.com/valid',
+        { method: 'GET' },
+        5000,
+      );
+
+      expect(result).toEqual({ data: 'success' });
     });
   });
 });

@@ -1,5 +1,6 @@
 import type { AIProvider, CLIProviderConfig, GenerateOptions } from '../types';
 
+import { hasContent, isDefined } from '../../utils/guards';
 import { isProviderTimeoutError, ProviderNotAvailableError, ProviderTimeoutError } from '../errors';
 import { ProviderType } from '../types';
 import { CLIExecutor } from '../utils/cli-executor';
@@ -76,6 +77,24 @@ export abstract class BaseCLIProvider implements AIProvider {
    * Generate a commit message using the CLI provider
    */
   async generateCommitMessage(prompt: string, options: GenerateOptions): Promise<string> {
+    // Validate input prompt
+    if (!hasContent(prompt)) {
+      throw new ProviderNotAvailableError(this.getName(), 'Prompt must be a non-empty string');
+    }
+
+    // Validate options object
+    if (!isDefined(options)) {
+      throw new ProviderNotAvailableError(this.getName(), 'Options parameter is required');
+    }
+
+    // Validate timeout if provided
+    if (
+      isDefined(options.timeout) &&
+      (typeof options.timeout !== 'number' || options.timeout <= 0)
+    ) {
+      throw new ProviderNotAvailableError(this.getName(), 'Timeout must be a positive number');
+    }
+
     // Check availability first
     const available = await this.isAvailable();
     if (!available) {

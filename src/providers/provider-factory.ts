@@ -4,6 +4,7 @@ import type { AIProvider, ProviderConfig } from './types';
 
 import { ClaudeProvider } from './implementations/claude-provider';
 import { CodexProvider } from './implementations/codex-provider';
+import { validateProviderConfig } from './types';
 
 /**
  * Error thrown when trying to create a provider that is not yet implemented
@@ -29,6 +30,7 @@ export class ProviderNotImplementedError extends Error {
  * @param config - Provider configuration (discriminated by 'type' field)
  * @returns AIProvider instance
  * @throws ProviderNotImplementedError if provider is not yet implemented
+ * @throws ZodError if configuration is invalid
  *
  * @example
  * ```typescript
@@ -40,8 +42,11 @@ export class ProviderNotImplementedError extends Error {
  * ```
  */
 export function createProvider(config: ProviderConfig): AIProvider {
+  // Validate configuration before creating provider
+  const validatedConfig = validateProviderConfig(config);
+
   return (
-    match(config)
+    match(validatedConfig)
       // CLI Providers
       .with({ type: 'cli', provider: 'claude' }, (cfg) => {
         return new ClaudeProvider({

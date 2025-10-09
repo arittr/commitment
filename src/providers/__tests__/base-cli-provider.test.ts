@@ -317,4 +317,120 @@ describe('BaseCLIProvider', () => {
       );
     });
   });
+
+  describe('input validation', () => {
+    it('should throw error for empty prompt', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      await expect(provider.generateCommitMessage('', {})).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      await expect(provider.generateCommitMessage('', {})).rejects.toThrow(
+        'Prompt must be a non-empty string',
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for whitespace-only prompt', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      await expect(provider.generateCommitMessage('   \n  ', {})).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      await expect(provider.generateCommitMessage('   \n  ', {})).rejects.toThrow(
+        'Prompt must be a non-empty string',
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for undefined options', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      await expect(provider.generateCommitMessage('prompt', undefined as any)).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      await expect(provider.generateCommitMessage('prompt', undefined as any)).rejects.toThrow(
+        'Options parameter is required',
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for null options', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      await expect(provider.generateCommitMessage('prompt', null as any)).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for negative timeout', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      await expect(provider.generateCommitMessage('prompt', { timeout: -1000 })).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      await expect(provider.generateCommitMessage('prompt', { timeout: -1000 })).rejects.toThrow(
+        'Timeout must be a positive number',
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for zero timeout', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      await expect(provider.generateCommitMessage('prompt', { timeout: 0 })).rejects.toThrow(
+        ProviderNotAvailableError,
+      );
+
+      await expect(provider.generateCommitMessage('prompt', { timeout: 0 })).rejects.toThrow(
+        'Timeout must be a positive number',
+      );
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for non-number timeout', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        provider.generateCommitMessage('prompt', { timeout: 'invalid' as any }),
+      ).rejects.toThrow(ProviderNotAvailableError);
+
+      expect(execa).not.toHaveBeenCalled();
+    });
+
+    it('should accept valid positive timeout', async () => {
+      const provider = new TestCLIProvider(mockConfig);
+
+      vi.mocked(execa).mockResolvedValue(
+        createExecaResult({
+          stdout: 'output',
+        }),
+      );
+
+      await provider.generateCommitMessage('prompt', { timeout: 5000 });
+
+      expect(execa).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Array),
+        expect.objectContaining({
+          timeout: 5000,
+        }),
+      );
+    });
+  });
 });

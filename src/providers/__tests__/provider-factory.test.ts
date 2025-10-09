@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ZodError } from 'zod';
 
 import type { APIProviderConfig, CLIProviderConfig } from '../types';
 
@@ -167,6 +168,86 @@ describe('ProviderFactory', () => {
     it('should suggest contributing', () => {
       const error = new ProviderNotImplementedError('provider', 'type');
       expect(error.message).toContain('contribute an implementation');
+    });
+  });
+
+  describe('config validation in factory', () => {
+    it('should validate config before creating provider', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+      };
+
+      const provider = createProvider(config as CLIProviderConfig);
+      expect(provider).toBeInstanceOf(ClaudeProvider);
+    });
+
+    it('should throw ZodError for invalid config type', () => {
+      const config = {
+        type: 'invalid-type',
+        provider: 'claude',
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      expect(() => createProvider(config as any)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for missing required fields', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        // Missing apiKey
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      expect(() => createProvider(config as any)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for invalid timeout value', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+        timeout: -1000, // Invalid negative timeout
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      expect(() => createProvider(config as any)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for empty API key', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: '', // Empty string not allowed
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      expect(() => createProvider(config as any)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for invalid endpoint URL', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: 'sk-test123',
+        endpoint: 'not-a-url', // Invalid URL format
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      expect(() => createProvider(config as any)).toThrow(ZodError);
+    });
+
+    it('should accept valid config with all optional fields', () => {
+      const config: CLIProviderConfig = {
+        type: 'cli',
+        provider: 'claude',
+        command: 'custom-claude',
+        args: ['--custom'],
+        timeout: 15_000,
+      };
+
+      const provider = createProvider(config);
+      expect(provider).toBeInstanceOf(ClaudeProvider);
     });
   });
 });

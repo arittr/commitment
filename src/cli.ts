@@ -2,12 +2,15 @@ import chalk from 'chalk';
 import { program } from 'commander';
 import { execa } from 'execa';
 import ora from 'ora';
+import { ZodError } from 'zod';
 
-import type { CommitTask } from './generator.js';
-import type { CLIProviderConfig, ProviderConfig } from './providers/index.js';
+import type { CommitTask } from './generator';
+import type { CLIProviderConfig, ProviderConfig } from './providers/index';
 
-import { CommitMessageGenerator } from './generator.js';
-import { createProvider, detectAvailableProvider } from './providers/index.js';
+import { formatValidationError, parseProviderConfigJson, validateCliOptions } from './cli/schemas';
+import { CommitMessageGenerator } from './generator';
+import { createProvider, detectAvailableProvider } from './providers/index';
+import { parseGitStatus } from './utils/git-schemas';
 
 /**
  * Get git status and check for staged changes
@@ -19,21 +22,24 @@ async function getGitStatus(cwd: string): Promise<{
 }> {
   try {
     const { stdout } = await execa('git', ['status', '--porcelain'], { cwd });
-    const lines = stdout.split('\n').filter((line) => line.trim() !== '');
 
-    // Get staged changes (lines starting with M, A, D, R in first column)
-    const stagedLines = lines.filter((line) => {
-      const status = line.slice(0, 2);
-      return !status.startsWith('?') && !status.startsWith(' ');
-    });
+    // Parse and validate git status output
+    try {
+      const parsedStatus = parseGitStatus(stdout);
 
-    const stagedFiles = stagedLines.map((line) => line.slice(3));
-
-    return {
-      hasChanges: stagedLines.length > 0,
-      stagedFiles,
-      statusLines: stagedLines,
-    };
+      return {
+        hasChanges: parsedStatus.hasChanges,
+        stagedFiles: parsedStatus.stagedFiles,
+        statusLines: parsedStatus.statusLines,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Malformed git status line')) {
+        throw new Error(
+          `Invalid git status output: ${error.message}\n${chalk.gray('This may indicate a git version incompatibility or corrupted output.')}`,
+        );
+      }
+      throw error;
+    }
   } catch (error) {
     throw new Error(
       `Failed to get git status: ${error instanceof Error ? error.message : String(error)}`,
@@ -158,7 +164,7 @@ async function main(): Promise<void> {
     .option('--fallback <provider...>', 'Fallback providers (can specify multiple)')
     .parse();
 
-  const options = program.opts<{
+  const rawOptions = program.opts<{
     ai: boolean;
     aiCommand: string;
     autoDetect?: boolean;
@@ -175,6 +181,20 @@ async function main(): Promise<void> {
     signature?: string;
     timeout: string;
   }>();
+
+  // Validate CLI options
+  let options;
+  try {
+    options = validateCliOptions(rawOptions);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error(chalk.red('❌ Invalid CLI options:'));
+      console.error(chalk.yellow(formatValidationError(error)));
+      console.log(chalk.gray('\nPlease check your command-line flags and try again.'));
+      process.exit(1);
+    }
+    throw error;
+  }
 
   // Handle --list-providers
   if (options.listProviders === true) {
@@ -196,15 +216,20 @@ async function main(): Promise<void> {
   let providerConfig: ProviderConfig | undefined;
 
   if (options.providerConfig !== undefined) {
-    // Parse JSON config
+    // Parse and validate JSON config
     try {
-      providerConfig = JSON.parse(options.providerConfig) as ProviderConfig;
+      providerConfig = parseProviderConfigJson(options.providerConfig);
     } catch (error) {
-      console.error(
-        chalk.red('❌ Invalid provider config JSON:'),
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
+      if (error instanceof Error) {
+        console.error(chalk.red('❌ Invalid provider config:'));
+        console.error(chalk.yellow(`   ${error.message}`));
+        console.log(chalk.gray('\nProvider config must be valid JSON matching the schema.'));
+        console.log(
+          chalk.gray('Example: --provider-config \'{"type":"cli","provider":"claude"}\''),
+        );
+        process.exit(1);
+      }
+      throw error;
     }
   } else if (options.provider !== undefined) {
     // Build config from provider name and provider-specific flags

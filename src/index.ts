@@ -4,10 +4,6 @@
  * @packageDocumentation
  */
 
-export { CommitMessageGenerator } from './generator.js';
-export type {
-  CommitTask,
-  CommitMessageGeneratorConfig,
-  CommitMessageOptions,
-} from './generator.js';
-export { hasContent } from './utils/guards.js';
+export { CommitMessageGenerator } from './generator';
+export type { CommitTask, CommitMessageGeneratorConfig, CommitMessageOptions } from './generator';
+export { hasContent } from './utils/guards';

@@ -1,5 +1,6 @@
 import type { AIProvider, APIProviderConfig, GenerateOptions } from '../types';
 
+import { hasContent, isDefined } from '../../utils/guards';
 import { ProviderAPIError, ProviderTimeoutError } from '../errors';
 import { ProviderType } from '../types';
 
@@ -13,6 +14,16 @@ export abstract class BaseAPIProvider implements AIProvider {
   protected readonly apiKey: string;
 
   constructor(config: APIProviderConfig) {
+    // Validate API key at construction time
+    if (!hasContent(config.apiKey)) {
+      throw new Error('API key must be a non-empty string');
+    }
+
+    // Validate timeout if provided
+    if (isDefined(config.timeout) && (typeof config.timeout !== 'number' || config.timeout <= 0)) {
+      throw new Error('Timeout must be a positive number');
+    }
+
     this.config = config;
     this.apiKey = config.apiKey;
     this.defaultTimeout = config.timeout ?? 30_000; // 30 seconds default
@@ -37,6 +48,19 @@ export abstract class BaseAPIProvider implements AIProvider {
    * Helper utility for subclasses to use in their API implementations
    */
   protected async makeRequest<T>(url: string, options: RequestInit, timeout: number): Promise<T> {
+    // Validate inputs
+    if (!hasContent(url)) {
+      throw new ProviderAPIError(this.getName(), undefined, 'URL must be a non-empty string');
+    }
+
+    if (!isDefined(options)) {
+      throw new ProviderAPIError(this.getName(), undefined, 'Request options are required');
+    }
+
+    if (typeof timeout !== 'number' || timeout <= 0) {
+      throw new ProviderAPIError(this.getName(), undefined, 'Timeout must be a positive number');
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();

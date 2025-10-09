@@ -202,6 +202,16 @@ const config: Record<string, unknown>[] = [
       'dot-notation': 'error',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'import-x/default': 'off',
+      'import-x/extensions': [
+        'error',
+        'ignorePackages',
+        {
+          js: 'never',
+          jsx: 'never',
+          ts: 'never',
+          tsx: 'never',
+        },
+      ],
       'import-x/first': 'error',
       'import-x/named': 'off',
       'import-x/namespace': 'off',

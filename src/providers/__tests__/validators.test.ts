@@ -6,10 +6,12 @@ import type { APIProviderConfig, CLIProviderConfig, ProviderConfig } from '../ty
 import {
   apiProviderSchema,
   cliProviderSchema,
+  createProviderConfig,
   isAPIProviderConfig,
   isCLIProviderConfig,
   providerConfigSchema,
   validateProviderConfig,
+  validateProviderConfigWithDetails,
 } from '../types';
 
 describe('Provider Validators', () => {
@@ -502,6 +504,245 @@ describe('Provider Validators', () => {
 
       expect(cliConfig.provider).toBe('claude');
       expect(apiConfig.apiKey).toBe('sk-test');
+    });
+  });
+
+  describe('validateProviderConfigWithDetails', () => {
+    it('should return success result for valid CLI config', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(config);
+      }
+    });
+
+    it('should return success result for valid API config', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: 'sk-test123',
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(config);
+      }
+    });
+
+    it('should return failure result for invalid config', () => {
+      const config = {
+        type: 'invalid',
+        provider: 'claude',
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeInstanceOf(ZodError);
+        expect(result.error.issues.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should return failure result for missing required fields', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        // Missing apiKey
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeInstanceOf(ZodError);
+        const apiKeyIssue = result.error.issues.find((issue) => issue.path.includes('apiKey'));
+        expect(apiKeyIssue).toBeDefined();
+      }
+    });
+
+    it('should return failure result for invalid timeout', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+        timeout: -1000,
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeInstanceOf(ZodError);
+        const timeoutIssue = result.error.issues.find((issue) => issue.path.includes('timeout'));
+        expect(timeoutIssue).toBeDefined();
+      }
+    });
+
+    it('should handle non-object inputs gracefully', () => {
+      const inputs = [null, undefined, 'string', 123, true, []];
+
+      for (const input of inputs) {
+        const result = validateProviderConfigWithDetails(input);
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error).toBeInstanceOf(ZodError);
+        }
+      }
+    });
+
+    it('should provide detailed error information', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: '', // Empty API key
+        timeout: 0, // Invalid timeout
+      };
+
+      const result = validateProviderConfigWithDetails(config);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.length).toBeGreaterThanOrEqual(2);
+        const formatted = result.error.format();
+        expect(formatted).toBeDefined();
+      }
+    });
+  });
+
+  describe('createProviderConfig', () => {
+    it('should create and validate CLI config', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+      };
+
+      const result = createProviderConfig(config);
+
+      expect(result).toEqual(config);
+      expect(result.type).toBe('cli');
+      expect(result.provider).toBe('claude');
+    });
+
+    it('should create and validate API config', () => {
+      const config = {
+        type: 'api' as const,
+        provider: 'openai' as const,
+        apiKey: 'sk-test123',
+      };
+
+      const result = createProviderConfig(config);
+
+      expect(result).toEqual(config);
+      expect(result.type).toBe('api');
+      expect(result.provider).toBe('openai');
+      if (result.type === 'api') {
+        expect(result.apiKey).toBe('sk-test123');
+      }
+    });
+
+    it('should create config with optional fields', () => {
+      const config = {
+        type: 'cli' as const,
+        provider: 'claude' as const,
+        command: '/usr/bin/claude',
+        args: ['--print'],
+        timeout: 30_000,
+      };
+
+      const result = createProviderConfig(config);
+
+      expect(result).toEqual(config);
+      if (result.type === 'cli') {
+        expect(result.command).toBe('/usr/bin/claude');
+        expect(result.args).toEqual(['--print']);
+        expect(result.timeout).toBe(30_000);
+      }
+    });
+
+    it('should throw ZodError for invalid config', () => {
+      const config = {
+        type: 'invalid',
+        provider: 'claude',
+      };
+
+      expect(() => createProviderConfig(config)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for missing required fields', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        // Missing apiKey
+      };
+
+      expect(() => createProviderConfig(config)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError for invalid field types', () => {
+      const config = {
+        type: 'cli',
+        provider: 'claude',
+        timeout: 'not-a-number', // Should be number
+      };
+
+      expect(() => createProviderConfig(config)).toThrow(ZodError);
+    });
+
+    it('should throw ZodError with helpful message', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: '', // Empty API key
+      };
+
+      try {
+        createProviderConfig(config);
+        expect.fail('Should have thrown ZodError');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ZodError);
+        const zodError = error as ZodError;
+        expect(zodError.issues.length).toBeGreaterThan(0);
+        expect(zodError.issues[0]?.message).toBeTruthy();
+      }
+    });
+
+    it('should handle null and undefined', () => {
+      expect(() => createProviderConfig(null)).toThrow(ZodError);
+      expect(() => createProviderConfig(undefined)).toThrow(ZodError);
+    });
+
+    it('should validate URL format for API endpoint', () => {
+      const config = {
+        type: 'api',
+        provider: 'openai',
+        apiKey: 'sk-test123',
+        endpoint: 'not-a-url',
+      };
+
+      expect(() => createProviderConfig(config)).toThrow(ZodError);
+    });
+
+    it('should accept valid URL for API endpoint', () => {
+      const config = {
+        type: 'api' as const,
+        provider: 'openai' as const,
+        apiKey: 'sk-test123',
+        endpoint: 'https://api.openai.com/v1',
+      };
+
+      const result = createProviderConfig(config);
+
+      if (result.type === 'api') {
+        expect(result.endpoint).toBe('https://api.openai.com/v1');
+      }
     });
   });
 });
