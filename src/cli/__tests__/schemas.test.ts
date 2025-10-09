@@ -4,7 +4,6 @@ import { z, ZodError } from 'zod';
 import type { CliOptions } from '../schemas';
 
 import {
-  buildProviderConfigFromOptions,
   cliOptionsSchema,
   formatValidationError,
   parseProviderConfigJson,
@@ -22,8 +21,6 @@ describe('CLI Schemas', () => {
         const result = cliOptionsSchema.parse(options);
 
         expect(result.ai).toBe(true);
-        expect(result.aiCommand).toBe('claude');
-        expect(result.timeout).toBe('120000');
         expect(result.cwd).toBe(process.cwd());
       });
 
@@ -137,54 +134,11 @@ describe('CLI Schemas', () => {
         expect(result.fallback).toEqual(['claude', 'codex']);
       });
 
-      it('should validate options with claudeCommand', () => {
-        const options = {
-          claudeCommand: 'custom-claude',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.claudeCommand).toBe('custom-claude');
-      });
-
-      it('should validate options with claudeTimeout', () => {
-        const options = {
-          claudeTimeout: '60000',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.claudeTimeout).toBe('60000');
-      });
-
-      it('should validate options with deprecated aiCommand', () => {
-        const options = {
-          aiCommand: 'custom-ai',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.aiCommand).toBe('custom-ai');
-      });
-
-      it('should validate options with deprecated timeout', () => {
-        const options = {
-          timeout: '90000',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.timeout).toBe('90000');
-      });
-
       it('should validate options with all fields', () => {
         const options = {
           ai: true,
-          aiCommand: 'claude',
           autoDetect: false,
           checkProvider: false,
-          claudeCommand: 'custom-claude',
-          claudeTimeout: '60000',
           cwd: '/custom/path',
           dryRun: true,
           fallback: ['codex'],
@@ -193,7 +147,6 @@ describe('CLI Schemas', () => {
           provider: 'claude',
           providerConfig: '{"type":"cli","provider":"claude"}',
           signature: 'Custom',
-          timeout: '120000',
         };
 
         const result = cliOptionsSchema.parse(options);
@@ -328,8 +281,6 @@ describe('CLI Schemas', () => {
       const result = validateCliOptions(options);
 
       expect(result.ai).toBe(true);
-      expect(result.aiCommand).toBe('claude');
-      expect(result.timeout).toBe('120000');
     });
 
     it('should throw ZodError for invalid options', () => {
@@ -564,7 +515,7 @@ describe('CLI Schemas', () => {
       const options = {
         cwd: '',
         ai: 'not-boolean',
-        timeout: 123,
+        provider: 12_345,
       };
 
       try {
@@ -606,177 +557,22 @@ describe('CLI Schemas', () => {
     });
   });
 
-  describe('buildProviderConfigFromOptions', () => {
-    it('should return undefined if no provider specified', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toBeUndefined();
-    });
-
-    it('should build Claude CLI config from options', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'claude',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'claude',
-      });
-    });
-
-    it('should build Claude CLI config with custom command', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        claudeCommand: 'custom-claude',
-        cwd: '/path',
-        provider: 'claude',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'claude',
-        command: 'custom-claude',
-      });
-    });
-
-    it('should build Claude CLI config with timeout', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        claudeTimeout: '60000',
-        cwd: '/path',
-        provider: 'claude',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'claude',
-        timeout: 60_000,
-      });
-    });
-
-    it('should build Codex CLI config from options', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'codex',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'codex',
-      });
-    });
-
-    it('should build Cursor CLI config from options', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'cursor',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'cursor',
-      });
-    });
-
-    it('should handle case-insensitive provider names', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'CLAUDE',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toEqual({
-        type: 'cli',
-        provider: 'claude',
-      });
-    });
-
-    it('should return undefined for API providers without config', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'openai',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toBeUndefined();
-    });
-
-    it('should return undefined for unknown providers', () => {
-      const options: CliOptions = {
-        ai: true,
-        aiCommand: 'claude',
-        cwd: '/path',
-        provider: 'unknown',
-        timeout: '120000',
-      };
-
-      const result = buildProviderConfigFromOptions(options);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
   describe('Type Inference', () => {
     it('should infer correct CliOptions type', () => {
       const options: CliOptions = {
         ai: true,
-        aiCommand: 'claude',
         cwd: '/path',
-        timeout: '120000',
       };
 
       expect(options.ai).toBe(true);
-      expect(options.aiCommand).toBe('claude');
       expect(options.cwd).toBe('/path');
-      expect(options.timeout).toBe('120000');
     });
 
     it('should allow optional fields in CliOptions', () => {
       const options: CliOptions = {
         ai: true,
-        aiCommand: 'claude',
         cwd: '/path',
         provider: 'claude',
-        timeout: '120000',
       };
 
       expect(options.provider).toBe('claude');
@@ -788,9 +584,7 @@ describe('CLI Schemas', () => {
 
       const options: CliOptions = {
         ai: true,
-        aiCommand: 'claude',
         cwd: '/custom',
-        timeout: '120000',
       };
 
       expect(options.cwd).toBeDefined();

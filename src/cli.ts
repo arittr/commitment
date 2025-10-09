@@ -4,7 +4,6 @@ import { execa } from 'execa';
 import ora from 'ora';
 import { ZodError } from 'zod';
 
-import type { CommitTask } from './generator';
 import type { CLIProviderConfig, ProviderConfig } from './providers/index';
 
 import {
@@ -15,7 +14,7 @@ import {
 import { buildProviderChain } from './cli/provider-config-builder';
 import { formatValidationError, parseProviderConfigJson, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
-import { analyzeChanges, categorizeFiles, parseGitStatus } from './utils/git-schemas';
+import { parseGitStatus } from './utils/git-schemas';
 
 /**
  * Get git status and check for staged changes
@@ -66,58 +65,6 @@ async function createCommit(message: string, cwd: string): Promise<void> {
 }
 
 /**
- * Create a task object from git status for commit message generation
- */
-function createTaskFromGitStatus(statusLines: string[], files: string[]): CommitTask {
-  // Analyze file patterns and changes using validated utilities
-  const changes = analyzeChanges(statusLines);
-  const categories = categorizeFiles(files);
-
-  // Generate intelligent title based on changes
-  let title = 'Update codebase';
-  if (categories.tests.length > 0 && categories.tests.length >= files.length / 2) {
-    title = 'Add comprehensive test coverage';
-  } else if (categories.components.length > 0) {
-    title = 'Enhance UI components and functionality';
-  } else if (categories.apis.length > 0) {
-    title = 'Enhance API and service integration';
-  } else if (categories.types.length > 0) {
-    title = 'Update type definitions and interfaces';
-  } else if (categories.configs.length > 0) {
-    title = 'Update project configuration';
-  } else if (categories.docs.length > 0) {
-    title = 'Update documentation';
-  }
-
-  // Generate detailed description
-  const descriptions: string[] = [];
-
-  if (changes.added > 0) {
-    descriptions.push(`${changes.added} new file${changes.added > 1 ? 's' : ''} added`);
-  }
-  if (changes.modified > 0) {
-    descriptions.push(`${changes.modified} file${changes.modified > 1 ? 's' : ''} modified`);
-  }
-  if (changes.deleted > 0) {
-    descriptions.push(`${changes.deleted} file${changes.deleted > 1 ? 's' : ''} deleted`);
-  }
-  if (changes.renamed > 0) {
-    descriptions.push(`${changes.renamed} file${changes.renamed > 1 ? 's' : ''} renamed`);
-  }
-
-  const description =
-    descriptions.length > 0
-      ? descriptions.join(', ')
-      : `${files.length} files changed across the codebase`;
-
-  return {
-    title,
-    description,
-    produces: files,
-  };
-}
-
-/**
  * Main CLI function
  */
 async function main(): Promise<void> {
@@ -132,18 +79,6 @@ async function main(): Promise<void> {
     .option('--signature <text>', 'Custom signature to append')
     .option('--provider <name>', 'AI provider to use (claude, codex, openai, cursor, gemini)')
     .option('--provider-config <json>', 'Provider configuration as JSON string')
-    .option('--claude-command <cmd>', 'Claude CLI command path')
-    .option('--claude-timeout <ms>', 'Claude CLI timeout in milliseconds')
-    .option(
-      '--ai-command <cmd>',
-      '[DEPRECATED] AI command to use (use --provider instead)',
-      'claude',
-    )
-    .option(
-      '--timeout <ms>',
-      '[DEPRECATED] AI timeout in milliseconds (use --provider instead)',
-      '120000',
-    )
     .option('--list-providers', 'List all available AI providers')
     .option('--check-provider', 'Check if selected provider is available')
     .option('--auto-detect', 'Auto-detect first available AI provider')
@@ -152,11 +87,8 @@ async function main(): Promise<void> {
 
   const rawOptions = program.opts<{
     ai: boolean;
-    aiCommand: string;
     autoDetect?: boolean;
     checkProvider?: boolean;
-    claudeCommand?: string;
-    claudeTimeout?: string;
     cwd: string;
     dryRun?: boolean;
     fallback?: string[];
@@ -165,7 +97,6 @@ async function main(): Promise<void> {
     provider?: string;
     providerConfig?: string;
     signature?: string;
-    timeout: string;
   }>();
 
   // Validate CLI options
@@ -207,18 +138,13 @@ async function main(): Promise<void> {
       throw error;
     }
   } else if (options.provider !== undefined) {
-    // Build config from provider name and provider-specific flags
+    // Build config from provider name
     const providerName = options.provider.toLowerCase();
 
     if (providerName === 'claude') {
       providerConfig = {
         type: 'cli',
         provider: 'claude',
-        command: options.claudeCommand,
-        timeout:
-          options.claudeTimeout !== undefined
-            ? Number.parseInt(options.claudeTimeout, 10)
-            : undefined,
       } satisfies CLIProviderConfig;
     } else {
       console.error(chalk.red(`❌ Provider '${providerName}' is not yet implemented`));
@@ -268,7 +194,11 @@ async function main(): Promise<void> {
     }
 
     // Create task from git status
-    const task = createTaskFromGitStatus(gitStatus.statusLines, gitStatus.stagedFiles);
+    const task = {
+      title: 'Code changes',
+      description: 'Analyze git diff to generate appropriate commit message',
+      produces: gitStatus.stagedFiles,
+    };
 
     // Generate commit message
     const spinner =
@@ -278,13 +208,6 @@ async function main(): Promise<void> {
       enableAI: options.ai,
       provider: providerChain === undefined ? providerConfig : undefined,
       providerChain,
-      // Backward compatibility with deprecated flags
-      aiCommand:
-        providerConfig === undefined && providerChain === undefined ? options.aiCommand : undefined,
-      aiTimeout:
-        providerConfig === undefined && providerChain === undefined
-          ? Number.parseInt(options.timeout, 10)
-          : undefined,
       signature: options.signature,
       logger: {
         warn: (warningMessage: string) => {

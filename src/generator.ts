@@ -25,10 +25,6 @@ export type CommitTask = {
  * Configuration options for commit message generation
  */
 export type CommitMessageGeneratorConfig = {
-  /** @deprecated Use provider config instead. AI client command (default: 'claude') */
-  aiCommand?: string;
-  /** @deprecated Use provider config instead. Timeout for AI generation in ms (default: 120000) */
-  aiTimeout?: number;
   /** Auto-detect first available provider (default: false) */
   autoDetect?: boolean;
   /** Enable/disable AI generation (default: true) */
@@ -63,7 +59,7 @@ export type CommitMessageOptions = {
  * @example
  * ```typescript
  * const generator = new CommitMessageGenerator({
- *   aiCommand: 'claude',
+ *   provider: { type: 'cli', provider: 'claude' },
  *   enableAI: true,
  * });
  *
@@ -81,10 +77,7 @@ export type CommitMessageOptions = {
  */
 export class CommitMessageGenerator {
   private readonly config: Required<
-    Omit<
-      CommitMessageGeneratorConfig,
-      'aiCommand' | 'aiTimeout' | 'autoDetect' | 'provider' | 'providerChain'
-    >
+    Omit<CommitMessageGeneratorConfig, 'autoDetect' | 'provider' | 'providerChain'>
   >;
   private readonly provider: AIProvider;
 
@@ -119,7 +112,7 @@ export class CommitMessageGenerator {
         : { warn: () => {} },
     };
 
-    // Initialize provider with priority: providerChain > provider > legacy config
+    // Initialize provider with priority: providerChain > provider > default
     if (validatedConfig.providerChain !== undefined && validatedConfig.providerChain.length > 0) {
       // Create provider chain from configs
       const providers = validatedConfig.providerChain.map((providerConfig) =>
@@ -127,29 +120,15 @@ export class CommitMessageGenerator {
       );
       this.provider = new ProviderChain(providers);
     } else if (validatedConfig.provider !== undefined) {
-      // Single provider (existing behavior)
+      // Single provider
       this.provider =
         'generateCommitMessage' in validatedConfig.provider &&
         'isAvailable' in validatedConfig.provider
           ? validatedConfig.provider
           : createProvider(validatedConfig.provider);
     } else {
-      // Default to Claude (backward compatibility)
-      this.provider = new ClaudeProvider({
-        command: validatedConfig.aiCommand,
-        timeout: validatedConfig.aiTimeout,
-      });
-    }
-
-    // Warn if using deprecated fields
-    if (
-      validatedConfig.provider === undefined &&
-      validatedConfig.providerChain === undefined &&
-      (validatedConfig.aiCommand !== undefined || validatedConfig.aiTimeout !== undefined)
-    ) {
-      this.config.logger.warn(
-        '⚠️ aiCommand and aiTimeout are deprecated. Use provider config instead.',
-      );
+      // Default to Claude CLI
+      this.provider = new ClaudeProvider();
     }
 
     // Warn if autoDetect is used (should be handled by CLI before construction)

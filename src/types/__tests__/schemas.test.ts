@@ -412,26 +412,6 @@ describe('Core Schemas', () => {
         expect(result.logger?.warn).toBeTypeOf('function');
       });
 
-      it('should validate config with deprecated aiCommand', () => {
-        const config = {
-          aiCommand: 'custom-claude',
-        };
-
-        const result = commitMessageGeneratorConfigSchema.parse(config);
-
-        expect(result).toEqual(config);
-      });
-
-      it('should validate config with deprecated aiTimeout', () => {
-        const config = {
-          aiTimeout: 60_000,
-        };
-
-        const result = commitMessageGeneratorConfigSchema.parse(config);
-
-        expect(result).toEqual(config);
-      });
-
       it('should validate config with autoDetect', () => {
         const config = {
           autoDetect: true,
@@ -454,8 +434,6 @@ describe('Core Schemas', () => {
           provider: { type: 'cli', provider: 'claude' },
           signature: 'Custom signature',
           logger,
-          aiCommand: 'claude',
-          aiTimeout: 120_000,
           autoDetect: false,
         };
 
@@ -466,29 +444,11 @@ describe('Core Schemas', () => {
         expect(result.signature).toBe('Custom signature');
         expect(result.logger).toBeDefined();
         expect(result.logger?.warn).toBeTypeOf('function');
-        expect(result.aiCommand).toBe('claude');
-        expect(result.aiTimeout).toBe(120_000);
         expect(result.autoDetect).toBe(false);
       });
     });
 
     describe('invalid configurations', () => {
-      it('should reject negative aiTimeout', () => {
-        const config = {
-          aiTimeout: -1000,
-        };
-
-        expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
-      });
-
-      it('should reject zero aiTimeout', () => {
-        const config = {
-          aiTimeout: 0,
-        };
-
-        expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
-      });
-
       it('should reject non-boolean enableAI', () => {
         const config = {
           enableAI: 'true',
@@ -692,7 +652,7 @@ describe('Core Schemas', () => {
 
       it('should throw ZodError for invalid config', () => {
         const config = {
-          aiTimeout: -1000,
+          enableAI: 'not-a-boolean',
         };
 
         expect(() => validateGeneratorConfig(config)).toThrow(ZodError);
@@ -710,7 +670,7 @@ describe('Core Schemas', () => {
       it('should provide detailed error messages', () => {
         const config = {
           enableAI: 'not-a-boolean',
-          aiTimeout: -100,
+          signature: 12_345,
         };
 
         try {
@@ -856,7 +816,7 @@ describe('Core Schemas', () => {
 
       it('should return error for invalid config', () => {
         const config = {
-          aiTimeout: -1000,
+          enableAI: 'not-a-boolean',
         };
 
         const result = safeValidateGeneratorConfig(config);

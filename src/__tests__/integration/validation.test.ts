@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
-import { buildProviderConfigFromOptions, validateCliOptions } from '../../cli/schemas';
+import { validateCliOptions } from '../../cli/schemas';
 import { CommitMessageGenerator } from '../../generator';
-import { ClaudeProvider, CodexProvider } from '../../providers/index';
+import { ClaudeProvider } from '../../providers/index';
 
 /**
  * Integration Tests for Validation Across System Boundaries
@@ -13,7 +13,6 @@ import { ClaudeProvider, CodexProvider } from '../../providers/index';
  * 2. Generator → Provider (task, options)
  * 3. External → Internal (git output, user input)
  * 4. Performance (validation overhead)
- * 5. Backward compatibility (deprecated fields)
  */
 describe('Validation Integration Tests', () => {
   describe('CLI → Generator Boundary', () => {
@@ -71,36 +70,7 @@ describe('Validation Integration Tests', () => {
       const validated = validateCliOptions(minimalOptions);
 
       expect(validated.ai).toBe(true);
-      expect(validated.aiCommand).toBe('claude');
-      expect(validated.timeout).toBe('120000');
       expect(validated.cwd).toBe(process.cwd());
-    });
-
-    it('should catch invalid timeout format in CLI options', () => {
-      const invalidOptions = {
-        cwd: '/valid/path',
-        timeout: 123, // Invalid: must be string
-      };
-
-      expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
-    });
-
-    it('should successfully build provider config from valid CLI options', () => {
-      const validOptions = validateCliOptions({
-        cwd: '/valid/path',
-        provider: 'claude',
-        claudeCommand: 'custom-claude',
-        claudeTimeout: '60000',
-      });
-
-      const providerConfig = buildProviderConfigFromOptions(validOptions);
-
-      expect(providerConfig).toEqual({
-        type: 'cli',
-        provider: 'claude',
-        command: 'custom-claude',
-        timeout: 60_000,
-      });
     });
   });
 
@@ -229,17 +199,15 @@ describe('Validation Integration Tests', () => {
       );
     });
 
-    it('should catch negative timeout in generator config', () => {
+    it('should catch invalid signature type in generator config', () => {
       const invalidConfig = {
-        aiTimeout: -1000, // Invalid: must be positive
+        signature: 12_345, // Invalid: must be string
       };
 
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
         /Invalid CommitMessageGenerator configuration/,
       );
-      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /must be a positive number/,
-      );
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(/signature/);
     });
 
     it('should catch mutually exclusive provider and providerChain', () => {
@@ -447,108 +415,6 @@ describe('Validation Integration Tests', () => {
     });
   });
 
-  describe('Backward Compatibility', () => {
-    it('should support deprecated aiCommand field', () => {
-      const config = {
-        aiCommand: 'custom-claude',
-        enableAI: true,
-      };
-
-      const generator = new CommitMessageGenerator(config);
-      expect(generator).toBeInstanceOf(CommitMessageGenerator);
-    });
-
-    it('should support deprecated aiTimeout field', () => {
-      const config = {
-        aiTimeout: 60_000,
-        enableAI: true,
-      };
-
-      const generator = new CommitMessageGenerator(config);
-      expect(generator).toBeInstanceOf(CommitMessageGenerator);
-    });
-
-    it('should support legacy CLI timeout option', () => {
-      const options = {
-        timeout: '90000',
-        cwd: '/path',
-      };
-
-      const validated = validateCliOptions(options);
-      expect(validated.timeout).toBe('90000');
-    });
-
-    it('should handle mix of deprecated and new fields', () => {
-      const config = {
-        aiCommand: 'claude', // Deprecated
-        aiTimeout: 90_000, // Deprecated
-        provider: { type: 'cli' as const, provider: 'claude' as const }, // New
-        enableAI: true,
-      };
-
-      // Should prefer new provider field over deprecated
-      const generator = new CommitMessageGenerator(config);
-      expect(generator).toBeInstanceOf(CommitMessageGenerator);
-    });
-
-    it('should maintain existing generateCommitMessage API', async () => {
-      const generator = new CommitMessageGenerator({
-        enableAI: false,
-      });
-
-      const task = {
-        title: 'Add feature',
-        description: 'New feature implementation',
-        produces: ['src/feature.ts'],
-      };
-
-      const options = {
-        workdir: process.cwd(),
-        files: ['src/feature.ts'],
-      };
-
-      const message = await generator.generateCommitMessage(task, options);
-
-      // Should return string message
-      expect(typeof message).toBe('string');
-      expect(message.length).toBeGreaterThan(0);
-    });
-
-    it('should maintain signature appending behavior', async () => {
-      const customSignature = 'Custom test signature';
-      const generator = new CommitMessageGenerator({
-        enableAI: false,
-        signature: customSignature,
-      });
-
-      const task = {
-        title: 'Add feature',
-        description: 'Test feature',
-        produces: [],
-      };
-
-      const options = {
-        workdir: process.cwd(),
-      };
-
-      const message = await generator.generateCommitMessage(task, options);
-
-      expect(message).toContain(customSignature);
-    });
-
-    it('should accept provider instances (backward compatibility)', () => {
-      const provider = new CodexProvider();
-
-      const config = {
-        provider,
-        enableAI: true,
-      };
-
-      const generator = new CommitMessageGenerator(config);
-      expect(generator).toBeInstanceOf(CommitMessageGenerator);
-    });
-  });
-
   describe('Error Message Context', () => {
     it('should include field path in validation errors', async () => {
       const generator = new CommitMessageGenerator({
@@ -594,7 +460,7 @@ describe('Validation Integration Tests', () => {
       const invalidOptions = {
         cwd: '',
         ai: 'not-boolean',
-        timeout: 123,
+        provider: 12_345,
       };
 
       try {

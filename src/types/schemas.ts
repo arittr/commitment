@@ -116,16 +116,6 @@ const loggerSchema = z.object({
 export const commitMessageGeneratorConfigSchema = z
   .object({
     /**
-     * @deprecated Use provider config instead. AI client command (default: 'claude')
-     */
-    aiCommand: z.string().optional(),
-
-    /**
-     * @deprecated Use provider config instead. Timeout for AI generation in ms (default: 120000)
-     */
-    aiTimeout: z.number().positive('AI timeout must be a positive number').optional(),
-
-    /**
      * Auto-detect first available provider (default: false)
      */
     autoDetect: z.boolean().optional(),

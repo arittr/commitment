@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
 import {
-  buildProviderConfigFromOptions,
   formatValidationError,
   parseProviderConfigJson,
   safeParseProviderConfigJson,
@@ -199,7 +198,7 @@ describe('Error Message Quality Integration Tests', () => {
       const invalidOptions = {
         cwd: '',
         ai: 'not-boolean',
-        timeout: 123,
+        provider: 12_345,
       };
 
       try {
@@ -326,7 +325,7 @@ describe('Error Message Quality Integration Tests', () => {
 
     it('should format config validation errors at construction', () => {
       const invalidConfig = {
-        aiTimeout: -1000,
+        signature: 12_345,
       };
 
       try {
@@ -335,7 +334,7 @@ describe('Error Message Quality Integration Tests', () => {
       } catch (error) {
         if (error instanceof Error) {
           expect(error.message).toContain('Invalid CommitMessageGenerator configuration');
-          expect(error.message).toContain('aiTimeout');
+          expect(error.message).toContain('signature');
           expect(error.message).toContain('Please check your configuration');
         }
       }
@@ -479,32 +478,6 @@ describe('Error Message Quality Integration Tests', () => {
           expect(error.message).toContain('contribute an implementation');
         }
       }
-    });
-  });
-
-  describe('Config Builder Error Guidance', () => {
-    it('should handle unknown provider gracefully', () => {
-      const options = validateCliOptions({
-        provider: 'unknown-provider',
-        cwd: '/valid',
-      });
-
-      const config = buildProviderConfigFromOptions(options);
-
-      // Should return undefined for unknown providers, not throw
-      expect(config).toBeUndefined();
-    });
-
-    it('should handle API provider without config gracefully', () => {
-      const options = validateCliOptions({
-        provider: 'openai',
-        cwd: '/valid',
-      });
-
-      const config = buildProviderConfigFromOptions(options);
-
-      // Should return undefined since API key is needed
-      expect(config).toBeUndefined();
     });
   });
 });

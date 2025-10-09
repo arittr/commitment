@@ -8,7 +8,6 @@
 export type { CliOptions } from './schemas';
 
 export {
-  buildProviderConfigFromOptions,
   cliOptionsSchema,
   formatValidationError,
   parsedProviderConfigSchema,

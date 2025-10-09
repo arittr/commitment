@@ -27,12 +27,6 @@ export const cliOptionsSchema = z.object({
   ai: z.boolean().default(true),
 
   /**
-   * @deprecated Use --provider instead
-   * Legacy AI command path
-   */
-  aiCommand: z.string().default('claude'),
-
-  /**
    * Auto-detect first available AI provider
    */
   autoDetect: z.boolean().optional(),
@@ -41,16 +35,6 @@ export const cliOptionsSchema = z.object({
    * Check if selected provider is available
    */
   checkProvider: z.boolean().optional(),
-
-  /**
-   * Claude CLI command path (deprecated, use --provider-config)
-   */
-  claudeCommand: z.string().optional(),
-
-  /**
-   * Claude CLI timeout in milliseconds (deprecated, use --provider-config)
-   */
-  claudeTimeout: z.string().optional(),
 
   /**
    * Working directory for git operations
@@ -91,12 +75,6 @@ export const cliOptionsSchema = z.object({
    * Custom signature to append to commits
    */
   signature: z.string().optional(),
-
-  /**
-   * @deprecated Use --provider-config instead
-   * Legacy AI timeout in milliseconds
-   */
-  timeout: z.string().default('120000'),
 });
 
 /**
@@ -279,74 +257,4 @@ export function formatValidationError(error: z.ZodError): string {
   });
 
   return `Validation failed:\n${issues.join('\n')}`;
-}
-
-/**
- * Build provider config from CLI options
- *
- * Constructs a ProviderConfig object from individual CLI flags,
- * handling backward compatibility with deprecated options.
- *
- * @param options - Validated CLI options
- * @returns ProviderConfig object or undefined if no provider specified
- *
- * @example
- * ```typescript
- * const options = {
- *   provider: 'claude',
- *   claudeCommand: 'claude-custom',
- *   claudeTimeout: '60000'
- * };
- *
- * const config = buildProviderConfigFromOptions(options);
- * // config = { type: 'cli', provider: 'claude', command: 'claude-custom', timeout: 60000 }
- * ```
- */
-export function buildProviderConfigFromOptions(
-  options: CliOptions,
-): z.infer<typeof providerConfigSchema> | undefined {
-  if (options.provider === undefined) {
-    return undefined;
-  }
-
-  const providerName = options.provider.toLowerCase();
-
-  // Build config based on provider type
-  if (providerName === 'claude') {
-    return parsedProviderConfigSchema.parse({
-      type: 'cli',
-      provider: 'claude',
-      command: options.claudeCommand,
-      timeout:
-        options.claudeTimeout !== undefined
-          ? Number.parseInt(options.claudeTimeout, 10)
-          : undefined,
-    });
-  }
-
-  if (providerName === 'codex') {
-    return parsedProviderConfigSchema.parse({
-      type: 'cli',
-      provider: 'codex',
-      timeout:
-        options.claudeTimeout !== undefined
-          ? Number.parseInt(options.claudeTimeout, 10)
-          : undefined,
-    });
-  }
-
-  if (providerName === 'cursor') {
-    return parsedProviderConfigSchema.parse({
-      type: 'cli',
-      provider: 'cursor',
-      timeout:
-        options.claudeTimeout !== undefined
-          ? Number.parseInt(options.claudeTimeout, 10)
-          : undefined,
-    });
-  }
-
-  // For API providers, we need API key which should come from providerConfig
-  // So we return undefined here and let the caller handle it
-  return undefined;
 }
