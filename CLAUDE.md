@@ -191,10 +191,16 @@ import { hasContent } from './utils/guards.js';
 ### Core Components
 
 - **CLI** (`src/cli.ts`): Command-line interface for generating and creating commits
+  - **CLI Commands** (`src/cli/commands/`): Modular, testable command handlers (list-providers, check-provider, auto-detect)
+  - **Provider Config Builder** (`src/cli/provider-config-builder.ts`): Builds provider fallback chains
 - **Generator** (`src/generator.ts`): CommitMessageGenerator class with AI and rule-based generation
 - **Providers** (`src/providers/`): Modular AI provider system supporting multiple backends
-- **Guards** (`src/utils/guards.ts`): Type guard utilities for safer code
 - **Schemas** (`src/types/schemas.ts`, `src/cli/schemas.ts`, `src/utils/git-schemas.ts`): Zod schemas for runtime validation
+- **Git Utilities** (`src/utils/git-schemas.ts`): Git output parsing and file categorization
+  - `parseGitStatus()` - Parse and validate git status output
+  - `categorizeFiles()` - Categorize files by type (tests, components, configs, etc.)
+  - `analyzeChanges()` - Extract change statistics (added, modified, deleted, renamed)
+- **Guards** (`src/utils/guards.ts`): Type guard utilities for safer code
 
 ### Key Design Patterns
 
@@ -860,29 +866,317 @@ commitment uses itself for its own commit messages via git hooks:
 
 This ensures commitment is battle-tested on itself and provides a real-world example.
 
+## CLI Modular Architecture
+
+The CLI is organized into focused, testable modules following single responsibility principle.
+
+### Structure
+
+```
+src/cli/
+├── cli.ts                      # Main CLI entry point (~340 lines)
+├── schemas.ts                  # CLI option validation with Zod
+├── commands/                   # Command handlers (independently testable)
+│   ├── list-providers.ts       # --list-providers command
+│   ├── check-provider.ts       # --check-provider command
+│   ├── auto-detect.ts          # --auto-detect command
+│   └── index.ts                # Command exports
+└── provider-config-builder.ts  # Provider chain building logic
+```
+
+### Design Principles
+
+1. **Separation of Concerns**: Each command is a separate module with a single responsibility
+2. **Testability**: All commands can be unit tested in isolation
+3. **Reusability**: Commands can be used outside the main CLI flow
+4. **Maintainability**: Easy to add new commands without modifying main CLI
+
+### Adding a New CLI Command
+
+**Step 1: Create command module** in `src/cli/commands/`:
+
+```typescript
+/* eslint-disable no-console, unicorn/no-process-exit */
+import chalk from 'chalk';
+
+/**
+ * Description of what your command does
+ */
+export function myCommand(options?: MyCommandOptions): void {
+  // Command logic here
+  console.log(chalk.green('✅ Command executed'));
+  process.exit(0);
+}
+```
+
+**Step 2: Export from index**:
+
+```typescript
+// src/cli/commands/index.ts
+export { myCommand } from './my-command';
+```
+
+**Step 3: Use in main CLI**:
+
+```typescript
+// src/cli.ts
+import { myCommand } from './cli/commands/index';
+
+// In main():
+if (options.myCommand) {
+  myCommand(options);
+}
+```
+
+**Step 4: Add tests**:
+
+```typescript
+// src/cli/commands/__tests__/my-command.test.ts
+import { describe, expect, it, vi } from 'vitest';
+import { myCommand } from '../my-command';
+
+describe('myCommand', () => {
+  it('should execute command logic', () => {
+    // Test implementation
+  });
+});
+```
+
+### Command Modules
+
+**listProvidersCommand()**
+
+Displays all available AI providers with implementation status.
+
+```typescript
+import { listProvidersCommand } from './cli/commands/index';
+
+listProvidersCommand();
+// Outputs formatted list of providers and exits with code 0
+```
+
+**checkProviderCommand(config?)**
+
+Checks if a provider is available and properly configured.
+
+```typescript
+import { checkProviderCommand } from './cli/commands/index';
+
+// Check default Claude provider
+await checkProviderCommand();
+
+// Check specific provider
+await checkProviderCommand({
+  type: 'cli',
+  provider: 'codex',
+});
+// Exits with 0 if available, 1 if not
+```
+
+**autoDetectCommand()**
+
+Auto-detects the first available AI provider.
+
+```typescript
+import { autoDetectCommand } from './cli/commands/index';
+
+const provider = await autoDetectCommand();
+if (provider !== null) {
+  console.log('Using:', provider.getName());
+}
+```
+
+### Utility Modules
+
+**buildProviderChain(mainProvider, fallbackNames)**
+
+Builds a provider fallback chain from primary and fallback provider names.
+
+```typescript
+import { buildProviderChain } from './cli/provider-config-builder';
+
+const chain = buildProviderChain({ type: 'cli', provider: 'claude' }, ['codex']);
+// Returns: [ClaudeConfig, CodexConfig]
+```
+
+### Testing CLI Commands
+
+All CLI commands have comprehensive unit tests following these patterns:
+
+```typescript
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+describe('commandName', () => {
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let processExitSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit called');
+    });
+  });
+
+  it('should perform expected action', () => {
+    expect(() => commandName()).toThrow('process.exit called');
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('expected output'));
+    expect(processExitSpy).toHaveBeenCalledWith(0);
+  });
+});
+```
+
+### ESLint Configuration for CLI Modules
+
+CLI command modules use relaxed ESLint rules since they need `console.log` and `process.exit`:
+
+```typescript
+/* eslint-disable no-console, unicorn/no-process-exit */
+import chalk from 'chalk';
+
+export function cliCommand(): void {
+  console.log('This is allowed in CLI modules');
+  process.exit(0);
+}
+```
+
 ## Testing
 
-Currently, commitment does not have automated tests. When adding tests in the future:
+The project uses Vitest for all testing with comprehensive coverage:
 
-- Use Vitest for all testing
-- Follow chopstack's test organization (co-located unit tests, integration tests)
-- Test both AI and fallback paths
-- Mock external dependencies (git commands, Claude CLI)
+- **678 total tests** across 20 test files
+- **Co-located tests**: Unit tests live alongside source files in `__tests__/` directories
+- **Integration tests**: Located in `src/__tests__/integration/`
+- **Test patterns**: All public APIs, edge cases, error handling, and validation
+
+### Test Organization
+
+```
+src/
+├── __tests__/
+│   └── integration/           # Integration tests
+│       ├── validation.test.ts # Cross-module validation tests
+│       └── error-messages.test.ts # User-facing error tests
+├── cli/
+│   ├── __tests__/
+│   │   ├── schemas.test.ts
+│   │   └── provider-config-builder.test.ts
+│   └── commands/__tests__/
+│       ├── list-providers.test.ts
+│       ├── check-provider.test.ts
+│       └── auto-detect.test.ts
+├── providers/
+│   ├── __tests__/             # Provider core tests
+│   ├── implementations/__tests__/ # Provider implementation tests
+│   └── utils/__tests__/       # Provider utility tests
+├── types/__tests__/
+│   └── schemas.test.ts
+└── utils/__tests__/
+    ├── guards.test.ts
+    └── git-schemas.test.ts
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run specific test file
+pnpm test src/cli/__tests__/schemas.test.ts
+
+# Run tests in watch mode
+pnpm test --watch
+
+# Run tests with coverage
+pnpm test --coverage
+```
+
+### Test Patterns
+
+**Schema Validation Tests**:
+
+```typescript
+describe('mySchema', () => {
+  it('accepts valid input', () => {
+    const valid = { field: 'value' };
+    expect(() => validateMySchema(valid)).not.toThrow();
+  });
+
+  it('rejects invalid input', () => {
+    const invalid = { field: 123 };
+    expect(() => validateMySchema(invalid)).toThrow(ZodError);
+  });
+
+  it('applies defaults', () => {
+    const partial = {};
+    const result = mySchema.parse(partial);
+    expect(result.field).toBe('default');
+  });
+});
+```
+
+**Provider Tests**:
+
+```typescript
+describe('MyProvider', () => {
+  it('should check availability', async () => {
+    const provider = new MyProvider();
+    const available = await provider.isAvailable();
+    expect(typeof available).toBe('boolean');
+  });
+
+  it('should generate commit message', async () => {
+    const provider = new MyProvider();
+    const message = await provider.generateCommitMessage('prompt', {
+      workdir: '/tmp',
+    });
+    expect(message).toBeTruthy();
+  });
+});
+```
+
+**CLI Command Tests** (see "Testing CLI Commands" section above)
 
 ## File Structure
 
 ```
 src/
-├── cli.ts          # CLI entry point
-├── generator.ts    # CommitMessageGenerator class
-├── index.ts        # Library exports
-└── utils/
-    └── guards.ts   # Type guards
+├── cli.ts                      # CLI entry point (~340 lines)
+├── generator.ts                # CommitMessageGenerator class
+├── index.ts                    # Library exports
+├── cli/                        # CLI modules
+│   ├── schemas.ts              # CLI option validation
+│   ├── commands/               # Command handlers
+│   │   ├── list-providers.ts
+│   │   ├── check-provider.ts
+│   │   ├── auto-detect.ts
+│   │   └── index.ts
+│   └── provider-config-builder.ts
+├── providers/                  # Provider system
+│   ├── types.ts                # Provider type definitions
+│   ├── provider-factory.ts     # Provider creation
+│   ├── provider-chain.ts       # Fallback chain support
+│   ├── auto-detect.ts          # Provider auto-detection
+│   ├── errors.ts               # Provider error types
+│   ├── base/                   # Base provider classes
+│   │   ├── base-cli-provider.ts
+│   │   └── base-api-provider.ts
+│   ├── implementations/        # Concrete providers
+│   │   ├── claude-provider.ts
+│   │   └── codex-provider.ts
+│   └── utils/                  # Provider utilities
+│       ├── cli-executor.ts
+│       └── cli-response-parser.ts
+├── types/                      # Core type definitions
+│   └── schemas.ts              # Zod schemas for core types
+└── utils/                      # Shared utilities
+    ├── guards.ts               # Type guard utilities
+    └── git-schemas.ts          # Git output validation
 
 examples/
-├── git-hooks/      # Plain git hooks examples
-├── husky/          # Husky integration examples
-└── lint-staged/    # lint-staged integration examples
+├── git-hooks/                  # Plain git hooks examples
+├── husky/                      # Husky integration examples
+└── lint-staged/                # lint-staged integration examples
 ```
 
 ## Publishing

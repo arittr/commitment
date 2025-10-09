@@ -7,10 +7,15 @@ import { ZodError } from 'zod';
 import type { CommitTask } from './generator';
 import type { CLIProviderConfig, ProviderConfig } from './providers/index';
 
+import {
+  autoDetectCommand,
+  checkProviderCommand,
+  listProvidersCommand,
+} from './cli/commands/index';
+import { buildProviderChain } from './cli/provider-config-builder';
 import { formatValidationError, parseProviderConfigJson, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
-import { createProvider, detectAvailableProvider } from './providers/index';
-import { parseGitStatus } from './utils/git-schemas';
+import { analyzeChanges, categorizeFiles, parseGitStatus } from './utils/git-schemas';
 
 /**
  * Get git status and check for staged changes
@@ -64,28 +69,9 @@ async function createCommit(message: string, cwd: string): Promise<void> {
  * Create a task object from git status for commit message generation
  */
 function createTaskFromGitStatus(statusLines: string[], files: string[]): CommitTask {
-  // Analyze file patterns and changes
-  const changes = {
-    added: statusLines.filter((line) => line.startsWith('A ')).length,
-    modified: statusLines.filter((line) => line.startsWith('M ')).length,
-    deleted: statusLines.filter((line) => line.startsWith('D ')).length,
-    renamed: statusLines.filter((line) => line.startsWith('R ')).length,
-  };
-
-  // Categorize files by type
-  const categories = {
-    tests: files.filter((f) => f.includes('test') || f.includes('spec')),
-    components: files.filter(
-      (f) => f.endsWith('.tsx') || f.endsWith('.jsx') || f.includes('component'),
-    ),
-    types: files.filter((f) => f.includes('types') || f.endsWith('.d.ts')),
-    configs: files.filter(
-      (f) =>
-        f.includes('config') || f.endsWith('.json') || f.endsWith('.yaml') || f.endsWith('.toml'),
-    ),
-    docs: files.filter((f) => f.endsWith('.md') || f.includes('README')),
-    apis: files.filter((f) => f.includes('api') || f.includes('service') || f.includes('adapter')),
-  };
+  // Analyze file patterns and changes using validated utilities
+  const changes = analyzeChanges(statusLines);
+  const categories = categorizeFiles(files);
 
   // Generate intelligent title based on changes
   let title = 'Update codebase';
@@ -198,18 +184,7 @@ async function main(): Promise<void> {
 
   // Handle --list-providers
   if (options.listProviders === true) {
-    console.log(chalk.cyan('📋 Available AI Providers:\n'));
-    console.log(chalk.white('  claude    ') + chalk.gray('- Claude CLI (default)'));
-    console.log(
-      chalk.white('  codex     ') + chalk.gray('- OpenAI Codex CLI (not yet implemented)'),
-    );
-    console.log(chalk.white('  openai    ') + chalk.gray('- OpenAI API (not yet implemented)'));
-    console.log(chalk.white('  cursor    ') + chalk.gray('- Cursor (not yet implemented)'));
-    console.log(
-      chalk.white('  gemini    ') + chalk.gray('- Google Gemini API (not yet implemented)'),
-    );
-    console.log(chalk.gray('\nExample usage: commitment --provider claude'));
-    process.exit(0);
+    listProvidersCommand();
   }
 
   // Parse provider configuration from CLI flags
@@ -255,81 +230,21 @@ async function main(): Promise<void> {
 
   // Handle --check-provider
   if (options.checkProvider === true) {
-    try {
-      const provider =
-        providerConfig !== undefined
-          ? createProvider(providerConfig)
-          : createProvider({ type: 'cli', provider: 'claude' });
-
-      const isAvailable = await provider.isAvailable();
-
-      if (isAvailable) {
-        console.log(chalk.green(`✅ Provider '${provider.getName()}' is available`));
-        process.exit(0);
-      } else {
-        console.log(chalk.red(`❌ Provider '${provider.getName()}' is not available`));
-        console.log(chalk.gray('   Make sure the CLI tool is installed and in your PATH'));
-        process.exit(1);
-      }
-    } catch (error) {
-      console.error(
-        chalk.red('❌ Error checking provider:'),
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
-    }
+    await checkProviderCommand(providerConfig);
   }
 
   // Handle --auto-detect
   if (options.autoDetect === true) {
-    const detectedProvider = await detectAvailableProvider();
+    const detectedProvider = await autoDetectCommand();
 
     if (detectedProvider !== null) {
-      console.log(chalk.green(`✅ Auto-detected provider: ${detectedProvider.getName()}`));
       // Override providerConfig with detected provider instance
       providerConfig = detectedProvider as unknown as ProviderConfig;
-    } else {
-      console.log(chalk.yellow('⚠️ No AI providers detected, will use rule-based generation'));
     }
   }
 
   // Handle provider fallback chain
-  let providerChain: ProviderConfig[] | undefined;
-
-  if (options.fallback !== undefined && options.fallback.length > 0) {
-    // Build provider chain from --provider + --fallback flags
-    const providers: ProviderConfig[] = [];
-
-    // Add main provider if specified
-    if (providerConfig !== undefined) {
-      providers.push(providerConfig);
-    }
-
-    // Add fallback providers
-    for (const fallbackName of options.fallback) {
-      const name = fallbackName.toLowerCase();
-
-      if (name === 'claude') {
-        providers.push({
-          type: 'cli',
-          provider: 'claude',
-        } satisfies CLIProviderConfig);
-      } else {
-        console.error(chalk.red(`❌ Fallback provider '${name}' is not yet implemented`));
-        console.log(chalk.gray('   Available providers: claude'));
-        process.exit(1);
-      }
-    }
-
-    if (providers.length > 0) {
-      providerChain = providers;
-      console.log(
-        chalk.cyan(
-          `📋 Provider fallback chain: ${providers.map((p) => (p as CLIProviderConfig).provider).join(' → ')}`,
-        ),
-      );
-    }
-  }
+  const providerChain = buildProviderChain(providerConfig, options.fallback);
 
   try {
     // Check for staged changes

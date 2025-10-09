@@ -172,11 +172,57 @@ export const fileCategoriesSchema = z.object({
 });
 
 /**
+ * Schema for git change statistics
+ *
+ * Represents counts of different types of file changes based on
+ * git status codes.
+ *
+ * @example
+ * ```typescript
+ * const stats = {
+ *   added: 2,
+ *   modified: 5,
+ *   deleted: 1,
+ *   renamed: 0
+ * };
+ *
+ * const validated = validateChangeStats(stats);
+ * ```
+ */
+export const changeStatsSchema = z.object({
+  /**
+   * Number of added files (status code 'A')
+   */
+  added: z.number().int().nonnegative().default(0),
+
+  /**
+   * Number of modified files (status code 'M')
+   */
+  modified: z.number().int().nonnegative().default(0),
+
+  /**
+   * Number of deleted files (status code 'D')
+   */
+  deleted: z.number().int().nonnegative().default(0),
+
+  /**
+   * Number of renamed files (status code 'R')
+   */
+  renamed: z.number().int().nonnegative().default(0),
+});
+
+/**
  * TypeScript types inferred from Zod schemas
  */
 export type GitStatusLine = z.infer<typeof gitStatusLineSchema>;
 export type GitStatus = z.infer<typeof gitStatusSchema>;
 export type FileCategories = z.infer<typeof fileCategoriesSchema>;
+export type ChangeStats = z.infer<typeof changeStatsSchema>;
+
+/**
+ * Type alias for file categorization (commonly used name)
+ */
+export type FileCategorization = FileCategories;
 
 /**
  * Validates a git status line string
@@ -371,6 +417,52 @@ export function parseGitStatus(rawOutput: string): GitStatus {
 }
 
 /**
+ * Validates change statistics object
+ *
+ * @param stats - Change statistics object to validate
+ * @returns Validated and typed change statistics
+ * @throws ZodError if validation fails
+ *
+ * @example
+ * ```typescript
+ * const stats = {
+ *   added: 2,
+ *   modified: 5,
+ *   deleted: 1,
+ *   renamed: 0
+ * };
+ *
+ * const validated = validateChangeStats(stats);
+ * ```
+ */
+export function validateChangeStats(stats: unknown): ChangeStats {
+  return changeStatsSchema.parse(stats);
+}
+
+/**
+ * Safely validates change statistics with error handling
+ *
+ * @param stats - Change statistics to validate
+ * @returns Success result with validated stats or failure result with error
+ *
+ * @example
+ * ```typescript
+ * const result = safeValidateChangeStats(unknownStats);
+ *
+ * if (result.success) {
+ *   console.log('Valid stats:', result.data);
+ * } else {
+ *   console.error('Validation failed:', result.error);
+ * }
+ * ```
+ */
+export function safeValidateChangeStats(
+  stats: unknown,
+): { data: ChangeStats; success: true } | { error: z.ZodError; success: false } {
+  return changeStatsSchema.safeParse(stats);
+}
+
+/**
  * Categorize files by their type/purpose
  *
  * Analyzes file paths to categorize them into common types
@@ -429,4 +521,38 @@ export function categorizeFiles(files: string[]): FileCategories {
   }
 
   return validateFileCategories(categories);
+}
+
+/**
+ * Analyze git status lines to extract change statistics
+ *
+ * Counts the number of files that were added, modified, deleted, or renamed
+ * based on git status codes.
+ *
+ * @param statusLines - Array of git status lines (from git status --porcelain)
+ * @returns Change statistics with counts for each change type
+ * @throws ZodError if result validation fails
+ *
+ * @example
+ * ```typescript
+ * const statusLines = [
+ *   'M  src/file1.ts',
+ *   'A  src/file2.ts',
+ *   'D  src/file3.ts',
+ *   'M  src/file4.ts'
+ * ];
+ *
+ * const stats = analyzeChanges(statusLines);
+ * // { added: 1, modified: 2, deleted: 1, renamed: 0 }
+ * ```
+ */
+export function analyzeChanges(statusLines: string[]): ChangeStats {
+  const stats: ChangeStats = {
+    added: statusLines.filter((line) => line.startsWith('A ')).length,
+    modified: statusLines.filter((line) => line.startsWith('M ')).length,
+    deleted: statusLines.filter((line) => line.startsWith('D ')).length,
+    renamed: statusLines.filter((line) => line.startsWith('R ')).length,
+  };
+
+  return validateChangeStats(stats);
 }

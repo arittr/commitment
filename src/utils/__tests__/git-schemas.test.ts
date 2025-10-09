@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
-import type { FileCategories, GitStatus, GitStatusLine } from '../git-schemas';
+import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas';
 
 import {
+  analyzeChanges,
   categorizeFiles,
+  changeStatsSchema,
   fileCategoriesSchema,
   gitStatusLineSchema,
   gitStatusSchema,
   parseGitStatus,
+  safeValidateChangeStats,
   safeValidateFileCategories,
   safeValidateGitStatus,
   safeValidateGitStatusLine,
+  validateChangeStats,
   validateFileCategories,
   validateGitStatus,
   validateGitStatusLine,
@@ -907,7 +911,337 @@ D  src/old-file.ts
     });
   });
 
+  describe('changeStatsSchema', () => {
+    describe('valid change stats', () => {
+      it('should validate empty stats', () => {
+        const stats = {};
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result.added).toBe(0);
+        expect(result.modified).toBe(0);
+        expect(result.deleted).toBe(0);
+        expect(result.renamed).toBe(0);
+      });
+
+      it('should validate stats with all fields', () => {
+        const stats = {
+          added: 5,
+          modified: 10,
+          deleted: 2,
+          renamed: 1,
+        };
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result).toEqual(stats);
+      });
+
+      it('should validate stats with some fields', () => {
+        const stats = {
+          added: 3,
+          modified: 7,
+        };
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result.added).toBe(3);
+        expect(result.modified).toBe(7);
+        expect(result.deleted).toBe(0);
+        expect(result.renamed).toBe(0);
+      });
+
+      it('should apply default zero for missing fields', () => {
+        const stats = {
+          added: 5,
+        };
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result.added).toBe(5);
+        expect(result.modified).toBe(0);
+        expect(result.deleted).toBe(0);
+        expect(result.renamed).toBe(0);
+      });
+
+      it('should validate zero values explicitly', () => {
+        const stats = {
+          added: 0,
+          modified: 0,
+          deleted: 0,
+          renamed: 0,
+        };
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result).toEqual(stats);
+      });
+
+      it('should validate large numbers', () => {
+        const stats = {
+          added: 1000,
+          modified: 5000,
+          deleted: 500,
+          renamed: 100,
+        };
+
+        const result = changeStatsSchema.parse(stats);
+
+        expect(result).toEqual(stats);
+      });
+    });
+
+    describe('invalid change stats', () => {
+      it('should reject negative numbers', () => {
+        const stats = {
+          added: -1,
+          modified: 5,
+        };
+
+        expect(() => changeStatsSchema.parse(stats)).toThrow(ZodError);
+      });
+
+      it('should reject non-integer numbers', () => {
+        const stats = {
+          added: 1.5,
+          modified: 2.3,
+        };
+
+        expect(() => changeStatsSchema.parse(stats)).toThrow(ZodError);
+      });
+
+      it('should reject non-number values', () => {
+        const stats = {
+          added: 'five',
+          modified: 10,
+        };
+
+        expect(() => changeStatsSchema.parse(stats)).toThrow(ZodError);
+      });
+
+      it('should reject null values', () => {
+        const stats = {
+          added: null,
+        };
+
+        expect(() => changeStatsSchema.parse(stats)).toThrow(ZodError);
+      });
+
+      it('should reject arrays', () => {
+        const stats = {
+          added: [1, 2, 3],
+        };
+
+        expect(() => changeStatsSchema.parse(stats)).toThrow(ZodError);
+      });
+    });
+  });
+
+  describe('analyzeChanges', () => {
+    it('should analyze empty status lines', () => {
+      const statusLines: string[] = [];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(0);
+      expect(result.modified).toBe(0);
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should count added files', () => {
+      const statusLines = ['A  src/file1.ts', 'A  src/file2.ts', 'A  src/file3.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(3);
+      expect(result.modified).toBe(0);
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should count modified files', () => {
+      const statusLines = ['M  src/file1.ts', 'M  src/file2.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(0);
+      expect(result.modified).toBe(2);
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should count deleted files', () => {
+      const statusLines = ['D  src/file1.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(0);
+      expect(result.modified).toBe(0);
+      expect(result.deleted).toBe(1);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should count renamed files', () => {
+      const statusLines = ['R  src/old.ts', 'R  src/another.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(0);
+      expect(result.modified).toBe(0);
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(2);
+    });
+
+    it('should count mixed changes', () => {
+      const statusLines = [
+        'M  src/file1.ts',
+        'A  src/file2.ts',
+        'D  src/file3.ts',
+        'M  src/file4.ts',
+        'R  src/file5.ts',
+      ];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(1);
+      expect(result.modified).toBe(2);
+      expect(result.deleted).toBe(1);
+      expect(result.renamed).toBe(1);
+    });
+
+    it('should ignore untracked files', () => {
+      const statusLines = ['M  src/staged.ts', '?? untracked.ts', 'A  src/added.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(1);
+      expect(result.modified).toBe(1);
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should ignore unstaged changes', () => {
+      const statusLines = ['M  src/staged.ts', ' M src/unstaged.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(0);
+      expect(result.modified).toBe(1); // Only staged modification
+      expect(result.deleted).toBe(0);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should handle real-world git output', () => {
+      const statusLines = [
+        'M  src/cli.ts',
+        'A  src/new-feature.ts',
+        'A  src/another-feature.ts',
+        'D  src/deprecated.ts',
+        'M  src/generator.ts',
+        'M  src/types.ts',
+      ];
+
+      const result = analyzeChanges(statusLines);
+
+      expect(result.added).toBe(2);
+      expect(result.modified).toBe(3);
+      expect(result.deleted).toBe(1);
+      expect(result.renamed).toBe(0);
+    });
+
+    it('should validate the result', () => {
+      const statusLines = ['M  src/file.ts'];
+
+      const result = analyzeChanges(statusLines);
+
+      // Result should be a valid ChangeStats object
+      expect(result).toHaveProperty('added');
+      expect(result).toHaveProperty('modified');
+      expect(result).toHaveProperty('deleted');
+      expect(result).toHaveProperty('renamed');
+      expect(typeof result.added).toBe('number');
+      expect(typeof result.modified).toBe('number');
+      expect(typeof result.deleted).toBe('number');
+      expect(typeof result.renamed).toBe('number');
+    });
+  });
+
+  describe('validateChangeStats', () => {
+    it('should validate valid stats', () => {
+      const stats = {
+        added: 1,
+        modified: 2,
+        deleted: 0,
+        renamed: 0,
+      };
+
+      const result = validateChangeStats(stats);
+
+      expect(result).toEqual(stats);
+    });
+
+    it('should throw ZodError for invalid stats', () => {
+      const stats = {
+        added: -1,
+        modified: 5,
+      };
+
+      expect(() => validateChangeStats(stats)).toThrow(ZodError);
+    });
+  });
+
+  describe('safeValidateChangeStats', () => {
+    it('should return success for valid stats', () => {
+      const stats = {
+        added: 5,
+        modified: 10,
+      };
+
+      const result = safeValidateChangeStats(stats);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.added).toBe(5);
+        expect(result.data.modified).toBe(10);
+      }
+    });
+
+    it('should return error for invalid stats', () => {
+      const stats = {
+        added: -1,
+      };
+
+      const result = safeValidateChangeStats(stats);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeInstanceOf(ZodError);
+      }
+    });
+
+    it('should not throw for invalid input', () => {
+      expect(() => safeValidateChangeStats(null)).not.toThrow();
+      expect(() => safeValidateChangeStats('string')).not.toThrow();
+      expect(() => safeValidateChangeStats([])).not.toThrow();
+    });
+  });
+
   describe('Type Inference', () => {
+    it('should infer correct ChangeStats type', () => {
+      const stats: ChangeStats = {
+        added: 1,
+        modified: 2,
+        deleted: 0,
+        renamed: 0,
+      };
+
+      expect(stats.added).toBe(1);
+      expect(stats.modified).toBe(2);
+      expect(stats.deleted).toBe(0);
+      expect(stats.renamed).toBe(0);
+    });
+
     it('should infer correct GitStatusLine type', () => {
       const line: GitStatusLine = {
         statusCode: 'M ',
