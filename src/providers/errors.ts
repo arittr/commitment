@@ -1,62 +1,69 @@
 /**
- * Base error class for all provider-related errors
+ * Legacy error exports for backward compatibility
+ *
+ * This module re-exports the consolidated error system for legacy provider code.
+ * These exports will be removed in Task 7 when legacy provider files are deleted.
+ *
+ * @deprecated Use AgentError and GeneratorError from '../errors.js' instead
+ */
+
+import { AgentError } from '../errors.js';
+
+/**
+ * @deprecated Use AgentError instead
  */
 export class ProviderError extends Error {
+  public override readonly name: string = 'ProviderError';
+  public readonly providerName: string;
   public override readonly cause?: Error;
 
-  constructor(
-    message: string,
-    public readonly providerName: string,
-    cause?: Error,
-  ) {
+  constructor(message: string, providerName: string, cause?: Error) {
     super(message);
-    this.name = 'ProviderError';
+    this.providerName = providerName;
     this.cause = cause;
     Object.setPrototypeOf(this, ProviderError.prototype);
   }
 }
 
 /**
- * Error thrown when a provider is not available or cannot be initialized
+ * @deprecated Use AgentError.cliNotFound() instead
  */
 export class ProviderNotAvailableError extends ProviderError {
+  public override readonly name = 'ProviderNotAvailableError';
+
   constructor(providerName: string, reason: string, cause?: Error) {
     super(`Provider '${providerName}' is not available: ${reason}`, providerName, cause);
-    this.name = 'ProviderNotAvailableError';
     Object.setPrototypeOf(this, ProviderNotAvailableError.prototype);
   }
 }
 
 /**
- * Error thrown when a provider operation times out
+ * @deprecated Use AgentError.executionFailed() instead
  */
 export class ProviderTimeoutError extends ProviderError {
-  constructor(
-    providerName: string,
-    public readonly timeoutMs: number,
-    operation: string,
-    cause?: Error,
-  ) {
+  public override readonly name = 'ProviderTimeoutError';
+  public readonly timeoutMs: number;
+
+  constructor(providerName: string, timeoutMs: number, operation: string, cause?: Error) {
     super(
       `Provider '${providerName}' operation '${operation}' timed out after ${timeoutMs}ms`,
       providerName,
       cause,
     );
-    this.name = 'ProviderTimeoutError';
+    this.timeoutMs = timeoutMs;
     Object.setPrototypeOf(this, ProviderTimeoutError.prototype);
   }
 }
 
 /**
- * Error thrown when an API provider encounters an API-specific error
+ * @deprecated Use AgentError.executionFailed() instead
  */
 export class ProviderAPIError extends ProviderError {
-  constructor(
-    providerName: string,
-    public readonly statusCode?: number,
-    public readonly apiMessage?: string,
-    cause?: Error,
-  ) {
+  public override readonly name = 'ProviderAPIError';
+  public readonly statusCode?: number;
+  public readonly apiMessage?: string;
+
+  constructor(providerName: string, statusCode?: number, apiMessage?: string, cause?: Error) {
     const details = [statusCode !== undefined ? `status ${statusCode}` : null, apiMessage].filter(
       Boolean,
     );
@@ -64,34 +71,35 @@ export class ProviderAPIError extends ProviderError {
     const detailsMessage = details.length > 0 ? `: ${details.join(' - ')}` : '';
 
     super(`Provider '${providerName}' API error${detailsMessage}`, providerName, cause);
-    this.name = 'ProviderAPIError';
+    this.statusCode = statusCode;
+    this.apiMessage = apiMessage;
     Object.setPrototypeOf(this, ProviderAPIError.prototype);
   }
 }
 
 /**
- * Type guard to check if an error is a ProviderError
+ * @deprecated Use isAgentError() instead
  */
 export function isProviderError(error: unknown): error is ProviderError {
-  return error instanceof ProviderError;
+  return error instanceof ProviderError || error instanceof AgentError;
 }
 
 /**
- * Type guard to check if an error is a ProviderNotAvailableError
+ * @deprecated Use isAgentError() instead
  */
 export function isProviderNotAvailableError(error: unknown): error is ProviderNotAvailableError {
   return error instanceof ProviderNotAvailableError;
 }
 
 /**
- * Type guard to check if an error is a ProviderTimeoutError
+ * @deprecated Use isAgentError() instead
  */
 export function isProviderTimeoutError(error: unknown): error is ProviderTimeoutError {
   return error instanceof ProviderTimeoutError;
 }
 
 /**
- * Type guard to check if an error is a ProviderAPIError
+ * @deprecated Use isAgentError() instead
  */
 export function isProviderAPIError(error: unknown): error is ProviderAPIError {
   return error instanceof ProviderAPIError;

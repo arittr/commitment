@@ -1,5 +1,7 @@
 import { execa } from 'execa';
 
+import { AgentError } from '../errors.js';
+
 import type { Agent } from './types.js';
 
 /**
@@ -79,53 +81,49 @@ export class ClaudeAgent implements Agent {
 
       // Validate response
       if (cleaned.length === 0 || cleaned.trim().length === 0) {
-        throw new Error(
-          'Claude CLI returned empty response. Please ensure API key is configured and try again.',
+        throw AgentError.executionFailed(
+          this.name,
+          0,
+          'Empty response - API key may not be configured',
         );
       }
 
       // Basic validation for conventional commit format
       if (!this._isValidCommitMessage(cleaned)) {
-        throw new Error(
-          `Claude CLI returned malformed response. Expected conventional commit format.\n\nReceived: ${cleaned.slice(0, 100)}...`,
-        );
+        throw AgentError.malformedResponse(this.name, cleaned);
       }
 
       return cleaned;
     } catch (error) {
+      // Re-throw AgentError as-is (already properly formatted)
+      if (error instanceof AgentError) {
+        throw error;
+      }
+
       // Handle CLI not found error
       if (this._isCLINotFoundError(error)) {
-        throw new Error(
-          'Claude CLI is not installed or not found in PATH.\n\n' +
-            'To install:\n' +
-            '  npm install -g @anthropic-ai/claude-cli\n' +
-            '  # or\n' +
-            '  brew install claude-cli\n\n' +
-            'Documentation: https://docs.anthropic.com/claude/docs/claude-cli',
-        );
+        throw AgentError.cliNotFound('claude', this.name);
       }
 
       // Handle execution errors
       if (error !== null && typeof error === 'object' && 'code' in error) {
         const execError = error as { code?: number | string; message?: string; stderr?: string };
         const details = execError.stderr ?? execError.message ?? 'Unknown error';
-        throw new Error(
-          `Claude CLI execution failed (code: ${execError.code}).\n\n` +
-            `Details: ${details}\n\n` +
-            'Please check:\n' +
-            '  - API key is configured: claude config\n' +
-            '  - Network connection is working\n' +
-            '  - Claude service is available',
+        const code = execError.code ?? 'unknown';
+        throw AgentError.executionFailed(
+          this.name,
+          code,
+          details,
+          error instanceof Error ? error : undefined,
         );
       }
 
-      // Re-throw if already processed
-      if (error instanceof Error) {
-        throw error;
-      }
-
       // Fallback for unknown errors
-      throw new Error(`Unexpected error during Claude CLI execution: ${String(error)}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
+        agentName: this.name,
+        cause: error instanceof Error ? error : undefined,
+      });
     }
   }
 

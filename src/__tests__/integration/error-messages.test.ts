@@ -291,7 +291,8 @@ describe('Error Message Quality Integration Tests', () => {
         if (error instanceof Error) {
           expect(error.message).toContain('Invalid task parameter');
           expect(error.message).toContain('title');
-          expect(error.message).toContain('Please provide a valid CommitTask');
+          const genError = error as { suggestedAction?: string };
+          expect(genError.suggestedAction).toContain('CommitTask');
         }
       }
     });
@@ -316,7 +317,8 @@ describe('Error Message Quality Integration Tests', () => {
         if (error instanceof Error) {
           expect(error.message).toContain('Invalid options parameter');
           expect(error.message).toContain('workdir');
-          expect(error.message).toContain('Please provide valid CommitMessageOptions');
+          const genError = error as { suggestedAction?: string };
+          expect(genError.suggestedAction).toContain('CommitMessageOptions');
         }
       }
     });
@@ -332,8 +334,11 @@ describe('Error Message Quality Integration Tests', () => {
       } catch (error) {
         if (error instanceof Error) {
           expect(error.message).toContain('Invalid CommitMessageGenerator configuration');
-          expect(error.message).toContain('signature');
-          expect(error.message).toContain('Please check your configuration');
+          const genError = error as { context?: { validationErrors?: string[] } };
+          const hasSignatureError = genError.context?.validationErrors?.some((error_) =>
+            error_.includes('signature'),
+          );
+          expect(hasSignatureError).toBe(true);
         }
       }
     });
@@ -349,7 +354,8 @@ describe('Error Message Quality Integration Tests', () => {
       } catch (error) {
         if (error instanceof Error) {
           expect(error.message).toContain('Invalid CommitMessageGenerator configuration');
-          expect(error.message).toContain('expected one of');
+          const genError = error as { context?: { validationErrors?: string[] } };
+          expect(genError.context?.validationErrors).toBeDefined();
         }
       }
     });

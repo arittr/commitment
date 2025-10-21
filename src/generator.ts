@@ -4,6 +4,7 @@ import type { Agent } from './agents/types.js';
 
 import { ClaudeAgent } from './agents/claude.js';
 import { CodexAgent } from './agents/codex.js';
+import { AgentError, GeneratorError } from './errors.js';
 import {
   safeValidateCommitOptions,
   safeValidateCommitTask,
@@ -82,16 +83,19 @@ export class CommitMessageGenerator {
 
     if (!validationResult.success) {
       // Format ZodError for user-friendly output
-      const errorMessages = validationResult.error.issues
-        .map((issue) => {
-          const path = issue.path.length > 0 ? issue.path.join('.') : 'config';
-          return `  - ${path}: ${issue.message}`;
-        })
-        .join('\n');
+      const errorMessages = validationResult.error.issues.map((issue) => {
+        const path = issue.path.length > 0 ? issue.path.join('.') : 'config';
+        return `${path}: ${issue.message}`;
+      });
 
-      throw new Error(
-        `Invalid CommitMessageGenerator configuration:\n${errorMessages}\n\nPlease check your configuration and try again.`,
-      );
+      throw new GeneratorError('Invalid CommitMessageGenerator configuration', {
+        context: { validationErrors: errorMessages },
+        suggestedAction: `Please provide valid configuration with:
+  - agent: 'claude' | 'codex' (optional, default: 'claude')
+  - enableAI: boolean (optional, default: true)
+  - signature: string (optional)
+  - logger: { warn: (msg: string) => void } (optional)`,
+      });
     }
 
     // Use validated config (now fully type-safe)
@@ -119,31 +123,23 @@ export class CommitMessageGenerator {
     // Validate task parameter
     const taskValidation = safeValidateCommitTask(task);
     if (!taskValidation.success) {
-      const errorMessages = taskValidation.error.issues
-        .map((issue) => {
-          const path = issue.path.length > 0 ? issue.path.join('.') : 'task';
-          return `  - ${path}: ${issue.message}`;
-        })
-        .join('\n');
+      const errorMessages = taskValidation.error.issues.map((issue) => {
+        const path = issue.path.length > 0 ? issue.path.join('.') : 'task';
+        return `${path}: ${issue.message}`;
+      });
 
-      throw new Error(
-        `Invalid task parameter:\n${errorMessages}\n\nPlease provide a valid CommitTask object.`,
-      );
+      throw GeneratorError.invalidTask(errorMessages);
     }
 
     // Validate options parameter
     const optionsValidation = safeValidateCommitOptions(options);
     if (!optionsValidation.success) {
-      const errorMessages = optionsValidation.error.issues
-        .map((issue) => {
-          const path = issue.path.length > 0 ? issue.path.join('.') : 'options';
-          return `  - ${path}: ${issue.message}`;
-        })
-        .join('\n');
+      const errorMessages = optionsValidation.error.issues.map((issue) => {
+        const path = issue.path.length > 0 ? issue.path.join('.') : 'options';
+        return `${path}: ${issue.message}`;
+      });
 
-      throw new Error(
-        `Invalid options parameter:\n${errorMessages}\n\nPlease provide valid CommitMessageOptions.`,
-      );
+      throw GeneratorError.invalidOptions(errorMessages);
     }
 
     // Use validated parameters (now fully type-safe)
@@ -158,9 +154,15 @@ export class CommitMessageGenerator {
           return this._addSignature(aiMessage);
         }
       } catch (error) {
-        this.config.logger.warn(
-          `⚠️ AI commit message generation failed: ${error instanceof Error ? error.message : String(error)}`,
-        );
+        // Log warning but don't throw - will fall back to rule-based
+        const errorMessage =
+          error instanceof AgentError
+            ? `${error.agentName ?? 'Agent'} failed: ${error.message}`
+            : error instanceof Error
+              ? error.message
+              : String(error);
+
+        this.config.logger.warn(`⚠️ AI commit message generation failed: ${errorMessage}`);
       }
     }
 
@@ -272,9 +274,14 @@ ${changeAnalysis}`;
       // Use agent to generate commit message
       return await this.agent.generate(enhancedPrompt, options.workdir);
     } catch (error) {
-      throw new Error(
-        `${this.agent.name} failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      // Wrap agent errors with generator context
+      if (error instanceof AgentError) {
+        throw GeneratorError.aiGenerationFailed(this.agent.name, error);
+      }
+
+      // Wrap other errors
+      const wrappedError = error instanceof Error ? error : new Error(String(error));
+      throw GeneratorError.aiGenerationFailed(this.agent.name, wrappedError);
     }
   }
 
