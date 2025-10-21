@@ -761,101 +761,140 @@ if (hasContent(str)) {
 - **Schema Files**: Explore `src/types/schemas.ts`, `src/cli/schemas.ts`, `src/utils/git-schemas.ts`
 - **Provider Types**: See `src/providers/types.ts` for advanced patterns
 
-## Adding a New AI Provider
+## Adding a New AI Agent
 
-The provider system is designed to make adding new AI providers trivial. Follow these steps:
+The agent system is designed for simplicity - no base classes, no factories, no auto-detection. Each agent is a standalone class implementing a simple interface.
 
-### Step 1: Create Provider Class
+### Step 1: Create Agent Class
 
-Create a new file in `src/providers/implementations/`:
+Create a new file in `src/agents/`:
 
 ```typescript
-import type { CLIProviderConfig } from '../types';
-import { BaseCLIProvider } from '../base/base-cli-provider';
-import { CLIResponseParser } from '../utils/cli-response-parser';
+import { execa } from 'execa';
+import { AgentError } from '../errors.js';
+import type { Agent } from './types.js';
 
-export class MyProvider extends BaseCLIProvider {
-  constructor(config: Omit<CLIProviderConfig, 'type' | 'provider'> = {}) {
-    super({
-      type: 'cli',
-      provider: 'my-provider',
-      ...config,
-    });
-  }
+/**
+ * My AI agent for generating commit messages
+ *
+ * Implements the Agent interface with CLI execution logic inlined.
+ * No base classes - all logic is self-contained.
+ *
+ * @example
+ * ```typescript
+ * const agent = new MyAgent();
+ * const message = await agent.generate(prompt, '/path/to/repo');
+ * ```
+ */
+export class MyAgent implements Agent {
+  readonly name = 'my-cli';
 
-  protected getCommand(): string {
-    return this.config.command ?? 'my-cli';
-  }
+  async generate(prompt: string, workdir: string): Promise<string> {
+    // 1. Check CLI availability
+    try {
+      await execa('which', ['my-cli']);
+    } catch {
+      throw AgentError.cliNotFound('my-cli', 'My CLI');
+    }
 
-  protected getArgs(): string[] {
-    return this.config.args ?? ['--print'];
-  }
+    // 2. Execute CLI with prompt
+    let result;
+    try {
+      result = await execa('my-cli', ['--prompt', prompt], {
+        cwd: workdir,
+        timeout: 120_000,
+      });
+    } catch (error) {
+      const exitCode = error instanceof Error && 'exitCode' in error ? error.exitCode : 'unknown';
+      const stderr = error instanceof Error && 'stderr' in error ? error.stderr : 'Unknown error';
+      throw AgentError.executionFailed('My CLI', exitCode, stderr as string, error as Error);
+    }
 
-  getName(): string {
-    return 'My CLI';
-  }
+    // 3. Parse and validate response
+    const output = result.stdout.trim();
+    if (!output || !output.includes(':')) {
+      throw AgentError.malformedResponse('My CLI', output);
+    }
 
-  async isAvailable(): Promise<boolean> {
-    return this.checkCommandAvailable();
-  }
-
-  protected override parseResponse(output: string): string {
-    const cleaned = CLIResponseParser.cleanAIArtifacts(output);
-    return CLIResponseParser.parse(cleaned);
+    return output;
   }
 }
 ```
 
 ### Step 2: Update Types
 
-Add your provider to the enum in `src/providers/types.ts`:
+Add your agent to the `AgentName` type in `src/agents/types.ts`:
 
 ```typescript
-provider: z.enum(['claude', 'codex', 'my-provider', 'cursor']),
+export type AgentName = 'claude' | 'codex' | 'my-cli';
 ```
 
-### Step 3: Update Factory
+### Step 3: Update Generator
 
-Import and instantiate in `src/providers/provider-factory.ts`:
+Add agent instantiation in `src/generator.ts`:
 
 ```typescript
-import { MyProvider } from './implementations/my-provider';
+// In generateWithAI() method
+if (this.config.agent === 'claude') {
+  agent = new ClaudeAgent();
+} else if (this.config.agent === 'codex') {
+  agent = new CodexAgent();
+} else if (this.config.agent === 'my-cli') {
+  agent = new MyAgent();
+}
+```
 
-// ... in createProvider():
-.with({ type: 'cli', provider: 'my-provider' }, (cfg) => {
-  return new MyProvider({
-    command: cfg.command,
-    args: cfg.args,
-    timeout: cfg.timeout,
+### Step 4: Export Agent
+
+Add to `src/agents/index.ts`:
+
+```typescript
+export { MyAgent } from './my-agent.js';
+```
+
+### Step 5: Add Tests
+
+Create `src/agents/__tests__/my-agent.test.ts`:
+
+```typescript
+import { describe, expect, it, vi } from 'vitest';
+import { MyAgent } from '../my-agent.js';
+
+describe('MyAgent', () => {
+  it('should have correct name', () => {
+    const agent = new MyAgent();
+    expect(agent.name).toBe('my-cli');
   });
-})
+
+  it('should generate commit message', async () => {
+    const agent = new MyAgent();
+    // Mock CLI execution and test success case
+  });
+
+  it('should throw when CLI not found', async () => {
+    const agent = new MyAgent();
+    // Mock missing CLI and verify error
+  });
+});
 ```
 
-### Step 4: Update Auto-Detection
+### Step 6: Update CLI Help
 
-Add to `src/providers/auto-detect.ts`:
+Add your agent to the help text in `src/cli.ts`:
 
 ```typescript
-const providersToCheck: AIProvider[] = [
-  new ClaudeProvider(),
-  new CodexProvider(),
-  new MyProvider(), // Add here
-];
+.option('--agent <name>', 'AI agent to use: claude, codex, my-cli (default: "claude")', 'claude')
 ```
 
-### Step 5: Export Provider
+**That's it!** Your agent is now fully integrated and can be used with `--agent my-cli`.
 
-Add to `src/providers/index.ts`:
+### Design Philosophy
 
-```typescript
-export { MyProvider } from './implementations/my-provider';
-```
-
-### Step 6: Add Tests
-
-Create `src/providers/implementations/__tests__/my-provider.test.ts` following the pattern in `codex-provider.test.ts`.
-
-That's it! Your provider is now fully integrated and can be used with `--provider my-provider`.
+- **No base classes**: Each agent implements the `Agent` interface directly
+- **Inline logic**: All CLI execution and parsing logic is in the agent class (~50-100 LOC)
+- **Self-contained**: No shared utilities or factories - just the agent class
+- **Simple configuration**: Just an agent name string, no complex configs
+- **Actionable errors**: All errors follow "what, why, how-to-fix" pattern using `AgentError`
 
 ## Self-Dogfooding
 
@@ -866,177 +905,39 @@ commitment uses itself for its own commit messages via git hooks:
 
 This ensures commitment is battle-tested on itself and provides a real-world example.
 
-## CLI Modular Architecture
+## CLI Architecture
 
-The CLI is organized into focused, testable modules following single responsibility principle.
+The CLI is simplified to core functionality only - no complex command modules, no provider chains, no auto-detection.
 
 ### Structure
 
 ```
 src/cli/
-├── cli.ts                      # Main CLI entry point (~340 lines)
-├── schemas.ts                  # CLI option validation with Zod
-├── commands/                   # Command handlers (independently testable)
-│   ├── list-providers.ts       # --list-providers command
-│   ├── check-provider.ts       # --check-provider command
-│   ├── auto-detect.ts          # --auto-detect command
-│   └── index.ts                # Command exports
-└── provider-config-builder.ts  # Provider chain building logic
+├── cli.ts         # Main CLI entry point (~200 lines)
+└── schemas.ts     # CLI option validation with Zod
 ```
 
-### Design Principles
+### Core CLI Flags
 
-1. **Separation of Concerns**: Each command is a separate module with a single responsibility
-2. **Testability**: All commands can be unit tested in isolation
-3. **Reusability**: Commands can be used outside the main CLI flow
-4. **Maintainability**: Easy to add new commands without modifying main CLI
+The CLI has exactly 5 core flags:
 
-### Adding a New CLI Command
+- `--agent <name>` - AI agent to use: claude, codex (default: "claude")
+- `--dry-run` - Generate message without creating commit
+- `--message-only` - Output only the commit message (no commit)
+- `--no-ai` - Disable AI generation, use rule-based only
+- `--cwd <path>` - Working directory (default: current directory)
 
-**Step 1: Create command module** in `src/cli/commands/`:
+### ESLint Configuration for CLI
+
+The CLI file uses relaxed ESLint rules since it needs `console.log` and `process.exit`:
 
 ```typescript
 /* eslint-disable no-console, unicorn/no-process-exit */
 import chalk from 'chalk';
 
-/**
- * Description of what your command does
- */
-export function myCommand(options?: MyCommandOptions): void {
-  // Command logic here
-  console.log(chalk.green('✅ Command executed'));
-  process.exit(0);
-}
-```
-
-**Step 2: Export from index**:
-
-```typescript
-// src/cli/commands/index.ts
-export { myCommand } from './my-command';
-```
-
-**Step 3: Use in main CLI**:
-
-```typescript
-// src/cli.ts
-import { myCommand } from './cli/commands/index';
-
-// In main():
-if (options.myCommand) {
-  myCommand(options);
-}
-```
-
-**Step 4: Add tests**:
-
-```typescript
-// src/cli/commands/__tests__/my-command.test.ts
-import { describe, expect, it, vi } from 'vitest';
-import { myCommand } from '../my-command';
-
-describe('myCommand', () => {
-  it('should execute command logic', () => {
-    // Test implementation
-  });
-});
-```
-
-### Command Modules
-
-**listProvidersCommand()**
-
-Displays all available AI providers with implementation status.
-
-```typescript
-import { listProvidersCommand } from './cli/commands/index';
-
-listProvidersCommand();
-// Outputs formatted list of providers and exits with code 0
-```
-
-**checkProviderCommand(config?)**
-
-Checks if a provider is available and properly configured.
-
-```typescript
-import { checkProviderCommand } from './cli/commands/index';
-
-// Check default Claude provider
-await checkProviderCommand();
-
-// Check specific provider
-await checkProviderCommand({
-  type: 'cli',
-  provider: 'codex',
-});
-// Exits with 0 if available, 1 if not
-```
-
-**autoDetectCommand()**
-
-Auto-detects the first available AI provider.
-
-```typescript
-import { autoDetectCommand } from './cli/commands/index';
-
-const provider = await autoDetectCommand();
-if (provider !== null) {
-  console.log('Using:', provider.getName());
-}
-```
-
-### Utility Modules
-
-**buildProviderChain(mainProvider, fallbackNames)**
-
-Builds a provider fallback chain from primary and fallback provider names.
-
-```typescript
-import { buildProviderChain } from './cli/provider-config-builder';
-
-const chain = buildProviderChain({ type: 'cli', provider: 'claude' }, ['codex']);
-// Returns: [ClaudeConfig, CodexConfig]
-```
-
-### Testing CLI Commands
-
-All CLI commands have comprehensive unit tests following these patterns:
-
-```typescript
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-describe('commandName', () => {
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-  let processExitSpy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called');
-    });
-  });
-
-  it('should perform expected action', () => {
-    expect(() => commandName()).toThrow('process.exit called');
-    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('expected output'));
-    expect(processExitSpy).toHaveBeenCalledWith(0);
-  });
-});
-```
-
-### ESLint Configuration for CLI Modules
-
-CLI command modules use relaxed ESLint rules since they need `console.log` and `process.exit`:
-
-```typescript
-/* eslint-disable no-console, unicorn/no-process-exit */
-import chalk from 'chalk';
-
-export function cliCommand(): void {
-  console.log('This is allowed in CLI modules');
-  process.exit(0);
-}
+// Console and process.exit are allowed in CLI files
+console.log(chalk.green('✅ Commit created'));
+process.exit(0);
 ```
 
 ## Testing
@@ -1141,32 +1042,17 @@ describe('MyProvider', () => {
 
 ```
 src/
-├── cli.ts                      # CLI entry point (~340 lines)
+├── cli.ts                      # CLI entry point (~200 lines)
 ├── generator.ts                # CommitMessageGenerator class
-├── index.ts                    # Library exports
+├── errors.ts                   # Consolidated error types (AgentError, GeneratorError)
+├── index.ts                    # Public API exports (≤10 items)
+├── agents/                     # Agent system (simplified, no base classes)
+│   ├── types.ts                # Agent interface and types
+│   ├── claude.ts               # Claude agent (~80 LOC)
+│   ├── codex.ts                # Codex agent (~80 LOC)
+│   └── index.ts                # Agent exports
 ├── cli/                        # CLI modules
-│   ├── schemas.ts              # CLI option validation
-│   ├── commands/               # Command handlers
-│   │   ├── list-providers.ts
-│   │   ├── check-provider.ts
-│   │   ├── auto-detect.ts
-│   │   └── index.ts
-│   └── provider-config-builder.ts
-├── providers/                  # Provider system
-│   ├── types.ts                # Provider type definitions
-│   ├── provider-factory.ts     # Provider creation
-│   ├── provider-chain.ts       # Fallback chain support
-│   ├── auto-detect.ts          # Provider auto-detection
-│   ├── errors.ts               # Provider error types
-│   ├── base/                   # Base provider classes
-│   │   ├── base-cli-provider.ts
-│   │   └── base-api-provider.ts
-│   ├── implementations/        # Concrete providers
-│   │   ├── claude-provider.ts
-│   │   └── codex-provider.ts
-│   └── utils/                  # Provider utilities
-│       ├── cli-executor.ts
-│       └── cli-response-parser.ts
+│   └── schemas.ts              # CLI option validation
 ├── types/                      # Core type definitions
 │   └── schemas.ts              # Zod schemas for core types
 └── utils/                      # Shared utilities

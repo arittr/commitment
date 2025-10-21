@@ -14,5 +14,6 @@
  */
 
 export { ClaudeAgent } from './claude.js';
+export { CodexAgent } from './codex.js';
 export type { Agent, AgentConfig, AgentName } from './types.js';
 export { agentConfigSchema, safeValidateAgentConfig, validateAgentConfig } from './types.js';

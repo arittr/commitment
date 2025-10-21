@@ -76,8 +76,15 @@ describe('ClaudeAgent', () => {
         message: 'spawn claude ENOENT',
       });
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/npm install -g/);
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/brew install/);
+      try {
+        await agent.generate('prompt', '/tmp');
+        throw new Error('Expected error to be thrown');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(Error);
+        const agentError = error as { suggestedAction?: string };
+        expect(agentError.suggestedAction).toContain('npm install -g');
+        expect(agentError.suggestedAction).toContain('brew install');
+      }
     });
 
     it('should throw error when CLI execution fails', async () => {
@@ -98,7 +105,15 @@ describe('ClaudeAgent', () => {
       });
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/API key not configured/);
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Please check:/);
+
+      try {
+        await agent.generate('prompt', '/tmp');
+        throw new Error('Expected error to be thrown');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(Error);
+        const agentError = error as { suggestedAction?: string };
+        expect(agentError.suggestedAction).toContain('Please check:');
+      }
     });
 
     it('should throw error when response is empty', async () => {
@@ -106,7 +121,7 @@ describe('ClaudeAgent', () => {
         stdout: '',
       } as never);
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/empty response/);
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Empty response/);
     });
 
     it('should throw error when response is whitespace only', async () => {
@@ -114,7 +129,7 @@ describe('ClaudeAgent', () => {
         stdout: '   \n\n  ',
       } as never);
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/empty response/);
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Empty response/);
     });
 
     it('should throw error when response is malformed', async () => {
