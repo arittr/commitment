@@ -24,10 +24,10 @@ describe('Validation Integration Tests', () => {
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
     });
 
-    it('should catch invalid provider name in CLI options', () => {
+    it('should catch invalid agent name in CLI options', () => {
       const invalidOptions = {
         cwd: '/valid/path',
-        provider: 123, // Invalid: must be string
+        agent: 'openai', // Invalid: must be 'claude' or 'codex'
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
@@ -43,24 +43,13 @@ describe('Validation Integration Tests', () => {
       expect(() => validateCliOptions(invalidOptions)).toThrow(/expected boolean/);
     });
 
-    it('should catch invalid fallback array in CLI options', () => {
+    it('should catch invalid agent type in CLI options', () => {
       const invalidOptions = {
         cwd: '/valid/path',
-        fallback: 'claude,codex', // Invalid: must be array
+        agent: 123, // Invalid: must be string enum
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
-    });
-
-    it('should catch invalid provider config JSON string', () => {
-      const invalidOptions = {
-        cwd: '/valid/path',
-        providerConfig: '{invalid json}',
-      };
-
-      const validatedOptions = validateCliOptions(invalidOptions);
-      // Should validate CLI schema but providerConfig parsing happens later
-      expect(validatedOptions.providerConfig).toBe('{invalid json}');
     });
 
     it('should validate and apply defaults for CLI options', () => {
