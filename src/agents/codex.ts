@@ -1,5 +1,7 @@
 import { execa } from 'execa';
 
+import { AgentError } from '../errors.js';
+
 import type { Agent } from './types.js';
 
 /**
@@ -68,43 +70,54 @@ export class CodexAgent implements Agent {
 
       // Validate response format
       if (cleaned.length === 0 || cleaned.trim().length === 0) {
-        throw new Error(
-          'Codex CLI returned empty or invalid response.\n\n' +
-            'The response was empty after cleaning. This may indicate:\n' +
-            '- Codex CLI is not properly configured\n' +
-            '- The prompt was too complex or unclear\n' +
-            '- Network or API issues\n\n' +
-            'Try running codex-sh manually to verify it works.',
+        throw AgentError.executionFailed(
+          this.name,
+          0,
+          'Empty response - CLI may not be properly configured',
         );
       }
 
       // Basic validation: should look like a conventional commit
       if (!this._isValidCommitFormat(cleaned)) {
-        throw new Error(
-          `Codex CLI returned malformed response.\n\n` +
-            `Expected conventional commit format (e.g., "feat: description").\n` +
-            `Received: ${cleaned.slice(0, 100)}...\n\n` +
-            `This may indicate Codex is not properly tuned for commit messages.`,
-        );
+        throw AgentError.malformedResponse(this.name, cleaned);
       }
 
       return cleaned;
     } catch (error) {
+      // Re-throw AgentError as-is (already properly formatted)
+      if (error instanceof AgentError) {
+        throw error;
+      }
+
       // Handle CLI not found error
-      if (error instanceof Error && error.message.includes('not found')) {
-        throw new Error(
-          'Codex CLI not available.\n\n' +
-            'The codex-sh command was not found on your system.\n\n' +
-            'To install Codex CLI:\n' +
-            '  npm install -g codex-sh\n\n' +
-            'Or use a different agent:\n' +
-            '  commitment --agent claude\n\n' +
-            'For more information: https://github.com/your-org/codex-sh',
+      if (
+        error !== null &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'ENOENT'
+      ) {
+        throw AgentError.cliNotFound('codex-sh', this.name);
+      }
+
+      // Handle execution errors
+      if (error !== null && typeof error === 'object' && 'code' in error) {
+        const execError = error as { code?: number | string; message?: string; stderr?: string };
+        const details = execError.stderr ?? execError.message ?? 'Unknown error';
+        const code = execError.code ?? 'unknown';
+        throw AgentError.executionFailed(
+          this.name,
+          code,
+          details,
+          error instanceof Error ? error : undefined,
         );
       }
 
-      // Re-throw other errors as-is
-      throw error;
+      // Fallback for unknown errors
+      const message = error instanceof Error ? error.message : String(error);
+      throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
+        agentName: this.name,
+        cause: error instanceof Error ? error : undefined,
+      });
     }
   }
 
