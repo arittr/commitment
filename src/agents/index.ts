@@ -13,5 +13,6 @@
  * @module agents
  */
 
+export { ClaudeAgent } from './claude.js';
 export type { Agent, AgentConfig, AgentName } from './types.js';
 export { agentConfigSchema, safeValidateAgentConfig, validateAgentConfig } from './types.js';
