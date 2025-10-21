@@ -1,17 +1,9 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 import { execa } from 'execa';
-import ora from 'ora';
 import { ZodError } from 'zod';
 
-import type { CLIProviderConfig, ProviderConfig } from './providers/index';
-
-import {
-  autoDetectCommand,
-  checkProviderCommand,
-  listProvidersCommand,
-} from './cli/commands/index';
-import { formatValidationError, parseProviderConfigJson, validateCliOptions } from './cli/schemas';
+import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import { parseGitStatus } from './utils/git-schemas';
 
@@ -69,33 +61,27 @@ async function createCommit(message: string, cwd: string): Promise<void> {
 async function main(): Promise<void> {
   program
     .name('commitment')
-    .description('AI-powered commit message generator with intelligent fallback')
+    .description(
+      'AI-powered commit message generator with intelligent fallback\n\n' +
+        'Available agents:\n' +
+        '  claude    - Claude CLI (default)\n' +
+        '  codex     - OpenAI Codex CLI\n\n' +
+        'Example: commitment --agent claude --dry-run',
+    )
     .version('0.1.0')
+    .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
+    .option('--no-ai', 'Disable AI generation, use rule-based only')
     .option('--dry-run', 'Generate message without creating commit')
     .option('--message-only', 'Output only the commit message (no commit)')
-    .option('--no-ai', 'Disable AI generation, use rule-based only')
     .option('--cwd <path>', 'Working directory', process.cwd())
-    .option('--signature <text>', 'Custom signature to append')
-    .option('--provider <name>', 'AI provider to use (claude, codex, openai, cursor, gemini)')
-    .option('--provider-config <json>', 'Provider configuration as JSON string')
-    .option('--list-providers', 'List all available AI providers')
-    .option('--check-provider', 'Check if selected provider is available')
-    .option('--auto-detect', 'Auto-detect first available AI provider')
-    .option('--fallback <provider...>', 'Fallback providers (can specify multiple)')
     .parse();
 
   const rawOptions = program.opts<{
+    agent?: string;
     ai: boolean;
-    autoDetect?: boolean;
-    checkProvider?: boolean;
     cwd: string;
     dryRun?: boolean;
-    fallback?: string[];
-    listProviders?: boolean;
     messageOnly?: boolean;
-    provider?: string;
-    providerConfig?: string;
-    signature?: string;
   }>();
 
   // Validate CLI options
@@ -112,61 +98,8 @@ async function main(): Promise<void> {
     throw error;
   }
 
-  // Handle --list-providers
-  if (options.listProviders === true) {
-    listProvidersCommand();
-  }
-
-  // Parse provider configuration from CLI flags
-  let providerConfig: ProviderConfig | undefined;
-
-  if (options.providerConfig !== undefined) {
-    // Parse and validate JSON config
-    try {
-      providerConfig = parseProviderConfigJson(options.providerConfig);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(chalk.red('❌ Invalid provider config:'));
-        console.error(chalk.yellow(`   ${error.message}`));
-        console.log(chalk.gray('\nProvider config must be valid JSON matching the schema.'));
-        console.log(
-          chalk.gray('Example: --provider-config \'{"type":"cli","provider":"claude"}\''),
-        );
-        process.exit(1);
-      }
-      throw error;
-    }
-  } else if (options.provider !== undefined) {
-    // Build config from provider name
-    const providerName = options.provider.toLowerCase();
-
-    if (providerName === 'claude') {
-      providerConfig = {
-        type: 'cli',
-        provider: 'claude',
-      } satisfies CLIProviderConfig;
-    } else {
-      console.error(chalk.red(`❌ Provider '${providerName}' is not yet implemented`));
-      console.log(chalk.gray('   Available providers: claude'));
-      console.log(chalk.gray('   Run `commitment --list-providers` for more info'));
-      process.exit(1);
-    }
-  }
-
-  // Handle --check-provider
-  if (options.checkProvider === true) {
-    await checkProviderCommand(providerConfig);
-  }
-
-  // Handle --auto-detect
-  if (options.autoDetect === true) {
-    const detectedProvider = await autoDetectCommand();
-
-    if (detectedProvider !== null) {
-      // Override providerConfig with detected provider instance
-      providerConfig = detectedProvider as unknown as ProviderConfig;
-    }
-  }
+  // Use default agent if not specified
+  const agentName = options.agent ?? 'claude';
 
   try {
     // Check for staged changes
@@ -196,27 +129,21 @@ async function main(): Promise<void> {
       produces: gitStatus.stagedFiles,
     };
 
-    // Generate commit message
-    const spinner =
-      options.messageOnly === true ? null : ora('Generating commit message with AI...').start();
-
-    // Map provider config to agent name (simplified)
-    let agentName: 'claude' | 'codex' = 'claude';
-    if (providerConfig !== undefined && 'provider' in providerConfig) {
-      agentName = providerConfig.provider === 'codex' ? 'codex' : 'claude';
+    // Show generation status
+    if (options.messageOnly !== true) {
+      if (options.ai) {
+        console.log(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
+      } else {
+        console.log(chalk.cyan('📝 Generating commit message with rules...'));
+      }
     }
 
     const generator = new CommitMessageGenerator({
       enableAI: options.ai,
       agent: agentName,
-      signature: options.signature,
       logger: {
         warn: (warningMessage: string) => {
-          if (spinner !== null) {
-            spinner.warn(warningMessage);
-          } else {
-            console.error(chalk.yellow(warningMessage));
-          }
+          console.error(chalk.yellow(`⚠️  ${warningMessage}`));
         },
       },
     });
@@ -226,8 +153,8 @@ async function main(): Promise<void> {
       files: gitStatus.stagedFiles,
     });
 
-    if (spinner !== null) {
-      spinner.succeed('Generated commit message');
+    if (options.messageOnly !== true) {
+      console.log(chalk.green('✅ Generated commit message'));
     }
 
     // Output the message

@@ -3,8 +3,6 @@ import { ZodError } from 'zod';
 
 import {
   formatValidationError,
-  parseProviderConfigJson,
-  safeParseProviderConfigJson,
   safeValidateCliOptions,
   validateCliOptions,
 } from '../../cli/schemas';
@@ -60,44 +58,19 @@ describe('Error Message Quality Integration Tests', () => {
       }
     });
 
-    it('should provide clear error for invalid provider config JSON', () => {
-      const invalidJson = '{not valid json}';
+    it('should provide clear error for invalid agent name', () => {
+      const invalidOptions = {
+        agent: 'invalid-agent',
+      };
 
       try {
-        parseProviderConfigJson(invalidJson);
+        validateCliOptions(invalidOptions as any);
         expect.fail('Should have thrown');
       } catch (error) {
-        if (error instanceof Error) {
-          expect(error.message).toContain('Invalid JSON');
-          expect(error.message).toContain('provider config');
-        }
-      }
-    });
-
-    it('should provide clear error for missing required provider config fields', () => {
-      const invalidConfig = '{"type":"cli"}'; // Missing provider field
-
-      try {
-        parseProviderConfigJson(invalidConfig);
-        expect.fail('Should have thrown');
-      } catch (error) {
-        if (error instanceof Error) {
-          expect(error.message).toContain('Invalid provider configuration');
-          expect(error.message).toContain('provider');
-        }
-      }
-    });
-
-    it('should provide clear error for invalid timeout value', () => {
-      const invalidConfig = '{"type":"cli","provider":"claude","timeout":-1000}';
-
-      try {
-        parseProviderConfigJson(invalidConfig);
-        expect.fail('Should have thrown');
-      } catch (error) {
-        if (error instanceof Error) {
-          expect(error.message).toContain('Invalid provider configuration');
-          expect(error.message).toContain('timeout');
+        if (error instanceof ZodError) {
+          const formatted = formatValidationError(error);
+          expect(formatted).toContain('agent');
+          expect(formatted).toContain('expected one of');
         }
       }
     });
@@ -196,7 +169,7 @@ describe('Error Message Quality Integration Tests', () => {
       const invalidOptions = {
         cwd: '',
         ai: 'not-boolean',
-        provider: 12_345,
+        agent: 'invalid',
       };
 
       try {
@@ -209,22 +182,6 @@ describe('Error Message Quality Integration Tests', () => {
           expect(formatted).toContain('cwd');
           expect(formatted).toContain('ai');
           expect(error.issues.length).toBeGreaterThan(1);
-        }
-      }
-    });
-
-    it('should format nested validation errors with full path', () => {
-      const invalidConfig =
-        '{"type":"cli","provider":"claude","args":"not-an-array","timeout":-500}';
-
-      try {
-        parseProviderConfigJson(invalidConfig);
-        expect.fail('Should have thrown');
-      } catch (error) {
-        if (error instanceof Error) {
-          expect(error.message).toContain('Invalid provider configuration');
-          // Should mention both invalid fields
-          expect(error.message).toBeTruthy();
         }
       }
     });
@@ -249,27 +206,20 @@ describe('Error Message Quality Integration Tests', () => {
       }
     });
 
-    it('should provide string error message for invalid provider config JSON', () => {
-      const invalidJson = '{invalid}';
+    it('should provide structured error for invalid agent in safe parse', () => {
+      const invalidOptions = {
+        agent: 'invalid-agent',
+      };
 
-      const result = safeParseProviderConfigJson(invalidJson);
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(typeof result.error).toBe('string');
-        expect(result.error).toContain('Invalid JSON');
-      }
-    });
-
-    it('should provide string error for schema validation in safe parse', () => {
-      const invalidConfig = '{"type":"invalid","provider":"claude"}';
-
-      const result = safeParseProviderConfigJson(invalidConfig);
+      const result = safeValidateCliOptions(invalidOptions);
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(typeof result.error).toBe('string');
-        expect(result.error).toContain('Invalid provider configuration');
+        expect(result.error).toBeInstanceOf(ZodError);
+        const firstIssue = result.error.issues[0];
+        if (firstIssue !== undefined) {
+          expect(firstIssue.path).toContain('agent');
+        }
       }
     });
   });
