@@ -3,7 +3,6 @@ import { ZodError } from 'zod';
 
 import { validateCliOptions } from '../../cli/schemas';
 import { CommitMessageGenerator } from '../../generator';
-import { ClaudeProvider } from '../../providers/index';
 
 /**
  * Integration Tests for Validation Across System Boundaries
@@ -210,61 +209,37 @@ describe('Validation Integration Tests', () => {
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(/signature/);
     });
 
-    it('should catch mutually exclusive provider and providerChain', () => {
+    it('should catch invalid agent name', () => {
       const invalidConfig = {
-        provider: { type: 'cli' as const, provider: 'claude' as const },
-        providerChain: [{ type: 'cli' as const, provider: 'codex' as const }],
+        agent: 'invalid-agent',
       };
 
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
         /Invalid CommitMessageGenerator configuration/,
       );
-      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /Cannot specify both "provider" and "providerChain"/,
-      );
+      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(/expected one of/);
     });
 
-    it('should catch empty provider chain', () => {
-      const invalidConfig = {
-        providerChain: [], // Invalid: must have at least 1 provider
-      };
-
-      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /Invalid CommitMessageGenerator configuration/,
-      );
-      expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /must contain at least one provider/,
-      );
-    });
-
-    it('should accept valid single provider config', () => {
+    it('should accept valid claude agent config', () => {
       const validConfig = {
         enableAI: true,
-        provider: { type: 'cli' as const, provider: 'claude' as const },
+        agent: 'claude' as const,
       };
 
       expect(() => new CommitMessageGenerator(validConfig)).not.toThrow();
     });
 
-    it('should accept valid provider chain config', () => {
+    it('should accept valid codex agent config', () => {
       const validConfig = {
         enableAI: true,
-        providerChain: [
-          { type: 'cli' as const, provider: 'claude' as const },
-          { type: 'cli' as const, provider: 'codex' as const },
-        ],
+        agent: 'codex' as const,
       };
 
       expect(() => new CommitMessageGenerator(validConfig)).not.toThrow();
     });
 
-    it('should accept valid provider instance', () => {
-      const provider = new ClaudeProvider();
-
-      const validConfig = {
-        enableAI: true,
-        provider,
-      };
+    it('should accept empty config (uses defaults)', () => {
+      const validConfig = {};
 
       expect(() => new CommitMessageGenerator(validConfig)).not.toThrow();
     });

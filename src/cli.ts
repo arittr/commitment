@@ -11,7 +11,6 @@ import {
   checkProviderCommand,
   listProvidersCommand,
 } from './cli/commands/index';
-import { buildProviderChain } from './cli/provider-config-builder';
 import { formatValidationError, parseProviderConfigJson, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import { parseGitStatus } from './utils/git-schemas';
@@ -169,9 +168,6 @@ async function main(): Promise<void> {
     }
   }
 
-  // Handle provider fallback chain
-  const providerChain = buildProviderChain(providerConfig, options.fallback);
-
   try {
     // Check for staged changes
     const gitStatus = await getGitStatus(options.cwd);
@@ -204,10 +200,15 @@ async function main(): Promise<void> {
     const spinner =
       options.messageOnly === true ? null : ora('Generating commit message with AI...').start();
 
+    // Map provider config to agent name (simplified)
+    let agentName: 'claude' | 'codex' = 'claude';
+    if (providerConfig !== undefined && 'provider' in providerConfig) {
+      agentName = providerConfig.provider === 'codex' ? 'codex' : 'claude';
+    }
+
     const generator = new CommitMessageGenerator({
       enableAI: options.ai,
-      provider: providerChain === undefined ? providerConfig : undefined,
-      providerChain,
+      agent: agentName,
       signature: options.signature,
       logger: {
         warn: (warningMessage: string) => {

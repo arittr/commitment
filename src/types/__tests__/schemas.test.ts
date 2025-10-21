@@ -345,9 +345,9 @@ describe('Core Schemas', () => {
         expect(result).toEqual(config);
       });
 
-      it('should validate config with provider config', () => {
+      it('should validate config with claude agent', () => {
         const config = {
-          provider: { type: 'cli', provider: 'claude' },
+          agent: 'claude' as const,
         };
 
         const result = commitMessageGeneratorConfigSchema.parse(config);
@@ -355,29 +355,9 @@ describe('Core Schemas', () => {
         expect(result).toEqual(config);
       });
 
-      it('should validate config with provider instance', () => {
-        const mockProvider = {
-          generateCommitMessage: async () => 'test',
-          isAvailable: async () => true,
-          getName: () => 'Test Provider',
-          getProviderType: () => 'cli' as const,
-        };
-
+      it('should validate config with codex agent', () => {
         const config = {
-          provider: mockProvider,
-        };
-
-        const result = commitMessageGeneratorConfigSchema.parse(config);
-
-        expect(result.provider).toBe(mockProvider);
-      });
-
-      it('should validate config with providerChain', () => {
-        const config = {
-          providerChain: [
-            { type: 'cli', provider: 'claude' },
-            { type: 'cli', provider: 'codex' },
-          ],
+          agent: 'codex' as const,
         };
 
         const result = commitMessageGeneratorConfigSchema.parse(config);
@@ -412,16 +392,6 @@ describe('Core Schemas', () => {
         expect(result.logger?.warn).toBeTypeOf('function');
       });
 
-      it('should validate config with autoDetect', () => {
-        const config = {
-          autoDetect: true,
-        };
-
-        const result = commitMessageGeneratorConfigSchema.parse(config);
-
-        expect(result).toEqual(config);
-      });
-
       it('should validate config with all optional fields', () => {
         const logger = {
           warn: (message: string) => {
@@ -431,20 +401,18 @@ describe('Core Schemas', () => {
 
         const config = {
           enableAI: true,
-          provider: { type: 'cli', provider: 'claude' },
+          agent: 'claude' as const,
           signature: 'Custom signature',
           logger,
-          autoDetect: false,
         };
 
         const result = commitMessageGeneratorConfigSchema.parse(config);
 
         expect(result.enableAI).toBe(true);
-        expect(result.provider).toEqual({ type: 'cli', provider: 'claude' });
+        expect(result.agent).toBe('claude');
         expect(result.signature).toBe('Custom signature');
         expect(result.logger).toBeDefined();
         expect(result.logger?.warn).toBeTypeOf('function');
-        expect(result.autoDetect).toBe(false);
       });
     });
 
@@ -477,57 +445,25 @@ describe('Core Schemas', () => {
         expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
       });
 
-      it('should reject invalid provider config', () => {
+      it('should reject invalid agent name', () => {
         const config = {
-          provider: { type: 'invalid', provider: 'claude' },
+          agent: 'invalid-agent',
         };
 
         expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
       });
 
-      it('should reject invalid provider instance (missing methods)', () => {
+      it('should reject non-string agent', () => {
         const config = {
-          provider: {
-            generateCommitMessage: async () => 'test',
-            // Missing isAvailable, getName, getProviderType
-          },
+          agent: 123,
         };
 
         expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
       });
 
-      it('should reject empty providerChain array', () => {
+      it('should provide helpful error message for invalid agent', () => {
         const config = {
-          providerChain: [],
-        };
-
-        expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
-      });
-
-      it('should reject providerChain with invalid configs', () => {
-        const config = {
-          providerChain: [
-            { type: 'cli', provider: 'claude' },
-            { type: 'invalid', provider: 'test' },
-          ],
-        };
-
-        expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
-      });
-
-      it('should reject both provider and providerChain', () => {
-        const config = {
-          provider: { type: 'cli', provider: 'claude' },
-          providerChain: [{ type: 'cli', provider: 'codex' }],
-        };
-
-        expect(() => commitMessageGeneratorConfigSchema.parse(config)).toThrow(ZodError);
-      });
-
-      it('should provide helpful error message for mutual exclusivity', () => {
-        const config = {
-          provider: { type: 'cli', provider: 'claude' },
-          providerChain: [{ type: 'cli', provider: 'codex' }],
+          agent: 'unknown',
         };
 
         try {
@@ -536,8 +472,7 @@ describe('Core Schemas', () => {
         } catch (error) {
           expect(error).toBeInstanceOf(ZodError);
           const zodError = error as ZodError;
-          expect(zodError.issues[0]?.message).toContain('provider');
-          expect(zodError.issues[0]?.message).toContain('providerChain');
+          expect(zodError.issues[0]?.message).toContain('expected one of');
         }
       });
     });
@@ -641,7 +576,7 @@ describe('Core Schemas', () => {
       it('should validate valid config', () => {
         const config = {
           enableAI: true,
-          provider: { type: 'cli', provider: 'claude' },
+          agent: 'claude' as const,
           signature: 'Custom signature',
         };
 
@@ -658,10 +593,9 @@ describe('Core Schemas', () => {
         expect(() => validateGeneratorConfig(config)).toThrow(ZodError);
       });
 
-      it('should throw ZodError for mutual exclusivity violation', () => {
+      it('should throw ZodError for invalid agent', () => {
         const config = {
-          provider: { type: 'cli', provider: 'claude' },
-          providerChain: [{ type: 'cli', provider: 'codex' }],
+          agent: 'invalid-agent',
         };
 
         expect(() => validateGeneratorConfig(config)).toThrow(ZodError);
@@ -803,7 +737,7 @@ describe('Core Schemas', () => {
       it('should return success for valid config', () => {
         const config = {
           enableAI: true,
-          provider: { type: 'cli', provider: 'claude' },
+          agent: 'claude' as const,
         };
 
         const result = safeValidateGeneratorConfig(config);
@@ -827,17 +761,16 @@ describe('Core Schemas', () => {
         }
       });
 
-      it('should return error for mutual exclusivity violation', () => {
+      it('should return error for invalid agent', () => {
         const config = {
-          provider: { type: 'cli', provider: 'claude' },
-          providerChain: [{ type: 'cli', provider: 'codex' }],
+          agent: 'unknown-agent',
         };
 
         const result = safeValidateGeneratorConfig(config);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0]?.message).toContain('provider');
+          expect(result.error.issues[0]?.message).toContain('expected one of');
         }
       });
 
@@ -911,7 +844,7 @@ describe('Core Schemas', () => {
       };
 
       expect(config.enableAI).toBe(false);
-      expect(config.provider).toBeUndefined();
+      expect(config.agent).toBeUndefined();
     });
   });
 });

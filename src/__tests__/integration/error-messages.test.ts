@@ -157,10 +157,9 @@ describe('Error Message Quality Integration Tests', () => {
       }
     });
 
-    it('should guide user when provider and providerChain conflict', () => {
+    it('should guide user when agent name is invalid', () => {
       const invalidConfig = {
-        provider: { type: 'cli' as const, provider: 'claude' as const },
-        providerChain: [{ type: 'cli' as const, provider: 'codex' as const }],
+        agent: 'invalid-agent',
       };
 
       const result = safeValidateGeneratorConfig(invalidConfig);
@@ -170,17 +169,16 @@ describe('Error Message Quality Integration Tests', () => {
         const firstIssue = result.error.issues[0];
         if (firstIssue !== undefined) {
           const errorMessage = firstIssue.message;
-          expect(errorMessage).toContain('Cannot specify both');
-          expect(errorMessage).toContain('provider');
-          expect(errorMessage).toContain('providerChain');
-          expect(errorMessage).toContain('Use one or the other');
+          expect(errorMessage).toContain('expected one of');
+          expect(errorMessage).toContain('claude');
+          expect(errorMessage).toContain('codex');
         }
       }
     });
 
-    it('should provide helpful error for empty provider chain', () => {
+    it('should provide helpful error for non-string agent', () => {
       const invalidConfig = {
-        providerChain: [],
+        agent: 123,
       };
 
       const result = safeValidateGeneratorConfig(invalidConfig);
@@ -189,7 +187,7 @@ describe('Error Message Quality Integration Tests', () => {
       if (!result.success) {
         const firstIssue = result.error.issues[0];
         if (firstIssue !== undefined) {
-          expect(firstIssue.message).toContain('must contain at least one provider');
+          expect(firstIssue.message).toContain('expected one of');
         }
       }
     });
@@ -340,10 +338,9 @@ describe('Error Message Quality Integration Tests', () => {
       }
     });
 
-    it('should include helpful hint for mutual exclusivity error', () => {
+    it('should include helpful hint for invalid agent error', () => {
       const invalidConfig = {
-        provider: { type: 'cli' as const, provider: 'claude' as const },
-        providerChain: [{ type: 'cli' as const, provider: 'codex' as const }],
+        agent: 'unknown-agent',
       };
 
       try {
@@ -351,8 +348,8 @@ describe('Error Message Quality Integration Tests', () => {
         expect.fail('Should have thrown');
       } catch (error) {
         if (error instanceof Error) {
-          expect(error.message).toContain('Cannot specify both');
-          expect(error.message).toContain('Use one or the other');
+          expect(error.message).toContain('Invalid CommitMessageGenerator configuration');
+          expect(error.message).toContain('expected one of');
         }
       }
     });

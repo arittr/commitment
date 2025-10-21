@@ -1,8 +1,9 @@
 import { execa } from 'execa';
 
-import type { AIProvider, ProviderConfig } from './providers/index';
+import type { Agent } from './agents/types.js';
 
-import { ClaudeProvider, createProvider, ProviderChain } from './providers/index';
+import { ClaudeAgent } from './agents/claude.js';
+import { CodexAgent } from './agents/codex.js';
 import {
   safeValidateCommitOptions,
   safeValidateCommitTask,
@@ -25,18 +26,14 @@ export type CommitTask = {
  * Configuration options for commit message generation
  */
 export type CommitMessageGeneratorConfig = {
-  /** Auto-detect first available provider (default: false) */
-  autoDetect?: boolean;
+  /** AI agent to use ('claude' | 'codex', default: 'claude') */
+  agent?: 'claude' | 'codex';
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
   /** Custom logger function */
   logger?: {
     warn: (message: string) => void;
   };
-  /** AI provider (config or instance) */
-  provider?: AIProvider | ProviderConfig;
-  /** Provider chain configs for fallback support */
-  providerChain?: ProviderConfig[];
   /** Custom signature to append to commits */
   signature?: string;
 };
@@ -59,7 +56,7 @@ export type CommitMessageOptions = {
  * @example
  * ```typescript
  * const generator = new CommitMessageGenerator({
- *   provider: { type: 'cli', provider: 'claude' },
+ *   agent: 'claude',
  *   enableAI: true,
  * });
  *
@@ -76,10 +73,8 @@ export type CommitMessageOptions = {
  * ```
  */
 export class CommitMessageGenerator {
-  private readonly config: Required<
-    Omit<CommitMessageGeneratorConfig, 'autoDetect' | 'provider' | 'providerChain'>
-  >;
-  private readonly provider: AIProvider;
+  private readonly config: Required<Omit<CommitMessageGeneratorConfig, 'agent'>>;
+  private readonly agent: Agent;
 
   constructor(config: CommitMessageGeneratorConfig = {}) {
     // Validate configuration at construction boundary
@@ -112,31 +107,9 @@ export class CommitMessageGenerator {
         : { warn: () => {} },
     };
 
-    // Initialize provider with priority: providerChain > provider > default
-    if (validatedConfig.providerChain !== undefined && validatedConfig.providerChain.length > 0) {
-      // Create provider chain from configs
-      const providers = validatedConfig.providerChain.map((providerConfig) =>
-        createProvider(providerConfig),
-      );
-      this.provider = new ProviderChain(providers);
-    } else if (validatedConfig.provider !== undefined) {
-      // Single provider
-      this.provider =
-        'generateCommitMessage' in validatedConfig.provider &&
-        'isAvailable' in validatedConfig.provider
-          ? validatedConfig.provider
-          : createProvider(validatedConfig.provider);
-    } else {
-      // Default to Claude CLI
-      this.provider = new ClaudeProvider();
-    }
-
-    // Warn if autoDetect is used (should be handled by CLI before construction)
-    if (validatedConfig.autoDetect === true) {
-      this.config.logger.warn(
-        '⚠️ autoDetect should be handled before creating CommitMessageGenerator. Use detectAvailableProvider() utility.',
-      );
-    }
+    // Instantiate agent directly based on config (defaults to Claude)
+    const agentName = validatedConfig.agent ?? 'claude';
+    this.agent = agentName === 'codex' ? new CodexAgent() : new ClaudeAgent();
   }
 
   /**
@@ -296,13 +269,11 @@ Change Analysis:
 ${changeAnalysis}`;
 
     try {
-      // Use provider to generate commit message
-      return await this.provider.generateCommitMessage(enhancedPrompt, {
-        workdir: options.workdir,
-      });
+      // Use agent to generate commit message
+      return await this.agent.generate(enhancedPrompt, options.workdir);
     } catch (error) {
       throw new Error(
-        `${this.provider.getName()} failed: ${error instanceof Error ? error.message : String(error)}`,
+        `${this.agent.name} failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
