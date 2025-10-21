@@ -7,11 +7,10 @@
 ## Features
 
 - 🤖 **AI-powered generation** using Claude CLI or Codex CLI for accurate, context-aware messages
-- 🔄 **Multiple AI providers** with automatic fallback (Claude → Codex → rule-based)
 - 🎯 **Intelligent fallback** to rule-based generation when AI fails
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
 - ✨ **Conventional commits** follows standard format (feat:, fix:, etc.)
-- 🎨 **Customizable** signature, AI command, and timeout options
+- 🎨 **Simple configuration** with just `--agent` flag
 - 🪝 **Precommit hooks** works seamlessly with husky and lint-staged
 - 📦 **Zero config** works out of the box with sensible defaults
 
@@ -36,6 +35,19 @@ yarn add -D commitment
 
 ## Quick Start
 
+**Get started in 3 commands:**
+
+```bash
+# 1. Install commitment
+npm install -D commitment
+
+# 2. Stage your changes
+git add .
+
+# 3. Generate and commit
+npx commitment
+```
+
 ### Basic Usage
 
 Stage your changes and run:
@@ -47,7 +59,7 @@ npx commitment
 This will:
 
 1. Analyze your staged changes
-2. Generate a commit message using AI
+2. Generate a commit message using AI (defaults to Claude)
 3. Create the commit
 
 ### Dry Run
@@ -72,13 +84,11 @@ npx commitment --message-only
 commitment [options]
 
 Options:
+  --agent <name>         AI agent to use: claude, codex (default: "claude")
   --dry-run              Generate message without creating commit
   --message-only         Output only the commit message (no commit)
   --no-ai                Disable AI generation, use rule-based only
   --cwd <path>           Working directory (default: current directory)
-  --signature <text>     Custom signature to append
-  --ai-command <cmd>     AI command to use (default: "claude")
-  --timeout <ms>         AI timeout in milliseconds (default: "120000")
   -V, --version          Output version number
   -h, --help             Display help
 ```
@@ -91,9 +101,8 @@ Use `commitment` in your Node.js scripts:
 import { CommitMessageGenerator } from 'commitment';
 
 const generator = new CommitMessageGenerator({
-  aiCommand: 'claude',
+  agent: 'claude',
   enableAI: true,
-  signature: 'Custom signature here',
 });
 
 const task = {
@@ -114,22 +123,11 @@ console.log(message);
 
 ```typescript
 type CommitMessageGeneratorConfig = {
-  /** AI client command (default: 'claude') */
-  aiCommand?: string;
-
-  /** Timeout for AI generation in ms (default: 120000) */
-  aiTimeout?: number;
+  /** AI agent to use: 'claude' or 'codex' (default: 'claude') */
+  agent?: string;
 
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
-
-  /** Custom logger function */
-  logger?: {
-    warn: (message: string) => void;
-  };
-
-  /** Custom signature to append to commits */
-  signature?: string;
 };
 ```
 
@@ -279,16 +277,10 @@ You can also disable AI and use rule-based only:
 npx commitment --no-ai
 ```
 
-### Custom Signature
-
-Remove or customize the default signature:
+Or try a different agent:
 
 ```bash
-# No signature
-npx commitment --signature ""
-
-# Custom signature
-npx commitment --signature "Signed-off-by: Your Name <your@email.com>"
+npx commitment --agent codex
 ```
 
 ## License
@@ -299,14 +291,9 @@ ISC
 
 Contributions welcome! Please open an issue or PR on GitHub.
 
-## Credits
-
-Extracted from [chopstack](https://github.com/anthropics/chopstack-mcp) - AI-powered PR stack automation tool.
-
-Built with:
+## Built With
 
 - [Claude CLI](https://claude.ai/code) for AI generation
 - [execa](https://github.com/sindresorhus/execa) for subprocess execution
 - [commander](https://github.com/tj/commander.js) for CLI parsing
 - [chalk](https://github.com/chalk/chalk) for terminal colors
-- [ora](https://github.com/sindresorhus/ora) for spinners
