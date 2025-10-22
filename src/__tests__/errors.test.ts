@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import { AgentError, GeneratorError, isAgentError, isGeneratorError } from '../errors';
 
 describe('AgentError', () => {
