@@ -1,25 +1,25 @@
 #!/usr/bin/env bun
-import { build } from 'bun';
 import { chmod } from 'node:fs/promises';
+import { build } from 'bun';
 
 // Build library entry point
 await build({
   entrypoints: ['./src/index.ts'],
-  outdir: './dist',
-  target: 'node',
   format: 'esm',
   minify: false,
+  outdir: './dist',
   sourcemap: 'external',
+  target: 'node',
 });
 
 // Build CLI entry point
 await build({
   entrypoints: ['./src/cli.ts'],
-  outdir: './dist',
-  target: 'node',
   format: 'esm',
   minify: false,
+  outdir: './dist',
   sourcemap: 'external',
+  target: 'node',
 });
 
 // Add shebang to CLI file
