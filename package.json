@@ -23,12 +23,6 @@
     "bun": ">=1.0.0",
     "node": ">=18.0.0"
   },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "files": [
     "dist",
     "README.md",
@@ -46,7 +40,6 @@
     "lint-staged"
   ],
   "license": "ISC",
-  "main": "./dist/index.js",
   "name": "@arittr/commitment",
   "packageManager": "bun@1.1.0",
   "scripts": {
@@ -57,12 +50,11 @@
     "lint": "bun check-types && biome check --write",
     "prepare": "bun run build && husky",
     "prepublishOnly": "bun run clean && bun run build",
-    "test": "bun test src/agents src/cli src/types src/utils src/__tests__",
-    "test:coverage": "bun test --coverage src/agents src/cli src/types src/utils src/__tests__",
-    "test:eval": "bun test src/eval/__tests__/eval-live.test.ts",
-    "test:watch": "bun test --watch src/agents src/cli src/types src/utils src/__tests__"
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:eval": "bun test src/eval/__tests__/baseline.eval.ts",
+    "test:watch": "bun test --watch"
   },
   "type": "module",
-  "types": "./dist/index.d.ts",
   "version": "1.0.0"
 }
