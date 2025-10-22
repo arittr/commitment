@@ -130,14 +130,18 @@ export class ClaudeAgent implements Agent {
   /**
    * Clean AI artifacts from Claude's response
    *
-   * Removes markdown code blocks, extra whitespace, and other artifacts
-   * that Claude might include in the response.
+   * Removes markdown code blocks, commit message markers, extra whitespace,
+   * and other artifacts that Claude might include in the response.
    *
    * @param output - Raw output from Claude CLI
    * @returns Cleaned commit message
    */
   private _cleanAIArtifacts(output: string): string {
     let cleaned = output.trim();
+
+    // Remove commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
+    cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
+    cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
 
     // Remove markdown code blocks (```...```)
     cleaned = cleaned.replaceAll(/^```[\S\s]*?\n/gm, '').replaceAll(/\n```$/gm, '');
