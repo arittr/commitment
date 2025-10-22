@@ -456,3 +456,284 @@ export function isAgentError(error: unknown): error is AgentError {
 export function isGeneratorError(error: unknown): error is GeneratorError {
   return error instanceof GeneratorError;
 }
+
+/**
+ * Options for creating an EvalError
+ */
+export type EvalErrorOptions = {
+  /** Original error that caused this error */
+  cause?: Error;
+  /** Additional context about the error (fixture, agent, etc.) */
+  context?: Record<string, unknown>;
+  /** Actionable suggestion for how to fix the error */
+  suggestedAction?: string;
+};
+
+/**
+ * Error thrown when evaluation system operations fail
+ *
+ * This error consolidates evaluation-related failures:
+ * - Fixture not found (missing or invalid fixture directory)
+ * - Agent generation failed (Claude/Codex couldn't generate message)
+ * - ChatGPT evaluation failed (API error or invalid response)
+ * - API key missing (OpenAI API key not configured)
+ * - Agent unavailable (CLI not installed or not working)
+ *
+ * All errors include actionable messages following the "what, why, how-to-fix" pattern.
+ *
+ * @example
+ * ```typescript
+ * // Fixture not found error
+ * throw EvalError.fixtureNotFound('simple');
+ *
+ * // Agent generation failed
+ * throw EvalError.generationFailed('claude', 'CLI not found');
+ *
+ * // Evaluation failed
+ * throw EvalError.evaluationFailed('API rate limit exceeded');
+ *
+ * // API key missing
+ * throw EvalError.apiKeyMissing('OpenAI');
+ *
+ * // Agent unavailable
+ * throw EvalError.agentUnavailable('claude');
+ * ```
+ */
+export class EvalError extends Error {
+  /** Name of the error class */
+  public override readonly name = 'EvalError';
+
+  /** Original error that caused this failure */
+  public override readonly cause?: Error;
+
+  /** Additional context (fixture, agent, etc.) */
+  public readonly context?: Record<string, unknown>;
+
+  /** Actionable suggestion for how to fix the error */
+  public readonly suggestedAction?: string;
+
+  /**
+   * Create a new EvalError
+   *
+   * @param message - Error message describing what failed
+   * @param options - Additional error context and metadata
+   *
+   * @example
+   * ```typescript
+   * throw new EvalError('Fixture not found', {
+   *   context: { fixtureName: 'simple' },
+   *   suggestedAction: 'Check that fixture exists in examples/eval-fixtures/'
+   * });
+   * ```
+   */
+  constructor(message: string, options?: EvalErrorOptions) {
+    super(message);
+    this.cause = options?.cause;
+    this.context = options?.context;
+    this.suggestedAction = options?.suggestedAction;
+
+    // Maintain proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, EvalError.prototype);
+  }
+
+  /**
+   * Create an error for when a fixture is not found
+   *
+   * Includes guidance on fixture location and structure.
+   *
+   * @param name - Name of the fixture that was not found
+   * @returns EvalError with fixture location guidance
+   *
+   * @example
+   * ```typescript
+   * throw EvalError.fixtureNotFound('simple');
+   * // Error includes examples/eval-fixtures/ path
+   * ```
+   */
+  static fixtureNotFound(name: string): EvalError {
+    return new EvalError(
+      `Fixture "${name}" not found.\n\nThe fixture directory or required files are missing.`,
+      {
+        context: { fixtureName: name },
+        suggestedAction: `Check that fixture exists:
+  examples/eval-fixtures/${name}/
+  ├── metadata.json          (required)
+  ├── mock-status.txt        (for mocked mode)
+  └── mock-diff.txt          (for mocked mode)
+
+Or for live fixtures:
+  examples/eval-fixtures/${name}-live/
+  ├── .git/                  (real git repository)
+  └── metadata.json          (required)
+
+Verify the fixture name is correct and files exist.`,
+      },
+    );
+  }
+
+  /**
+   * Create an error for when agent generation fails
+   *
+   * Includes agent name and reason for failure with troubleshooting steps.
+   *
+   * @param agent - Name of the agent that failed (claude, codex)
+   * @param reason - Why generation failed
+   * @returns EvalError with troubleshooting guidance
+   *
+   * @example
+   * ```typescript
+   * throw EvalError.generationFailed('claude', 'CLI not found');
+   * ```
+   */
+  static generationFailed(agent: string, reason: string): EvalError {
+    return new EvalError(
+      `Agent "${agent}" failed to generate commit message.\n\nReason: ${reason}`,
+      {
+        context: { agent, reason },
+        suggestedAction: `Troubleshooting steps:
+  1. Verify ${agent} CLI is installed and in PATH
+  2. Check API key is configured (if applicable)
+  3. Run: ${agent} --version
+  4. Check network connection
+
+Or skip this agent:
+  - Use --agent flag to select different agent
+  - Use --no-ai to fall back to rule-based generation`,
+      },
+    );
+  }
+
+  /**
+   * Create an error for when ChatGPT evaluation fails
+   *
+   * Includes reason and suggestions for common issues.
+   *
+   * @param reason - Why evaluation failed
+   * @returns EvalError with diagnostic guidance
+   *
+   * @example
+   * ```typescript
+   * throw EvalError.evaluationFailed('API rate limit exceeded');
+   * ```
+   */
+  static evaluationFailed(reason: string): EvalError {
+    return new EvalError(`ChatGPT evaluation failed.\n\nReason: ${reason}`, {
+      context: { reason },
+      suggestedAction: `Common issues:
+  - API rate limit exceeded: Wait and retry
+  - Network error: Check internet connection
+  - Invalid response: Check OpenAI service status
+  - Model unavailable: Verify gpt-4 access
+
+Check OpenAI status: https://status.openai.com
+Or set OPENAI_API_KEY environment variable.`,
+    });
+  }
+
+  /**
+   * Create an error for when API key is missing
+   *
+   * Includes instructions for setting up the API key.
+   *
+   * @param service - Name of the service (OpenAI, Anthropic, etc.)
+   * @returns EvalError with API key setup instructions
+   *
+   * @example
+   * ```typescript
+   * throw EvalError.apiKeyMissing('OpenAI');
+   * ```
+   */
+  static apiKeyMissing(service: string): EvalError {
+    return new EvalError(
+      `${service} API key is not configured.\n\nThe evaluation system requires an API key to function.`,
+      {
+        context: { service },
+        suggestedAction: `Set up your ${service} API key:
+
+  1. Get API key from ${service}:
+     ${service === 'OpenAI' ? 'https://platform.openai.com/api-keys' : `${service} website`}
+
+  2. Set environment variable:
+     export OPENAI_API_KEY="your-api-key-here"
+
+  3. Or add to .env file:
+     OPENAI_API_KEY=your-api-key-here
+
+  4. Verify it's set:
+     echo $OPENAI_API_KEY
+
+Then run evaluation tests again.`,
+      },
+    );
+  }
+
+  /**
+   * Create an error for when an agent is unavailable
+   *
+   * Includes installation instructions for the specific agent.
+   *
+   * @param name - Name of the agent (claude, codex, cursor)
+   * @returns EvalError with installation instructions
+   *
+   * @example
+   * ```typescript
+   * throw EvalError.agentUnavailable('claude');
+   * ```
+   */
+  static agentUnavailable(name: string): EvalError {
+    let installInstructions = '';
+
+    if (name === 'claude') {
+      installInstructions = `To install Claude CLI:
+  npm install -g @anthropic-ai/claude-cli
+  # or
+  brew install claude-cli
+
+Documentation: https://docs.anthropic.com/claude/docs/claude-cli`;
+    } else if (name === 'codex') {
+      installInstructions = `To install Codex CLI:
+  npm install -g codex
+
+For more information: https://github.com/your-org/codex`;
+    } else {
+      installInstructions = `Please install the ${name} CLI and ensure it's in your PATH.`;
+    }
+
+    return new EvalError(
+      `Agent "${name}" is not available.\n\nThe CLI is not installed or not working properly.`,
+      {
+        context: { agentName: name },
+        suggestedAction: `${installInstructions}
+
+Verify installation:
+  ${name} --version
+
+If already installed, check:
+  - CLI is in PATH
+  - API key is configured (if applicable)
+  - No permission issues`,
+      },
+    );
+  }
+}
+
+/**
+ * Type guard to check if an error is an EvalError
+ *
+ * @param error - Error to check
+ * @returns True if error is an EvalError instance
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await runner.runFixture(fixture);
+ * } catch (error) {
+ *   if (isEvalError(error)) {
+ *     console.error('Evaluation failed:', error.suggestedAction);
+ *   }
+ * }
+ * ```
+ */
+export function isEvalError(error: unknown): error is EvalError {
+  return error instanceof EvalError;
+}

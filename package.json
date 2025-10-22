@@ -1,5 +1,5 @@
 {
-  "name": "commitment",
+  "name": "@arittr/commitment",
   "version": "1.0.0",
   "description": "AI-powered commit message generator with intelligent fallback",
   "type": "module",
@@ -27,6 +27,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:eval": "vitest run src/__tests__/integration/eval-live.test.ts",
     "lint": "pnpm run type-check && pnpm run format:check && eslint .",
     "format": "prettier --cache --write . && eslint . --fix",
     "format:check": "prettier --cache --check .",
@@ -52,6 +53,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@openai/agents": "^0.1.11",
     "chalk": "^5.6.2",
     "commander": "^14.0.1",
     "execa": "^9.6.0",
