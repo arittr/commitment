@@ -4,7 +4,11 @@ This file provides guidance to Claude Code and other AI coding agents when worki
 
 ## Project Overview
 
-**commitment** is an AI-powered commit message generator with intelligent fallback. It uses Claude CLI to generate high-quality, conventional commit messages from git diffs, with a rule-based fallback for when AI is unavailable.
+**commitment** is an AI-powered commit message generator with intelligent fallback. It uses AI agents (Claude CLI or Codex CLI) to generate high-quality, conventional commit messages from git diffs, with a rule-based fallback for when AI is unavailable.
+
+**Architecture Philosophy:** Streamlined and simple. No base classes, no factories, no provider chains. Each agent is a standalone class (~80 LOC) with inline logic. One-command setup with `commitment init` for automatic hook installation.
+
+**Constitution:** This project follows @docs/constitutions/v2/ (current). See v2/meta.md for changelog from v1.
 
 ## Development Commands
 
@@ -188,13 +192,18 @@ import { hasContent } from './utils/guards.js';
 
 ## Architecture Overview
 
+**See @docs/constitutions/v2/architecture.md for full architectural rules and boundaries.**
+
 ### Core Components
 
-- **CLI** (`src/cli.ts`): Command-line interface for generating and creating commits
-  - **CLI Commands** (`src/cli/commands/`): Modular, testable command handlers (list-providers, check-provider, auto-detect)
-  - **Provider Config Builder** (`src/cli/provider-config-builder.ts`): Builds provider fallback chains
+- **CLI** (`src/cli.ts`): Command-line interface (~200 lines)
+  - **Init Command** (`src/cli/commands/init.ts`): Automatic hook installation with auto-detection
+  - **CLI Schemas** (`src/cli/schemas.ts`): CLI option validation
 - **Generator** (`src/generator.ts`): CommitMessageGenerator class with AI and rule-based generation
-- **Providers** (`src/providers/`): Modular AI provider system supporting multiple backends
+- **Agents** (`src/agents/`): Standalone AI agent implementations (no base classes)
+  - `claude.ts` - Claude CLI agent (~80 LOC, self-contained)
+  - `codex.ts` - Codex CLI agent (~80 LOC, self-contained)
+  - `types.ts` - Minimal Agent interface
 - **Schemas** (`src/types/schemas.ts`, `src/cli/schemas.ts`, `src/utils/git-schemas.ts`): Zod schemas for runtime validation
 - **Git Utilities** (`src/utils/git-schemas.ts`): Git output parsing and file categorization
   - `parseGitStatus()` - Parse and validate git status output
@@ -206,11 +215,14 @@ import { hasContent } from './utils/guards.js';
 
 1. **AI-First with Fallback**: Always try AI generation first, fall back to rule-based
 2. **Conventional Commits**: All messages follow conventional commit format
-3. **Provider Abstraction**: Pluggable AI providers (Claude CLI, Codex CLI, etc.)
-4. **ESM-Only**: Built as ESM modules using latest TypeScript and Node.js features
-5. **Strict TypeScript**: All strict compiler options enabled
-6. **Self-Dogfooding**: commitment uses itself via git hooks
-7. **Schema-First Type Safety**: Runtime validation at system boundaries using Zod schemas
+3. **Inline Agent Logic**: Each agent is standalone (~80 LOC) with all logic inline - no base classes, no factories
+4. **Direct Instantiation**: Simple if/else for agent selection - no auto-detection or provider chains
+5. **One-Command Setup**: `commitment init` auto-detects and installs hooks
+6. **ESM-Only**: Built as ESM modules using latest TypeScript and Node.js features
+7. **Strict TypeScript**: All strict compiler options enabled
+8. **Self-Dogfooding**: commitment uses itself via git hooks
+9. **Schema-First Type Safety**: Runtime validation at system boundaries using Zod schemas
+10. **Cross-Platform**: LF line endings via `.gitattributes`, Windows-compatible hooks
 
 ## Type Safety Patterns
 
@@ -763,7 +775,9 @@ if (hasContent(str)) {
 
 ## Adding a New AI Agent
 
-The agent system is designed for simplicity - no base classes, no factories, no auto-detection. Each agent is a standalone class implementing a simple interface.
+**See @docs/constitutions/v2/architecture.md for full extension point documentation.**
+
+The agent system is designed for maximum simplicity - no base classes, no factories, no auto-detection. Each agent is a standalone class (~50-100 LOC) implementing a minimal interface with all logic inline.
 
 ### Step 1: Create Agent Class
 
@@ -907,24 +921,44 @@ This ensures commitment is battle-tested on itself and provides a real-world exa
 
 ## CLI Architecture
 
-The CLI is simplified to core functionality only - no complex command modules, no provider chains, no auto-detection.
+**See @docs/constitutions/v2/architecture.md for CLI module boundaries and responsibilities.**
+
+The CLI is simplified to core functionality - no complex command modules, no provider chains, no auto-detection.
 
 ### Structure
 
 ```
 src/cli/
-├── cli.ts         # Main CLI entry point (~200 lines)
-└── schemas.ts     # CLI option validation with Zod
+├── cli.ts         # Main CLI entry point (~200 lines) with commands
+├── schemas.ts     # CLI option validation with Zod
+└── commands/
+    ├── init.ts    # Hook installation command (~250 LOC)
+    └── index.ts   # Command exports
+```
+
+### CLI Commands
+
+**Main Command:** Generate and create commit
+```bash
+npx commitment [options]
+```
+
+**Init Command:** Set up git hooks automatically
+```bash
+npx commitment init [options]
 ```
 
 ### Core CLI Flags
 
-The CLI has exactly 5 core flags:
-
+**Main Command Flags:**
 - `--agent <name>` - AI agent to use: claude, codex (default: "claude")
 - `--dry-run` - Generate message without creating commit
 - `--message-only` - Output only the commit message (no commit)
 - `--no-ai` - Disable AI generation, use rule-based only
+- `--cwd <path>` - Working directory (default: current directory)
+
+**Init Command Flags:**
+- `--hook-manager <type>` - Hook manager: husky, simple-git-hooks, plain
 - `--cwd <path>` - Working directory (default: current directory)
 
 ### ESLint Configuration for CLI
@@ -1040,6 +1074,8 @@ describe('MyProvider', () => {
 
 ## File Structure
 
+**See @docs/constitutions/v2/architecture.md for module organization rules.**
+
 ```
 src/
 ├── cli.ts                      # CLI entry point (~200 lines)
@@ -1048,11 +1084,14 @@ src/
 ├── index.ts                    # Public API exports (≤10 items)
 ├── agents/                     # Agent system (simplified, no base classes)
 │   ├── types.ts                # Agent interface and types
-│   ├── claude.ts               # Claude agent (~80 LOC)
-│   ├── codex.ts                # Codex agent (~80 LOC)
+│   ├── claude.ts               # Claude agent (~80 LOC, self-contained)
+│   ├── codex.ts                # Codex agent (~80 LOC, self-contained)
 │   └── index.ts                # Agent exports
 ├── cli/                        # CLI modules
-│   └── schemas.ts              # CLI option validation
+│   ├── schemas.ts              # CLI option validation
+│   └── commands/
+│       ├── init.ts             # Hook installation command
+│       └── index.ts            # Command exports
 ├── types/                      # Core type definitions
 │   └── schemas.ts              # Zod schemas for core types
 └── utils/                      # Shared utilities
@@ -1062,7 +1101,20 @@ src/
 examples/
 ├── git-hooks/                  # Plain git hooks examples
 ├── husky/                      # Husky integration examples
+├── simple-git-hooks/           # simple-git-hooks integration examples
 └── lint-staged/                # lint-staged integration examples
+
+docs/
+└── constitutions/
+    ├── current -> v2           # Symlink to current version
+    ├── v1/                     # Previous constitution
+    └── v2/                     # Current constitution (streamlined)
+        ├── meta.md
+        ├── architecture.md
+        ├── patterns.md
+        ├── schema-rules.md
+        ├── tech-stack.md
+        └── testing.md
 ```
 
 ## Publishing
