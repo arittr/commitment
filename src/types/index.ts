@@ -9,7 +9,7 @@
  * @module types
  */
 
-export type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from './schemas.ts';
+export type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from './schemas';
 export {
   commitMessageGeneratorConfigSchema,
   commitMessageOptionsSchema,
@@ -20,4 +20,4 @@ export {
   validateCommitOptions,
   validateCommitTask,
   validateGeneratorConfig,
-} from './schemas.ts';
+} from './schemas';

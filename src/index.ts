@@ -7,13 +7,13 @@
  */
 
 // Agent system
-export type { Agent, AgentName } from './agents/types.ts';
+export type { Agent, AgentName } from './agents/types';
 // Error types
-export { AgentError, GeneratorError, isAgentError, isGeneratorError } from './errors.ts';
+export { AgentError, GeneratorError, isAgentError, isGeneratorError } from './errors';
 export type {
   CommitMessageGeneratorConfig,
   CommitMessageOptions,
   CommitTask,
-} from './generator.ts';
+} from './generator';
 // Core generator
-export { CommitMessageGenerator } from './generator.ts';
+export { CommitMessageGenerator } from './generator';

@@ -11,7 +11,7 @@ import {
   isNumber,
   isObject,
   isString,
-} from '../guards.ts';
+} from '../guards';
 
 describe('Type Guards', () => {
   describe('hasContent', () => {
