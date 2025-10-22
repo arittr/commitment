@@ -213,7 +213,13 @@ describe('EvalReporter', () => {
       // Verify unlink called before symlink
       const unlinkCall = vi.mocked(unlinkSync).mock.invocationCallOrder[0];
       const symlinkCall = vi.mocked(symlinkSync).mock.invocationCallOrder[0];
-      expect(unlinkCall).toBeLessThan(symlinkCall!);
+
+      // Type assertion after checking they're defined
+      expect(unlinkCall).toBeDefined();
+      expect(symlinkCall).toBeDefined();
+      if (unlinkCall !== undefined && symlinkCall !== undefined) {
+        expect(unlinkCall).toBeLessThan(symlinkCall);
+      }
     });
 
     it('should use timestamp without colons for Windows compatibility', async () => {

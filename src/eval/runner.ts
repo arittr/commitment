@@ -29,7 +29,7 @@ import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EvalError } from '../errors';
+import { EvaluationError } from '../errors';
 import { CommitMessageGenerator } from '../generator';
 import { hasContent } from '../utils/guards';
 import { Evaluator } from './evaluator';
@@ -70,7 +70,7 @@ export class EvalRunner {
    * @param name - Fixture name (e.g., 'simple', 'complex')
    * @param mode - Loading mode ('mocked' or 'live')
    * @returns Loaded EvalFixture with git status, git diff, and metadata
-   * @throws {EvalError} If fixture directory or required files are missing
+   * @throws {EvaluationError} If fixture directory or required files are missing
    *
    * @example
    * ```typescript
@@ -134,8 +134,8 @@ export class EvalRunner {
         name: metadata.name,
       };
     } catch {
-      // If any file is missing or git command fails, throw EvalError.fixtureNotFound
-      throw EvalError.fixtureNotFound(name);
+      // If any file is missing or git command fails, throw EvaluationError.fixtureNotFound
+      throw EvaluationError.fixtureNotFound(name);
     }
   }
 
@@ -155,7 +155,7 @@ export class EvalRunner {
    * @param fixture - The fixture to evaluate
    * @param workdir - Working directory for generators (defaults to process.cwd())
    * @returns EvalComparison with both results and winner
-   * @throws {EvalError} If generation or evaluation fails
+   * @throws {EvaluationError} If generation or evaluation fails
    *
    * @example
    * ```typescript
@@ -189,7 +189,7 @@ export class EvalRunner {
 
     // Type assertion: At runtime, mocked generators may return null
     if (!hasContent(claudeMessage as string | null)) {
-      throw EvalError.generationFailed('claude', 'No message generated');
+      throw EvaluationError.generationFailed('claude', 'No message generated');
     }
 
     // 2. Generate commit message with Codex
@@ -204,7 +204,7 @@ export class EvalRunner {
 
     // Type assertion: At runtime, mocked generators may return null
     if (!hasContent(codexMessage as string | null)) {
-      throw EvalError.generationFailed('codex', 'No message generated');
+      throw EvaluationError.generationFailed('codex', 'No message generated');
     }
 
     // 3. Evaluate Claude's message
@@ -248,7 +248,7 @@ export class EvalRunner {
    *
    * @param mode - Loading mode ('mocked' or 'live')
    * @returns Array of EvalComparison results for all fixtures
-   * @throws {EvalError} If any generation or evaluation fails
+   * @throws {EvaluationError} If any generation or evaluation fails
    *
    * @example
    * ```typescript

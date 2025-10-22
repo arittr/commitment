@@ -7,15 +7,15 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EvalError } from '../../errors';
+import { EvaluationError } from '../../errors';
 import { ChatGPTAgent } from '../chatgpt';
 
 // Mock the OpenAI Agents SDK
-vi.mock('@openai/agents', () => {
-  return {
-    Agent: vi.fn(),
-  };
-});
+vi.mock('@openai/agents', () => ({
+  // biome-ignore lint/style/useNamingConvention: Agent and run are from external library
+  Agent: vi.fn(),
+  run: vi.fn(),
+}));
 
 describe('ChatGPTAgent', () => {
   let agent: ChatGPTAgent;
@@ -196,12 +196,14 @@ describe('ChatGPTAgent', () => {
     });
 
     describe('error cases', () => {
-      it('should throw EvalError.apiKeyMissing when OPENAI_API_KEY is not set', async () => {
+      it('should throw EvaluationError.apiKeyMissing when OPENAI_API_KEY is not set', async () => {
         // Save and clear API key
         const originalKey = process.env.OPENAI_API_KEY;
         delete process.env.OPENAI_API_KEY;
 
-        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
+        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
+          EvaluationError
+        );
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           /OpenAI API key is not configured/
@@ -211,14 +213,16 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = originalKey;
       });
 
-      it('should throw EvalError.evaluationFailed on API errors', async () => {
+      it('should throw EvaluationError.evaluationFailed on API errors', async () => {
         // Set API key so we get past that check
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock API error
         mockAgent.run.mockRejectedValue(new Error('API rate limit exceeded'));
 
-        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
+        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
+          EvaluationError
+        );
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           /evaluation failed/i
@@ -229,7 +233,7 @@ describe('ChatGPTAgent', () => {
         );
       });
 
-      it('should throw EvalError.evaluationFailed when no tool calls in response', async () => {
+      it('should throw EvaluationError.evaluationFailed when no tool calls in response', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock response with no tool calls
@@ -237,23 +241,27 @@ describe('ChatGPTAgent', () => {
           toolCalls: [],
         });
 
-        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
+        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
+          EvaluationError
+        );
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           /No tool call in response/
         );
       });
 
-      it('should throw EvalError.evaluationFailed when toolCalls is undefined', async () => {
+      it('should throw EvaluationError.evaluationFailed when toolCalls is undefined', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock response with undefined toolCalls
         mockAgent.run.mockResolvedValue({});
 
-        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
+        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
+          EvaluationError
+        );
       });
 
-      it('should throw EvalError.evaluationFailed on network errors', async () => {
+      it('should throw EvaluationError.evaluationFailed on network errors', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock network error
@@ -264,13 +272,15 @@ describe('ChatGPTAgent', () => {
         );
       });
 
-      it('should throw EvalError.evaluationFailed on unknown errors', async () => {
+      it('should throw EvaluationError.evaluationFailed on unknown errors', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock non-Error object
         mockAgent.run.mockRejectedValue('Unknown error');
 
-        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
+        await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
+          EvaluationError
+        );
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           /Unknown error/
