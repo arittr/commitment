@@ -1,7 +1,7 @@
 import { execa } from 'execa';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ClaudeAgent } from '../claude.ts';
+import { ClaudeAgent } from '../claude';
 
 // Mock execa before importing ClaudeAgent
 vi.mock('execa', () => ({

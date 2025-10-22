@@ -1,8 +1,8 @@
 import { execa } from 'execa';
 
-import { AgentError } from '../errors.ts';
+import { AgentError } from '../errors';
 
-import type { Agent } from './types.ts';
+import type { Agent } from './types';
 
 /**
  * Claude CLI agent for AI-powered commit message generation

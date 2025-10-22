@@ -9,7 +9,7 @@ import { EvalRunner } from '../../eval/runner.js';
 /**
  * Check if OPENAI_API_KEY is set and non-empty
  */
-function hasOpenAIKey(): boolean {
+function hasOpenAiKey(): boolean {
   return typeof process.env.OPENAI_API_KEY === 'string' && process.env.OPENAI_API_KEY.length > 0;
 }
 
@@ -35,7 +35,7 @@ describe('Eval System Integration (Live AI)', () => {
 
   beforeAll(() => {
     // Check prerequisites
-    if (!hasOpenAIKey()) {
+    if (!hasOpenAiKey()) {
       console.warn('⚠️  Skipping eval tests: OPENAI_API_KEY not set');
     }
 
@@ -73,7 +73,7 @@ describe('Eval System Integration (Live AI)', () => {
 
   it(
     'should run full eval pipeline for simple fixture',
-    { timeout: 120_000, skip: !hasOpenAIKey() }, // 2 minutes for live AI calls
+    { skip: !hasOpenAiKey(), timeout: 120_000 }, // 2 minutes for live AI calls
     async () => {
       const fixture = runner.loadFixture('simple', 'mocked');
       const comparison = await runner.runFixture(fixture);
@@ -91,9 +91,9 @@ describe('Eval System Integration (Live AI)', () => {
       expect(comparison.claudeResult.overallScore).toBeGreaterThanOrEqual(0);
       expect(comparison.claudeResult.overallScore).toBeLessThanOrEqual(10);
       expect(comparison.claudeResult.metrics).toMatchObject({
-        conventionalCompliance: expect.any(Number),
-        clarity: expect.any(Number),
         accuracy: expect.any(Number),
+        clarity: expect.any(Number),
+        conventionalCompliance: expect.any(Number),
         detailLevel: expect.any(Number),
       });
       expect(comparison.claudeResult.feedback.length).toBeGreaterThan(0);
@@ -110,10 +110,10 @@ describe('Eval System Integration (Live AI)', () => {
       // Verify files created
       const latestPath = join(testResultsDir, 'latest-simple.json');
       expect(existsSync(latestPath)).toBe(true);
-    },
+    }
   );
 
-  it('should generate markdown report', { timeout: 120_000, skip: !hasOpenAIKey() }, async () => {
+  it('should generate markdown report', { skip: !hasOpenAiKey(), timeout: 120_000 }, async () => {
     const fixture = runner.loadFixture('simple', 'mocked');
     const comparison = await runner.runFixture(fixture);
 
@@ -125,7 +125,7 @@ describe('Eval System Integration (Live AI)', () => {
 
   it(
     'should run all fixtures',
-    { timeout: 300_000, skip: !hasOpenAIKey() }, // 5 minutes for multiple fixtures
+    { skip: !hasOpenAiKey(), timeout: 300_000 }, // 5 minutes for multiple fixtures
     async () => {
       const comparisons = await runner.runAll('mocked');
 
@@ -133,12 +133,12 @@ describe('Eval System Integration (Live AI)', () => {
       for (const comparison of comparisons) {
         expect(comparison.winner).toMatch(/claude|codex|tie/);
       }
-    },
+    }
   );
 
   it(
     'should compare with baseline (when baseline exists)',
-    { timeout: 240_000, skip: !hasOpenAIKey() }, // 4 minutes for two runs
+    { skip: !hasOpenAiKey(), timeout: 240_000 }, // 4 minutes for two runs
     async () => {
       const fixture = runner.loadFixture('simple', 'mocked');
       const comparison = await runner.runFixture(fixture);
@@ -162,7 +162,7 @@ describe('Eval System Integration (Live AI)', () => {
       if (baselineComparison !== null) {
         expect(baselineComparison).toContain('Baseline Comparison');
       }
-    },
+    }
   );
 
   it('should throw when OPENAI_API_KEY missing', { timeout: 10_000 }, async () => {
@@ -180,8 +180,8 @@ describe('Eval System Integration (Live AI)', () => {
           'M  test.ts',
           'diff --git a/test.ts b/test.ts',
           'simple',
-          'claude',
-        ),
+          'claude'
+        )
       ).rejects.toThrow('OpenAI API key is not configured');
     } finally {
       process.env.OPENAI_API_KEY = originalKey;

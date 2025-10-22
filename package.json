@@ -54,20 +54,19 @@
   "packageManager": "pnpm@10.8.0",
   "scripts": {
     "build": "tsup",
+    "check-types": "tsc --noEmit",
     "clean": "rm -rf dist",
     "dev": "tsup --watch",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "pnpm run type-check && biome check .",
-    "lint:fix": "pnpm run type-check && biome check --write .",
+    "lint": "pnpm check-types && biome check --write",
     "prepare": "pnpm run build && husky",
     "prepublishOnly": "pnpm run clean && pnpm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:eval": "vitest run src/__tests__/integration/eval-live.test.ts",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest",
-    "type-check": "tsc --noEmit"
+    "test:watch": "vitest"
   },
   "type": "module",
   "types": "./dist/index.d.ts",
