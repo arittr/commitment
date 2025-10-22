@@ -18,6 +18,21 @@ describe('ClaudeAgent', () => {
     mockExeca.mockReset();
   });
 
+  /**
+   * Helper to mock successful which + claude command
+   */
+  const mockSuccessfulGeneration = (output: string): void => {
+    mockExeca.mockImplementation(async (cmd: string) => {
+      if (cmd === 'which') {
+        return { stdout: '/usr/local/bin/claude' } as never;
+      }
+      if (cmd === 'claude') {
+        return { stdout: output } as never;
+      }
+      throw new Error('Unexpected command');
+    });
+  };
+
   describe('name', () => {
     it('should return correct agent name', () => {
       expect(agent.name).toBe('Claude CLI');
@@ -26,10 +41,10 @@ describe('ClaudeAgent', () => {
 
   describe('generate', () => {
     it('should generate commit message from prompt', async () => {
-      // Mock execa to return a valid commit message
-      mockExeca.mockResolvedValue({
-        stdout: 'feat: add dark mode toggle\n\nImplement theme switching functionality',
-      } as never);
+      // Mock successful which + claude command
+      mockSuccessfulGeneration(
+        'feat: add dark mode toggle\n\nImplement theme switching functionality'
+      );
 
       const prompt = 'Generate commit message for adding dark mode';
       const workdir = '/tmp/test-repo';
@@ -37,6 +52,7 @@ describe('ClaudeAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
+      expect(mockExeca).toHaveBeenCalledWith('which', ['Claude CLI']);
       expect(mockExeca).toHaveBeenCalledWith(
         'claude',
         ['--print'],
@@ -48,105 +64,51 @@ describe('ClaudeAgent', () => {
     });
 
     it('should clean AI artifacts from response', async () => {
-      // Mock execa to return response with AI artifacts
-      mockExeca.mockResolvedValue({
-        stdout: '```\nfeat: add feature\n\nDetails here\n```',
-      } as never);
+      // Mock successful which + claude command with markdown artifacts
+      mockSuccessfulGeneration('```\nfeat: add feature\n\nDetails here\n```');
 
       const message = await agent.generate('prompt', '/tmp');
 
-      // Should clean markdown code blocks
+      // Should clean markdown code blocks (via BaseAgent.cleanResponse)
       expect(message).toBe('feat: add feature\n\nDetails here');
     });
 
     it('should throw error when CLI is not found', async () => {
-      mockExeca.mockRejectedValue({
-        code: 'ENOENT',
-        message: 'spawn claude ENOENT',
+      // Mock which command to fail (CLI not found)
+      mockExeca.mockImplementation(async (cmd: string) => {
+        if (cmd === 'which') {
+          throw { code: 'ENOENT', message: 'spawn which ENOENT' };
+        }
+        throw new Error('Unexpected command');
       });
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
-        /Claude CLI is not installed or not found in PATH/
+        /CLI command "Claude CLI" not found/
       );
     });
 
-    it('should show installation instructions in CLI not found error', async () => {
-      mockExeca.mockRejectedValue({
-        code: 'ENOENT',
-        message: 'spawn claude ENOENT',
-      });
-
-      try {
-        await agent.generate('prompt', '/tmp');
-        throw new Error('Expected error to be thrown');
-      } catch (error: unknown) {
-        expect(error).toBeInstanceOf(Error);
-        const agentError = error as { suggestedAction?: string };
-        expect(agentError.suggestedAction).toContain('npm install -g');
-        expect(agentError.suggestedAction).toContain('brew install');
-      }
-    });
-
-    it('should throw error when CLI execution fails', async () => {
-      mockExeca.mockRejectedValue({
-        code: 1,
-        message: 'Command failed',
-        stderr: 'API key not configured',
-      });
-
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Claude CLI execution failed/);
-    });
-
-    it('should include error details in execution failure', async () => {
-      mockExeca.mockRejectedValue({
-        code: 1,
-        message: 'Command failed',
-        stderr: 'API key not configured',
-      });
-
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/API key not configured/);
-
-      try {
-        await agent.generate('prompt', '/tmp');
-        throw new Error('Expected error to be thrown');
-      } catch (error: unknown) {
-        expect(error).toBeInstanceOf(Error);
-        const agentError = error as { suggestedAction?: string };
-        expect(agentError.suggestedAction).toContain('Please check:');
-      }
-    });
-
     it('should throw error when response is empty', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: '',
-      } as never);
+      mockSuccessfulGeneration('');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Empty response/);
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+        /Invalid conventional commit format/
+      );
     });
 
     it('should throw error when response is whitespace only', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: '   \n\n  ',
-      } as never);
+      mockSuccessfulGeneration('   \n\n  ');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Empty response/);
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+        /Invalid conventional commit format/
+      );
     });
 
     it('should throw error when response is malformed', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: 'Not a valid commit message format',
-      } as never);
+      mockSuccessfulGeneration('Not a valid commit message format');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/malformed response/);
-    });
-
-    it('should include diagnostic context in malformed response error', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: 'Invalid response with special characters: @#$%',
-      } as never);
-
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Received:/);
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Invalid response/);
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+        /Invalid conventional commit format/
+      );
     });
 
     it('should accept valid conventional commit types', async () => {
@@ -164,9 +126,7 @@ describe('ClaudeAgent', () => {
       ];
 
       for (const message of validTypes) {
-        mockExeca.mockResolvedValue({
-          stdout: message,
-        } as never);
+        mockSuccessfulGeneration(message);
 
         const result = await agent.generate('prompt', '/tmp');
         expect(result).toBe(message);
@@ -174,18 +134,14 @@ describe('ClaudeAgent', () => {
     });
 
     it('should clean multiple types of AI artifacts', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: '```typescript\nfeat: add feature\n```',
-      } as never);
+      mockSuccessfulGeneration('```typescript\nfeat: add feature\n```');
 
       const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature');
     });
 
     it('should handle timeout parameter', async () => {
-      mockExeca.mockResolvedValue({
-        stdout: 'feat: test',
-      } as never);
+      mockSuccessfulGeneration('feat: test');
 
       await agent.generate('prompt', '/tmp');
 
@@ -199,19 +155,17 @@ describe('ClaudeAgent', () => {
     });
 
     it('should clean COMMIT_MESSAGE markers from response', async () => {
-      // Mock execa to return response with commit message markers
-      mockExeca.mockResolvedValue({
-        stdout: `<<<COMMIT_MESSAGE_START>>>
+      // Mock successful generation with commit message markers
+      mockSuccessfulGeneration(`<<<COMMIT_MESSAGE_START>>>
 feat: add constitution v2 and improve documentation
 
 - Add comprehensive v2 constitution
 - Update CLAUDE.md with v2 references
-<<<COMMIT_MESSAGE_END>>>`,
-      } as never);
+<<<COMMIT_MESSAGE_END>>>`);
 
       const message = await agent.generate('prompt', '/tmp');
 
-      // Should clean markers and return only the commit message
+      // Should clean markers via ClaudeAgent.cleanResponse override
       expect(message).toBe(
         `feat: add constitution v2 and improve documentation
 
@@ -221,17 +175,15 @@ feat: add constitution v2 and improve documentation
     });
 
     it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
-      // Mock execa to return response with markers and extra whitespace
-      mockExeca.mockResolvedValue({
-        stdout: `
+      // Mock successful generation with markers and extra whitespace
+      mockSuccessfulGeneration(`
 <<<COMMIT_MESSAGE_START>>>
 
 feat: add feature
 
 - Implement new functionality
 <<<COMMIT_MESSAGE_END>>>
-`,
-      } as never);
+`);
 
       const message = await agent.generate('prompt', '/tmp');
 

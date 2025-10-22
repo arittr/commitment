@@ -91,7 +91,7 @@ export function cleanAIResponse(output: string): string {
  *
  * Valid format: `type(scope): description` or `type: description`
  *
- * Valid types: feat, fix, docs, style, refactor, test, chore, perf
+ * Valid types: feat, fix, docs, style, refactor, test, chore, perf, build, ci
  *
  * This is a basic format check. It does not validate:
  * - Description quality or length
@@ -122,12 +122,12 @@ export function cleanAIResponse(output: string): string {
  */
 export function validateConventionalCommit(message: string): boolean {
   // Pattern matches: type(scope?): description
-  // - type: feat, fix, docs, style, refactor, test, chore, perf
+  // - type: feat, fix, docs, style, refactor, test, chore, perf, build, ci
   // - scope: optional, any word characters in parentheses
   // - colon: required
   // - description: at least one non-whitespace character after colon
   const conventionalCommitPattern =
-    /^(feat|fix|docs|style|refactor|test|chore|perf)(\(.+\))?:\s*\S+/;
+    /^(feat|fix|docs|style|refactor|test|chore|perf|build|ci)(\(.+\))?:\s*\S+/;
 
   return conventionalCommitPattern.test(message);
 }

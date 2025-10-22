@@ -6,13 +6,14 @@
  *
  * Design Principles:
  * - Single responsibility: generate commit messages
- * - No base classes or factories
+ * - Template method pattern via BaseAgent
  * - Each agent is self-contained
  * - Simple configuration (just an agent name)
  *
  * @module agents
  */
 
+export { BaseAgent } from './base-agent.js';
 export { ChatGPTAgent } from './chatgpt';
 export { ClaudeAgent } from './claude';
 export { CodexAgent } from './codex';
