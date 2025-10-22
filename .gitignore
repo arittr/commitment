@@ -33,6 +33,10 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Evaluation results (runtime generated)
+.eval-results/
+.eval-results-test/
+
 # Misc
 *.bak
 *.tmp
