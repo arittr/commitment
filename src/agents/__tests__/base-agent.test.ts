@@ -18,7 +18,8 @@ class TestAgent extends BaseAgent {
   // Track calls to verify execution order
   public callOrder: string[] = [];
 
-  protected async executeCommand(_prompt: string, _workdir: string): Promise<string> {
+  // Make executeCommand public for testing (override access modifier)
+  public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
     this.callOrder.push('executeCommand');
     return 'feat: test commit message\n\nTest description';
   }
@@ -47,7 +48,8 @@ class TestAgent extends BaseAgent {
 class CustomCleanAgent extends BaseAgent {
   readonly name = 'CustomCleanAgent';
 
-  protected async executeCommand(_prompt: string, _workdir: string): Promise<string> {
+  // Make executeCommand public for testing
+  public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
     return '[CUSTOM]feat: test\n\nDescription';
   }
 
@@ -65,7 +67,8 @@ class CustomCleanAgent extends BaseAgent {
 class CustomValidateAgent extends BaseAgent {
   readonly name = 'CustomValidateAgent';
 
-  protected async executeCommand(_prompt: string, _workdir: string): Promise<string> {
+  // Make executeCommand public for testing
+  public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
     return 'feat: test';
   }
 
@@ -148,7 +151,7 @@ describe('BaseAgent', () => {
       const agent = new TestAgent();
 
       // Mock executeCommand to return response with markdown
-      agent['executeCommand'] = vi.fn().mockResolvedValue('```\nfeat: test\n\nDescription\n```');
+      agent.executeCommand = vi.fn().mockResolvedValue('```\nfeat: test\n\nDescription\n```');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -161,7 +164,7 @@ describe('BaseAgent', () => {
     it('should remove thinking tags', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi
+      agent.executeCommand = vi
         .fn()
         .mockResolvedValue('<thinking>analyzing</thinking>\nfeat: test\n\nDescription');
 
@@ -175,7 +178,7 @@ describe('BaseAgent', () => {
     it('should normalize excessive newlines', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('feat: test\n\n\n\nDescription');
+      agent.executeCommand = vi.fn().mockResolvedValue('feat: test\n\n\n\nDescription');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -189,7 +192,7 @@ describe('BaseAgent', () => {
     it('should use validateConventionalCommit from agent-utils', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('feat: valid message');
+      agent.executeCommand = vi.fn().mockResolvedValue('feat: valid message');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -201,7 +204,7 @@ describe('BaseAgent', () => {
     it('should throw error for invalid conventional commit format', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('invalid message format');
+      agent.executeCommand = vi.fn().mockResolvedValue('invalid message format');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -217,7 +220,7 @@ describe('BaseAgent', () => {
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       for (const type of validTypes) {
-        agent['executeCommand'] = vi.fn().mockResolvedValue(`${type}: test message`);
+        agent.executeCommand = vi.fn().mockResolvedValue(`${type}: test message`);
         const result = await agent.generate('prompt', '/test');
         expect(result).toBe(`${type}: test message`);
       }
@@ -226,7 +229,7 @@ describe('BaseAgent', () => {
     it('should accept messages with scope', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('feat(core): add feature');
+      agent.executeCommand = vi.fn().mockResolvedValue('feat(core): add feature');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -262,7 +265,7 @@ describe('BaseAgent', () => {
       const agent = new CustomValidateAgent();
 
       // Override to return message without "test"
-      agent['executeCommand'] = vi.fn().mockResolvedValue('feat: no keyword');
+      agent.executeCommand = vi.fn().mockResolvedValue('feat: no keyword');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -276,7 +279,7 @@ describe('BaseAgent', () => {
     it('should propagate executeCommand errors', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockRejectedValue(new Error('Execution failed'));
+      agent.executeCommand = vi.fn().mockRejectedValue(new Error('Execution failed'));
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -286,7 +289,7 @@ describe('BaseAgent', () => {
     it('should handle empty response from executeCommand', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('');
+      agent.executeCommand = vi.fn().mockResolvedValue('');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -298,7 +301,7 @@ describe('BaseAgent', () => {
     it('should handle response with only whitespace', async () => {
       const agent = new TestAgent();
 
-      agent['executeCommand'] = vi.fn().mockResolvedValue('   \n\n   ');
+      agent.executeCommand = vi.fn().mockResolvedValue('   \n\n   ');
 
       vi.mocked(execa).mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -320,7 +323,7 @@ describe('BaseAgent', () => {
       } as any);
 
       // Mock executeCommand to return realistic output (no leading whitespace on lines)
-      agent['executeCommand'] = vi
+      agent.executeCommand = vi
         .fn()
         .mockResolvedValue(
           '```\nfeat(core): add new feature\n\nImplemented feature X with support for Y.\nBreaking change: API signature changed.\n```'
