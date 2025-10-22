@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 /**
  * Unit tests for EvalRunner module
  *
@@ -6,7 +7,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { EvaluationError } from '../../errors.js';
 import { CommitMessageGenerator } from '../../generator.js';
 import type { Evaluator } from '../evaluator.js';
@@ -14,14 +15,14 @@ import { EvalRunner } from '../runner.js';
 import type { EvalFixture, EvalMetrics, EvalResult } from '../schemas.js';
 
 // Mock dependencies
-vi.mock('../evaluator.js');
-vi.mock('../../generator.js');
-vi.mock('node:fs', async () => {
-  const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
+mock.module('../evaluator.js');
+mock.module('../../generator.js');
+mock.module('node:fs', async () => {
+  const actual = await import('node:fs');
   return {
     ...actual,
-    readdirSync: vi.fn(),
-    readFileSync: vi.fn(),
+    readdirSync: mock(),
+    readFileSync: mock(),
   };
 });
 
@@ -29,7 +30,7 @@ describe('EvalRunner', () => {
   let runner: EvalRunner;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.restore();
     runner = new EvalRunner();
   });
 
@@ -39,7 +40,7 @@ describe('EvalRunner', () => {
       const { readFileSync } = await import('node:fs');
 
       // Mock metadata.json
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({
             description: 'Single-file bug fix',
@@ -70,7 +71,7 @@ describe('EvalRunner', () => {
     it('should throw EvaluationError.fixtureNotFound for missing fixture', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
-      vi.mocked(readFileSync).mockImplementation(() => {
+      readFileSync.mockImplementation(() => {
         throw new Error('ENOENT: no such file');
       });
 
@@ -82,7 +83,7 @@ describe('EvalRunner', () => {
     it('should throw EvaluationError.fixtureNotFound for missing metadata.json', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           throw new Error('File not found');
         }
@@ -96,7 +97,7 @@ describe('EvalRunner', () => {
     it('should throw EvaluationError.fixtureNotFound for missing mock files', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -113,7 +114,7 @@ describe('EvalRunner', () => {
       const { readFileSync } = await import('node:fs');
       const readFileCalls: string[] = [];
 
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         readFileCalls.push(path.toString());
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'simple' });
@@ -135,7 +136,7 @@ describe('EvalRunner', () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
 
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({
             description: 'Multi-file feature',
@@ -178,10 +179,10 @@ describe('EvalRunner', () => {
       const codexMessage = 'fix: codex message';
 
       // Mock generators
-      const claudeGenerateSpy = vi.fn().mockResolvedValue(claudeMessage);
-      const codexGenerateSpy = vi.fn().mockResolvedValue(codexMessage);
+      const claudeGenerateSpy = mock().mockResolvedValue(claudeMessage);
+      const codexGenerateSpy = mock().mockResolvedValue(codexMessage);
 
-      vi.mocked(CommitMessageGenerator).mockImplementation((config?: any) => {
+      CommitMessageGenerator.mockImplementation((config?: any) => {
         const generator = {
           generateCommitMessage: config?.agent === 'codex' ? codexGenerateSpy : claudeGenerateSpy,
         } as unknown as CommitMessageGenerator;
@@ -196,7 +197,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
         agent: 'claude',
         commitMessage: claudeMessage,
         feedback: 'Good',
@@ -227,10 +228,10 @@ describe('EvalRunner', () => {
       const claudeMessage = 'fix: claude message';
       const codexMessage = 'fix: codex message';
 
-      vi.mocked(CommitMessageGenerator).mockImplementation((config?: any) => {
+      CommitMessageGenerator.mockImplementation((config?: any) => {
         const message = config?.agent === 'codex' ? codexMessage : claudeMessage;
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue(message),
+          generateCommitMessage: mock().mockResolvedValue(message),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -241,7 +242,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = vi.spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
 
       evaluateSpy.mockResolvedValueOnce({
         agent: 'claude',
@@ -294,9 +295,9 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -307,7 +308,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = vi.spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
 
       // Claude scores 9.0
       evaluateSpy.mockResolvedValueOnce({
@@ -349,9 +350,9 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -362,7 +363,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = vi.spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
 
       // Claude scores 6.5
       evaluateSpy.mockResolvedValueOnce({
@@ -404,9 +405,9 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -417,7 +418,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = vi.spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
 
       // Claude scores 8.0
       evaluateSpy.mockResolvedValueOnce({
@@ -459,9 +460,9 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue(null), // Null = no message generated
+          generateCommitMessage: mock().mockResolvedValue(null), // Null = no message generated
         } as unknown as CommitMessageGenerator;
       });
 
@@ -484,10 +485,10 @@ describe('EvalRunner', () => {
 
       // Claude succeeds, Codex fails
 
-      vi.mocked(CommitMessageGenerator).mockImplementation((config?: any) => {
+      CommitMessageGenerator.mockImplementation((config?: any) => {
         const message = config?.agent === 'codex' ? null : 'fix: claude message';
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue(message),
+          generateCommitMessage: mock().mockResolvedValue(message),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -508,9 +509,9 @@ describe('EvalRunner', () => {
         name: 'test-fixture',
       };
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -541,7 +542,7 @@ describe('EvalRunner', () => {
         timestamp: new Date().toISOString(),
       };
 
-      const evaluateSpy = vi.spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
       evaluateSpy.mockResolvedValueOnce(claudeResult);
       evaluateSpy.mockResolvedValueOnce(codexResult);
 
@@ -563,10 +564,10 @@ describe('EvalRunner', () => {
       const { readdirSync, readFileSync } = await import('node:fs');
 
       // Mock directory listing
-      vi.mocked(readdirSync).mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
+      readdirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
 
       // Mock file reads
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -574,9 +575,9 @@ describe('EvalRunner', () => {
       });
 
       // Mock generator and evaluator
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -588,7 +589,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',
@@ -610,10 +611,10 @@ describe('EvalRunner', () => {
       const { readdirSync, readFileSync } = await import('node:fs');
 
       // Mock directory listing
-      vi.mocked(readdirSync).mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
+      readdirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
 
       // Mock file reads
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -621,9 +622,9 @@ describe('EvalRunner', () => {
       });
 
       // Mock generator and evaluator
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -635,7 +636,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',
@@ -656,18 +657,18 @@ describe('EvalRunner', () => {
       // Arrange
       const { readdirSync, readFileSync } = await import('node:fs');
 
-      vi.mocked(readdirSync).mockReturnValue(['simple', 'complex'] as never[]);
+      readdirSync.mockReturnValue(['simple', 'complex'] as never[]);
 
-      vi.mocked(readFileSync).mockImplementation((path) => {
+      readFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
         return 'mock data';
       });
 
-      vi.mocked(CommitMessageGenerator).mockImplementation(() => {
+      CommitMessageGenerator.mockImplementation(() => {
         return {
-          generateCommitMessage: vi.fn().mockResolvedValue('fix: message'),
+          generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
       });
 
@@ -679,7 +680,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',

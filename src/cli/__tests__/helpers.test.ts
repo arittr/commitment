@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import chalk from 'chalk';
 import { execa } from 'execa';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,23 +13,23 @@ import {
 } from '../helpers';
 
 // Mock console.log
-const mockConsoleLog = vi.fn();
-const mockConsoleError = vi.fn();
+const mockConsoleLog = mock();
+const mockConsoleError = mock();
 
 beforeEach(() => {
-  vi.spyOn(console, 'log').mockImplementation(mockConsoleLog);
-  vi.spyOn(console, 'error').mockImplementation(mockConsoleError);
+  spyOn(console, 'log').mockImplementation(mockConsoleLog);
+  spyOn(console, 'error').mockImplementation(mockConsoleError);
 });
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  mock.restore();
   mockConsoleLog.mockClear();
   mockConsoleError.mockClear();
 });
 
 // Mock execa
-vi.mock('execa', () => ({
-  execa: vi.fn(),
+mock.module('execa', () => ({
+  execa: mock(),
 }));
 
 describe('displayStagedChanges', () => {
@@ -182,7 +183,7 @@ describe('executeCommit', () => {
   });
 
   it('should create commit and display success message', async () => {
-    vi.mocked(execa).mockResolvedValue({
+    execa.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
@@ -198,7 +199,7 @@ describe('executeCommit', () => {
 
   it('should throw error if commit creation fails', async () => {
     const error = new Error('Git error');
-    vi.mocked(execa).mockRejectedValue(error);
+    execa.mockRejectedValue(error);
 
     await expect(executeCommit('feat: message', '/tmp/repo', false, false)).rejects.toThrow(
       'Failed to create commit: Git error'
@@ -208,7 +209,7 @@ describe('executeCommit', () => {
 
 describe('createCommit', () => {
   it('should execute git commit with message', async () => {
-    vi.mocked(execa).mockResolvedValue({
+    execa.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
@@ -223,7 +224,7 @@ describe('createCommit', () => {
 
   it('should throw error on git failure', async () => {
     const error = new Error('Commit failed');
-    vi.mocked(execa).mockRejectedValue(error);
+    execa.mockRejectedValue(error);
 
     await expect(createCommit('feat: message', '/tmp/repo')).rejects.toThrow(
       'Failed to create commit: Commit failed'
@@ -231,7 +232,7 @@ describe('createCommit', () => {
   });
 
   it('should handle non-Error exceptions', async () => {
-    vi.mocked(execa).mockRejectedValue('string error');
+    execa.mockRejectedValue('string error');
 
     await expect(createCommit('feat: message', '/tmp/repo')).rejects.toThrow(
       'Failed to create commit: string error'
@@ -242,7 +243,7 @@ describe('createCommit', () => {
 describe('getGitStatus', () => {
   it('should parse git status output successfully', async () => {
     const gitOutput = 'M  src/file1.ts\nA  src/file2.ts';
-    vi.mocked(execa).mockResolvedValue({
+    execa.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: gitOutput,
@@ -256,7 +257,7 @@ describe('getGitStatus', () => {
   });
 
   it('should handle empty git status', async () => {
-    vi.mocked(execa).mockResolvedValue({
+    execa.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
@@ -270,7 +271,7 @@ describe('getGitStatus', () => {
 
   it('should throw error on git command failure', async () => {
     const error = new Error('Git command failed');
-    vi.mocked(execa).mockRejectedValue(error);
+    execa.mockRejectedValue(error);
 
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(
       'Failed to get git status: Git command failed'
@@ -279,7 +280,7 @@ describe('getGitStatus', () => {
 
   it('should provide helpful error for malformed git status', async () => {
     const gitOutput = 'INVALID LINE FORMAT';
-    vi.mocked(execa).mockResolvedValue({
+    execa.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: gitOutput,
@@ -290,7 +291,7 @@ describe('getGitStatus', () => {
   });
 
   it('should handle non-Error exceptions from git', async () => {
-    vi.mocked(execa).mockRejectedValue('string error');
+    execa.mockRejectedValue('string error');
 
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(
       'Failed to get git status: string error'

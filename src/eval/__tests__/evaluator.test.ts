@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 /**
  * Unit tests for Evaluator module
  *
@@ -6,14 +7,22 @@
 
 /* eslint-disable jest/unbound-method */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { EvaluationError } from '../../errors';
 import type { ChatGPTAgent } from '../chatgpt-agent';
 import { Evaluator } from '../evaluator';
 import type { EvalMetrics } from '../schemas';
 
 // Mock ChatGPT agent
-vi.mock('../chatgpt-agent');
+mock.module('../chatgpt-agent', () => ({
+  ChatGPTAgent: mock(() => ({
+    name: 'chatgpt',
+    evaluate: mock(() => Promise.resolve({
+      metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+      feedback: '',
+    })),
+  })),
+}));
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
@@ -21,7 +30,7 @@ describe('Evaluator', () => {
 
   beforeEach(() => {
     // Reset mocks
-    vi.clearAllMocks();
+    mock.restore();
 
     // Create evaluator instance
     evaluator = new Evaluator();
@@ -50,7 +59,7 @@ describe('Evaluator', () => {
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
       // Mock ChatGPT agent response
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: mockFeedback,
         metrics: mockMetrics,
       });
@@ -79,7 +88,7 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: mockFeedback,
         metrics: mockMetrics,
       });
@@ -121,7 +130,7 @@ describe('Evaluator', () => {
         detailLevel: 7,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Good',
         metrics: mockMetrics,
       });
@@ -154,7 +163,7 @@ describe('Evaluator', () => {
         detailLevel: 10,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Perfect commit message',
         metrics: mockMetrics,
       });
@@ -187,7 +196,7 @@ describe('Evaluator', () => {
         detailLevel: 0,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Poor commit message',
         metrics: mockMetrics,
       });
@@ -215,7 +224,7 @@ describe('Evaluator', () => {
 
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
+      spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -237,7 +246,7 @@ describe('Evaluator', () => {
 
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
+      spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -264,7 +273,7 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Well structured',
         metrics: mockMetrics,
       });
@@ -298,7 +307,7 @@ describe('Evaluator', () => {
         detailLevel: 9,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Test feedback',
         metrics: mockMetrics,
       });
@@ -334,7 +343,7 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
+      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Good',
         metrics: mockMetrics,
       });

@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from '../agent-utils.js';
 
 describe('cleanAIResponse', () => {

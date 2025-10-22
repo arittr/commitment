@@ -1,8 +1,6 @@
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { beforeAll, describe, expect, it } from 'vitest';
-
 import { EvalReporter } from '../../eval/reporter.js';
 import { EvalRunner } from '../../eval/runner.js';
 

@@ -1,28 +1,28 @@
+import { mock } from 'bun:test';
 import { execa } from 'execa';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ClaudeAgent } from '../claude';
 
 // Mock execa before importing ClaudeAgent
-vi.mock('execa', () => ({
-  execa: vi.fn(),
+mock.module('execa', () => ({
+  execa: mock(() => {}),
 }));
 
 describe('ClaudeAgent', () => {
   let agent: ClaudeAgent;
-  let mockExeca: ReturnType<typeof vi.fn>;
+  let mockExeca: ReturnType<typeof mock>;
 
   beforeEach(() => {
     agent = new ClaudeAgent();
-    mockExeca = vi.mocked(execa);
-    mockExeca.mockReset();
+    // @ts-expect-error - execa is mocked
+    mockExeca = execa as ReturnType<typeof mock>;
   });
 
   /**
    * Helper to mock successful which + claude command
    */
   const mockSuccessfulGeneration = (output: string): void => {
-    mockExeca.mockImplementation(async (cmd: string) => {
+    mockExeca = mock(async (cmd: string) => {
       if (cmd === 'which') {
         return { stdout: '/usr/local/bin/claude' } as never;
       }
@@ -31,6 +31,8 @@ describe('ClaudeAgent', () => {
       }
       throw new Error('Unexpected command');
     });
+    // @ts-expect-error - reassign mocked function
+    globalThis.execa = mockExeca;
   };
 
   describe('name', () => {
@@ -75,12 +77,14 @@ describe('ClaudeAgent', () => {
 
     it('should throw error when CLI is not found', async () => {
       // Mock which command to fail (CLI not found)
-      mockExeca.mockImplementation(async (cmd: string) => {
+      mockExeca = mock(async (cmd: string) => {
         if (cmd === 'which') {
           throw { code: 'ENOENT', message: 'spawn which ENOENT' };
         }
         throw new Error('Unexpected command');
       });
+      // @ts-expect-error - reassign mocked function
+      globalThis.execa = mockExeca;
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /CLI command "Claude CLI" not found/

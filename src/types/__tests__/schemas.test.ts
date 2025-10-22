@@ -17,7 +17,6 @@
  * See: @docs/constitutions/current/schema-rules.md
  */
 
-import { describe, expect, it } from 'vitest';
 import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas';
 import { commitTaskSchema } from '../schemas';
 

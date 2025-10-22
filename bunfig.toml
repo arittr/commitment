@@ -1,0 +1,12 @@
+[test]
+# Coverage configuration
+coverage = true
+coverageThreshold = 80
+coverageReporters = ["text", "json", "html"]
+coverageDir = "coverage"
+
+# Test execution
+timeout = 30000  # 30 seconds per test
+
+# Preload scripts (if needed for mocks)
+# preload = ["./test-setup.ts"]
