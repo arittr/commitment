@@ -67,7 +67,6 @@ export class ClaudeAgent implements Agent {
    * );
    * ```
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Core agent logic, needs refactoring
   async generate(prompt: string, workdir: string): Promise<string> {
     try {
       // Execute Claude CLI with prompt via stdin
@@ -77,55 +76,76 @@ export class ClaudeAgent implements Agent {
         timeout: 120_000, // 2 minutes
       });
 
-      // Clean AI artifacts from response
-      const cleaned = this._cleanAIArtifacts(stdout);
-
-      // Validate response
-      if (cleaned.length === 0 || cleaned.trim().length === 0) {
-        throw AgentError.executionFailed(
-          this.name,
-          0,
-          'Empty response - API key may not be configured'
-        );
-      }
-
-      // Basic validation for conventional commit format
-      if (!this._isValidCommitMessage(cleaned)) {
-        throw AgentError.malformedResponse(this.name, cleaned);
-      }
-
-      return cleaned;
+      return this._processResponse(stdout);
     } catch (error) {
-      // Re-throw AgentError as-is (already properly formatted)
-      if (error instanceof AgentError) {
-        throw error;
-      }
-
-      // Handle CLI not found error
-      if (this._isCLINotFoundError(error)) {
-        throw AgentError.cliNotFound('claude', this.name);
-      }
-
-      // Handle execution errors
-      if (error !== null && typeof error === 'object' && 'code' in error) {
-        const execError = error as { code?: number | string; message?: string; stderr?: string };
-        const details = execError.stderr ?? execError.message ?? 'Unknown error';
-        const code = execError.code ?? 'unknown';
-        throw AgentError.executionFailed(
-          this.name,
-          code,
-          details,
-          error instanceof Error ? error : undefined
-        );
-      }
-
-      // Fallback for unknown errors
-      const message = error instanceof Error ? error.message : String(error);
-      throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
-        agentName: this.name,
-        cause: error instanceof Error ? error : undefined,
-      });
+      this._handleExecutionError(error);
     }
+  }
+
+  /**
+   * Process and validate the CLI response
+   *
+   * @param stdout - Raw stdout from Claude CLI
+   * @returns Cleaned and validated commit message
+   * @throws {AgentError} If response is invalid
+   */
+  private _processResponse(stdout: string): string {
+    // Clean AI artifacts from response
+    const cleaned = this._cleanAIArtifacts(stdout);
+
+    // Validate response is not empty
+    if (cleaned.length === 0 || cleaned.trim().length === 0) {
+      throw AgentError.executionFailed(
+        this.name,
+        0,
+        'Empty response - API key may not be configured'
+      );
+    }
+
+    // Validate conventional commit format
+    if (!this._isValidCommitMessage(cleaned)) {
+      throw AgentError.malformedResponse(this.name, cleaned);
+    }
+
+    return cleaned;
+  }
+
+  /**
+   * Handle execution errors and convert to AgentError
+   *
+   * @param error - The error that occurred
+   * @throws {AgentError} Always throws with appropriate error type
+   */
+  private _handleExecutionError(error: unknown): never {
+    // Re-throw AgentError as-is (already properly formatted)
+    if (error instanceof AgentError) {
+      throw error;
+    }
+
+    // Handle CLI not found error
+    if (this._isCLINotFoundError(error)) {
+      throw AgentError.cliNotFound('claude', this.name);
+    }
+
+    // Handle execution errors
+    if (error !== null && typeof error === 'object' && 'code' in error) {
+      const execError = error as { code?: number | string; message?: string; stderr?: string };
+      const details = execError.stderr ?? execError.message ?? 'Unknown error';
+      const code = execError.code ?? 'unknown';
+      throw AgentError.executionFailed(
+        this.name,
+        code,
+        details,
+        error instanceof Error ? error : undefined
+      );
+    }
+
+    // Fallback for unknown errors
+    const message = error instanceof Error ? error.message : String(error);
+    throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
+      agentName: this.name,
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 
   /**

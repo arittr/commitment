@@ -491,7 +491,6 @@ export function safeValidateChangeStats(
  * // }
  * ```
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: File categorization logic, needs refactoring
 export function categorizeFiles(files: string[]): FileCategories {
   const categories: FileCategories = {
     apis: [],
@@ -505,22 +504,64 @@ export function categorizeFiles(files: string[]): FileCategories {
   for (const file of files) {
     const lower = file.toLowerCase();
 
-    if (lower.includes('component') || lower.endsWith('.tsx') || lower.endsWith('.jsx')) {
+    if (isComponentFile(lower)) {
       categories.components.push(file);
-    } else if (lower.includes('api') || lower.includes('endpoint') || lower.includes('route')) {
+    } else if (isApiFile(lower)) {
       categories.apis.push(file);
-    } else if (lower.includes('test') || lower.includes('spec')) {
+    } else if (isTestFile(lower)) {
       categories.tests.push(file);
-    } else if (lower.includes('config') || lower.endsWith('.json') || lower.endsWith('.yaml')) {
+    } else if (isConfigFile(lower)) {
       categories.configs.push(file);
-    } else if (lower.endsWith('.md') || lower.includes('readme') || lower.includes('doc')) {
+    } else if (isDocFile(lower)) {
       categories.docs.push(file);
-    } else if (lower.includes('type') || lower.endsWith('.d.ts')) {
+    } else if (isTypeFile(lower)) {
       categories.types.push(file);
     }
   }
 
   return validateFileCategories(categories);
+}
+
+/**
+ * Check if file is a component
+ */
+function isComponentFile(filename: string): boolean {
+  return filename.includes('component') || filename.endsWith('.tsx') || filename.endsWith('.jsx');
+}
+
+/**
+ * Check if file is an API endpoint
+ */
+function isApiFile(filename: string): boolean {
+  return filename.includes('api') || filename.includes('endpoint') || filename.includes('route');
+}
+
+/**
+ * Check if file is a test
+ */
+function isTestFile(filename: string): boolean {
+  return filename.includes('test') || filename.includes('spec');
+}
+
+/**
+ * Check if file is a configuration file
+ */
+function isConfigFile(filename: string): boolean {
+  return filename.includes('config') || filename.endsWith('.json') || filename.endsWith('.yaml');
+}
+
+/**
+ * Check if file is documentation
+ */
+function isDocFile(filename: string): boolean {
+  return filename.endsWith('.md') || filename.includes('readme') || filename.includes('doc');
+}
+
+/**
+ * Check if file is a type definition
+ */
+function isTypeFile(filename: string): boolean {
+  return filename.includes('type') || filename.endsWith('.d.ts');
 }
 
 /**
