@@ -152,7 +152,7 @@ For more information: https://github.com/your-org/codex`;
         agentName,
         context: { command },
         suggestedAction: installInstructions,
-      },
+      }
     );
   }
 
@@ -176,7 +176,7 @@ For more information: https://github.com/your-org/codex`;
     agentName: string,
     exitCode: number | string,
     stderr?: string,
-    cause?: Error,
+    cause?: Error
   ): AgentError {
     const details = stderr ?? 'Unknown error';
 
@@ -190,7 +190,7 @@ For more information: https://github.com/your-org/codex`;
   - API key is configured (e.g., claude config)
   - Network connection is working
   - Service is available and responding`,
-      },
+      }
     );
   }
 
@@ -216,7 +216,7 @@ For more information: https://github.com/your-org/codex`;
   static malformedResponse(
     agentName: string,
     receivedOutput: string,
-    expectedFormat?: string,
+    expectedFormat?: string
   ): AgentError {
     // Truncate long output to avoid overwhelming error messages
     const maxLength = 100;
@@ -242,7 +242,7 @@ Valid format:
   - Additional context
 
 Types: feat, fix, docs, style, refactor, test, chore, perf`,
-      },
+      }
     );
   }
 }
@@ -334,7 +334,7 @@ Or stage all changes:
   git add .
 
 Then run commitment again.`,
-      },
+      }
     );
   }
 
@@ -567,7 +567,7 @@ Or for live fixtures:
   └── metadata.json          (required)
 
 Verify the fixture name is correct and files exist.`,
-      },
+      }
     );
   }
 
@@ -599,7 +599,7 @@ Verify the fixture name is correct and files exist.`,
 Or skip this agent:
   - Use --agent flag to select different agent
   - Use --no-ai to fall back to rule-based generation`,
-      },
+      }
     );
   }
 
@@ -663,7 +663,7 @@ Or set OPENAI_API_KEY environment variable.`,
      echo $OPENAI_API_KEY
 
 Then run evaluation tests again.`,
-      },
+      }
     );
   }
 
@@ -712,7 +712,7 @@ If already installed, check:
   - CLI is in PATH
   - API key is configured (if applicable)
   - No permission issues`,
-      },
+      }
     );
   }
 }

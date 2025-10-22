@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { z, ZodError } from 'zod';
-
-import type { CliOptions } from '../schemas';
-
+import { ZodError, z } from 'zod';
+import type { CliOptions } from '../schemas.ts';
 import {
   cliOptionsSchema,
   formatValidationError,
   safeValidateCliOptions,
   validateCliOptions,
-} from '../schemas';
+} from '../schemas.ts';
 
 describe('CLI Schemas', () => {
   describe('cliOptionsSchema', () => {
@@ -162,8 +160,8 @@ describe('CLI Schemas', () => {
   describe('validateCliOptions', () => {
     it('should validate valid options', () => {
       const options = {
-        cwd: '/path/to/project',
         agent: 'claude',
+        cwd: '/path/to/project',
       };
 
       const result = validateCliOptions(options);
@@ -239,8 +237,8 @@ describe('CLI Schemas', () => {
 
     it('should provide error details in result', () => {
       const options = {
-        cwd: '',
         ai: 'not-a-boolean',
+        cwd: '',
       };
 
       const result = safeValidateCliOptions(options);
@@ -285,9 +283,9 @@ describe('CLI Schemas', () => {
 
     it('should format multiple issue error', () => {
       const options = {
-        cwd: '',
-        ai: 'not-boolean',
         agent: 'invalid',
+        ai: 'not-boolean',
+        cwd: '',
       };
 
       try {
@@ -329,9 +327,9 @@ describe('CLI Schemas', () => {
 
     it('should allow optional fields in CliOptions', () => {
       const options: CliOptions = {
+        agent: 'claude',
         ai: true,
         cwd: '/path',
-        agent: 'claude',
       };
 
       expect(options.agent).toBe('claude');
@@ -351,9 +349,9 @@ describe('CLI Schemas', () => {
 
     it('should only allow valid agent values', () => {
       const options: CliOptions = {
+        agent: 'claude', // Only 'claude' or 'codex' allowed
         ai: true,
         cwd: '/path',
-        agent: 'claude', // Only 'claude' or 'codex' allowed
       };
 
       expect(options.agent).toBe('claude');

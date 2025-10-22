@@ -1,17 +1,15 @@
 import { execa } from 'execa';
-
-import type { Agent } from './agents/types.js';
-
-import { ClaudeAgent } from './agents/claude.js';
-import { CodexAgent } from './agents/codex.js';
-import { AgentError, GeneratorError } from './errors.js';
+import { ClaudeAgent } from './agents/claude.ts';
+import { CodexAgent } from './agents/codex.ts';
+import type { Agent } from './agents/types.ts';
+import { AgentError, GeneratorError } from './errors.ts';
 import {
   safeValidateCommitOptions,
   safeValidateCommitTask,
   safeValidateGeneratorConfig,
-} from './types/schemas';
-import { categorizeFiles } from './utils/git-schemas';
-import { hasContent, isDefined, isString } from './utils/guards';
+} from './types/schemas.ts';
+import { categorizeFiles } from './utils/git-schemas.ts';
+import { hasContent, isDefined, isString } from './utils/guards.ts';
 
 /**
  * Minimal task interface for commit message generation
@@ -112,11 +110,11 @@ export class CommitMessageGenerator {
         : '🤖 Generated with Claude via commitment';
 
     this.config = {
-      signature: validatedConfig.signature ?? defaultSignature,
       enableAI: validatedConfig.enableAI ?? true,
       logger: isDefined(validatedConfig.logger)
         ? { warn: validatedConfig.logger.warn as (message: string) => void }
         : { warn: () => {} },
+      signature: validatedConfig.signature ?? defaultSignature,
     };
   }
 
@@ -180,19 +178,19 @@ export class CommitMessageGenerator {
    */
   private async _generateAICommitMessage(
     task: CommitTask,
-    options: CommitMessageOptions,
+    options: CommitMessageOptions
   ): Promise<string> {
     // Get comprehensive git diff information
     const gitDiffStat = await this._execGit(['diff', '--cached', '--stat'], options.workdir);
     const gitDiffNameStatus = await this._execGit(
       ['diff', '--cached', '--name-status'],
-      options.workdir,
+      options.workdir
     );
 
     // Get actual code changes (limited to avoid token limits)
     const gitDiffContent = await this._execGit(
       ['diff', '--cached', '--unified=3', '--ignore-space-change'],
-      options.workdir,
+      options.workdir
     );
 
     // Validate git outputs are strings
@@ -303,25 +301,25 @@ ${changeAnalysis}`;
     // Generate detailed bullet points based on file changes
     if (categories.components.length > 0) {
       bulletPoints.push(
-        `- Add ${categories.components.length} component${categories.components.length > 1 ? 's' : ''}: ${categories.components.slice(0, 3).join(', ')}${categories.components.length > 3 ? '...' : ''}`,
+        `- Add ${categories.components.length} component${categories.components.length > 1 ? 's' : ''}: ${categories.components.slice(0, 3).join(', ')}${categories.components.length > 3 ? '...' : ''}`
       );
     }
 
     if (categories.apis.length > 0) {
       bulletPoints.push(
-        `- Implement ${categories.apis.length} API endpoint${categories.apis.length > 1 ? 's' : ''}: ${categories.apis.slice(0, 3).join(', ')}${categories.apis.length > 3 ? '...' : ''}`,
+        `- Implement ${categories.apis.length} API endpoint${categories.apis.length > 1 ? 's' : ''}: ${categories.apis.slice(0, 3).join(', ')}${categories.apis.length > 3 ? '...' : ''}`
       );
     }
 
     if (categories.tests.length > 0) {
       bulletPoints.push(
-        `- Add ${categories.tests.length} test file${categories.tests.length > 1 ? 's' : ''} for comprehensive coverage`,
+        `- Add ${categories.tests.length} test file${categories.tests.length > 1 ? 's' : ''} for comprehensive coverage`
       );
     }
 
     if (categories.configs.length > 0) {
       bulletPoints.push(
-        `- Update ${categories.configs.length} configuration file${categories.configs.length > 1 ? 's' : ''}`,
+        `- Update ${categories.configs.length} configuration file${categories.configs.length > 1 ? 's' : ''}`
       );
     }
 
@@ -339,7 +337,7 @@ ${changeAnalysis}`;
     const uncategorizedCount = files.length - categorizedCount;
     if (uncategorizedCount > 0) {
       bulletPoints.push(
-        `- Modify ${uncategorizedCount} additional file${uncategorizedCount > 1 ? 's' : ''}`,
+        `- Modify ${uncategorizedCount} additional file${uncategorizedCount > 1 ? 's' : ''}`
       );
     }
 
@@ -426,7 +424,7 @@ ${changeAnalysis}`;
       return stdout;
     } catch (error) {
       throw new Error(
-        `Git command failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Git command failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -452,18 +450,18 @@ ${changeAnalysis}`;
 
     // Detect significant patterns only
     const patterns = {
-      newFunctions: addedLines.filter((line) =>
-        /\+.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line),
-      ).length,
-      removedFunctions: removedLines.filter((line) =>
-        /-.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line),
-      ).length,
-      newTests: addedLines.filter((line) => /\+.*(test|it|describe)\s*\(/.test(line)).length,
-      removedTests: removedLines.filter((line) => /-.*(test|it|describe)\s*\(/.test(line)).length,
       mockChanges:
         diffContent.includes('vi.mock') ||
         diffContent.includes('jest.mock') ||
         diffContent.includes('mock'),
+      newFunctions: addedLines.filter((line) =>
+        /\+.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line)
+      ).length,
+      newTests: addedLines.filter((line) => /\+.*(test|it|describe)\s*\(/.test(line)).length,
+      removedFunctions: removedLines.filter((line) =>
+        /-.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line)
+      ).length,
+      removedTests: removedLines.filter((line) => /-.*(test|it|describe)\s*\(/.test(line)).length,
       typeChanges:
         diffContent.includes('interface') ||
         diffContent.includes('type ') ||

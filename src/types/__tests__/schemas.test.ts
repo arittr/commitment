@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-
-import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas';
-
+import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas.ts';
 import {
   commitMessageGeneratorConfigSchema,
   commitMessageOptionsSchema,
@@ -13,16 +11,16 @@ import {
   validateCommitOptions,
   validateCommitTask,
   validateGeneratorConfig,
-} from '../schemas';
+} from '../schemas.ts';
 
 describe('Core Schemas', () => {
   describe('commitTaskSchema', () => {
     describe('valid tasks', () => {
       it('should validate a minimal valid task', () => {
         const task = {
-          title: 'Add feature',
           description: 'Implement new feature',
           produces: [],
+          title: 'Add feature',
         };
 
         const result = commitTaskSchema.parse(task);
@@ -32,9 +30,9 @@ describe('Core Schemas', () => {
 
       it('should validate task with produces array', () => {
         const task = {
-          title: 'Add authentication',
           description: 'Implement JWT-based auth',
           produces: ['src/auth.ts', 'src/middleware/auth.ts'],
+          title: 'Add authentication',
         };
 
         const result = commitTaskSchema.parse(task);
@@ -44,8 +42,8 @@ describe('Core Schemas', () => {
 
       it('should apply default empty array for produces if missing', () => {
         const task = {
-          title: 'Update docs',
           description: 'Fix typos in README',
+          title: 'Update docs',
         };
 
         const result = commitTaskSchema.parse(task);
@@ -55,9 +53,9 @@ describe('Core Schemas', () => {
 
       it('should validate task with maximum length title', () => {
         const task = {
-          title: 'a'.repeat(200),
           description: 'Test description',
           produces: [],
+          title: 'a'.repeat(200),
         };
 
         const result = commitTaskSchema.parse(task);
@@ -67,9 +65,9 @@ describe('Core Schemas', () => {
 
       it('should validate task with maximum length description', () => {
         const task = {
-          title: 'Test title',
           description: 'a'.repeat(1000),
           produces: [],
+          title: 'Test title',
         };
 
         const result = commitTaskSchema.parse(task);
@@ -79,9 +77,9 @@ describe('Core Schemas', () => {
 
       it('should validate task with many files in produces', () => {
         const task = {
-          title: 'Refactor components',
           description: 'Break down large components',
           produces: Array.from({ length: 50 }, (_, index) => `src/component-${index}.ts`),
+          title: 'Refactor components',
         };
 
         const result = commitTaskSchema.parse(task);
@@ -93,9 +91,9 @@ describe('Core Schemas', () => {
     describe('invalid tasks', () => {
       it('should reject empty title', () => {
         const task = {
-          title: '',
           description: 'Valid description',
           produces: [],
+          title: '',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -103,9 +101,9 @@ describe('Core Schemas', () => {
 
       it('should reject title exceeding max length', () => {
         const task = {
-          title: 'a'.repeat(201),
           description: 'Valid description',
           produces: [],
+          title: 'a'.repeat(201),
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -113,9 +111,9 @@ describe('Core Schemas', () => {
 
       it('should reject empty description', () => {
         const task = {
-          title: 'Valid title',
           description: '',
           produces: [],
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -123,9 +121,9 @@ describe('Core Schemas', () => {
 
       it('should reject description exceeding max length', () => {
         const task = {
-          title: 'Valid title',
           description: 'a'.repeat(1001),
           produces: [],
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -142,8 +140,8 @@ describe('Core Schemas', () => {
 
       it('should reject missing description field', () => {
         const task = {
-          title: 'Valid title',
           produces: [],
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -151,9 +149,9 @@ describe('Core Schemas', () => {
 
       it('should reject non-string title', () => {
         const task = {
-          title: 123,
           description: 'Valid description',
           produces: [],
+          title: 123,
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -161,9 +159,9 @@ describe('Core Schemas', () => {
 
       it('should reject non-string description', () => {
         const task = {
-          title: 'Valid title',
           description: { text: 'Not a string' },
           produces: [],
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -171,9 +169,9 @@ describe('Core Schemas', () => {
 
       it('should reject non-array produces', () => {
         const task = {
-          title: 'Valid title',
           description: 'Valid description',
           produces: 'not-an-array',
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -181,9 +179,9 @@ describe('Core Schemas', () => {
 
       it('should reject produces array with non-string elements', () => {
         const task = {
-          title: 'Valid title',
           description: 'Valid description',
           produces: ['valid', 123, 'also-valid'],
+          title: 'Valid title',
         };
 
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
@@ -205,8 +203,8 @@ describe('Core Schemas', () => {
 
       it('should validate options with files array', () => {
         const options = {
-          workdir: '/path/to/project',
           files: ['src/index.ts', 'src/utils.ts'],
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -216,8 +214,8 @@ describe('Core Schemas', () => {
 
       it('should validate options with output string', () => {
         const options = {
-          workdir: '/path/to/project',
           output: 'Build successful',
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -227,9 +225,9 @@ describe('Core Schemas', () => {
 
       it('should validate options with all fields', () => {
         const options = {
-          workdir: '/path/to/project',
           files: ['src/index.ts'],
           output: 'Tests passed',
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -239,8 +237,8 @@ describe('Core Schemas', () => {
 
       it('should validate options with empty files array', () => {
         const options = {
-          workdir: '/path/to/project',
           files: [],
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -250,8 +248,8 @@ describe('Core Schemas', () => {
 
       it('should validate options with empty output string', () => {
         const options = {
-          workdir: '/path/to/project',
           output: '',
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -261,8 +259,8 @@ describe('Core Schemas', () => {
 
       it('should validate options with many files', () => {
         const options = {
-          workdir: '/path/to/project',
           files: Array.from({ length: 100 }, (_, index) => `src/file-${index}.ts`),
+          workdir: '/path/to/project',
         };
 
         const result = commitMessageOptionsSchema.parse(options);
@@ -298,8 +296,8 @@ describe('Core Schemas', () => {
 
       it('should reject non-array files', () => {
         const options = {
-          workdir: '/path/to/project',
           files: 'not-an-array',
+          workdir: '/path/to/project',
         };
 
         expect(() => commitMessageOptionsSchema.parse(options)).toThrow(ZodError);
@@ -307,8 +305,8 @@ describe('Core Schemas', () => {
 
       it('should reject files array with non-string elements', () => {
         const options = {
-          workdir: '/path/to/project',
           files: ['valid.ts', 123, null],
+          workdir: '/path/to/project',
         };
 
         expect(() => commitMessageOptionsSchema.parse(options)).toThrow(ZodError);
@@ -316,8 +314,8 @@ describe('Core Schemas', () => {
 
       it('should reject non-string output', () => {
         const options = {
-          workdir: '/path/to/project',
           output: { message: 'not a string' },
+          workdir: '/path/to/project',
         };
 
         expect(() => commitMessageOptionsSchema.parse(options)).toThrow(ZodError);
@@ -400,10 +398,10 @@ describe('Core Schemas', () => {
         };
 
         const config = {
-          enableAI: true,
           agent: 'claude' as const,
-          signature: 'Custom signature',
+          enableAI: true,
           logger,
+          signature: 'Custom signature',
         };
 
         const result = commitMessageGeneratorConfigSchema.parse(config);
@@ -482,9 +480,9 @@ describe('Core Schemas', () => {
     describe('validateCommitTask', () => {
       it('should validate valid task', () => {
         const task = {
-          title: 'Add feature',
           description: 'Implement new feature',
           produces: ['src/feature.ts'],
+          title: 'Add feature',
         };
 
         const result = validateCommitTask(task);
@@ -494,9 +492,9 @@ describe('Core Schemas', () => {
 
       it('should throw ZodError for invalid task', () => {
         const task = {
-          title: '',
           description: 'Valid description',
           produces: [],
+          title: '',
         };
 
         expect(() => validateCommitTask(task)).toThrow(ZodError);
@@ -504,9 +502,9 @@ describe('Core Schemas', () => {
 
       it('should provide detailed error messages', () => {
         const task = {
-          title: '',
           description: '',
           produces: 'not-an-array',
+          title: '',
         };
 
         try {
@@ -530,9 +528,9 @@ describe('Core Schemas', () => {
     describe('validateCommitOptions', () => {
       it('should validate valid options', () => {
         const options = {
-          workdir: '/path/to/project',
           files: ['src/index.ts'],
           output: 'Build successful',
+          workdir: '/path/to/project',
         };
 
         const result = validateCommitOptions(options);
@@ -550,8 +548,8 @@ describe('Core Schemas', () => {
 
       it('should provide detailed error messages', () => {
         const options = {
-          workdir: 123,
           files: 'not-an-array',
+          workdir: 123,
         };
 
         try {
@@ -575,8 +573,8 @@ describe('Core Schemas', () => {
     describe('validateGeneratorConfig', () => {
       it('should validate valid config', () => {
         const config = {
-          enableAI: true,
           agent: 'claude' as const,
+          enableAI: true,
           signature: 'Custom signature',
         };
 
@@ -635,9 +633,9 @@ describe('Core Schemas', () => {
     describe('safeValidateCommitTask', () => {
       it('should return success for valid task', () => {
         const task = {
-          title: 'Add feature',
           description: 'Implement new feature',
           produces: ['src/feature.ts'],
+          title: 'Add feature',
         };
 
         const result = safeValidateCommitTask(task);
@@ -650,9 +648,9 @@ describe('Core Schemas', () => {
 
       it('should return error for invalid task', () => {
         const task = {
-          title: '',
           description: 'Valid description',
           produces: [],
+          title: '',
         };
 
         const result = safeValidateCommitTask(task);
@@ -671,8 +669,8 @@ describe('Core Schemas', () => {
 
       it('should provide error details in result', () => {
         const task = {
-          title: '',
           description: '',
+          title: '',
         };
 
         const result = safeValidateCommitTask(task);
@@ -687,8 +685,8 @@ describe('Core Schemas', () => {
     describe('safeValidateCommitOptions', () => {
       it('should return success for valid options', () => {
         const options = {
-          workdir: '/path/to/project',
           files: ['src/index.ts'],
+          workdir: '/path/to/project',
         };
 
         const result = safeValidateCommitOptions(options);
@@ -720,8 +718,8 @@ describe('Core Schemas', () => {
 
       it('should provide error details in result', () => {
         const options = {
-          workdir: 123,
           files: 'not-an-array',
+          workdir: 123,
         };
 
         const result = safeValidateCommitOptions(options);
@@ -736,8 +734,8 @@ describe('Core Schemas', () => {
     describe('safeValidateGeneratorConfig', () => {
       it('should return success for valid config', () => {
         const config = {
-          enableAI: true,
           agent: 'claude' as const,
+          enableAI: true,
         };
 
         const result = safeValidateGeneratorConfig(config);
@@ -794,9 +792,9 @@ describe('Core Schemas', () => {
   describe('Type Inference', () => {
     it('should infer correct CommitTask type', () => {
       const task: CommitTask = {
-        title: 'Test',
         description: 'Test description',
         produces: ['file.ts'],
+        title: 'Test',
       };
 
       expect(task.title).toBe('Test');
@@ -806,9 +804,9 @@ describe('Core Schemas', () => {
 
     it('should infer correct CommitMessageOptions type', () => {
       const options: CommitMessageOptions = {
-        workdir: '/path',
         files: ['test.ts'],
         output: 'output',
+        workdir: '/path',
       };
 
       expect(options.workdir).toBe('/path');
@@ -829,8 +827,8 @@ describe('Core Schemas', () => {
     it('should allow optional fields in inferred types', () => {
       // Note: produces has a default [], so it's optional in input but required in output
       const inputTask = {
-        title: 'Test',
         description: 'Test',
+        title: 'Test',
       };
 
       const validatedTask = commitTaskSchema.parse(inputTask);

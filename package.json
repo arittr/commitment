@@ -1,40 +1,42 @@
 {
-  "name": "@arittr/commitment",
-  "version": "1.0.0",
-  "description": "AI-powered commit message generator with intelligent fallback",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
+  "author": "Drew Ritter <drew@ritter.dev>",
   "bin": {
     "commitment": "./dist/cli.js"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.1.11",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.1",
+    "execa": "^9.6.0",
+    "ts-pattern": "^5.8.0",
+    "zod": "^4.1.12"
+  },
+  "description": "AI-powered commit message generator with intelligent fallback",
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.7",
+    "@types/node": "^24.3.0",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "husky": "^9.1.7",
+    "jiti": "^2.6.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "clean": "rm -rf dist",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:eval": "vitest run src/__tests__/integration/eval-live.test.ts",
-    "lint": "pnpm run type-check && pnpm run format:check && eslint .",
-    "format": "prettier --cache --write . && eslint . --fix",
-    "format:check": "prettier --cache --check .",
-    "type-check": "tsc --noEmit",
-    "prepublishOnly": "pnpm run clean && pnpm run build",
-    "prepare": "pnpm run build && husky"
-  },
   "keywords": [
     "git",
     "commit",
@@ -46,42 +48,28 @@
     "husky",
     "lint-staged"
   ],
-  "author": "Drew Ritter <drew@ritter.dev>",
   "license": "ISC",
+  "main": "./dist/index.js",
+  "name": "@arittr/commitment",
   "packageManager": "pnpm@10.8.0",
-  "engines": {
-    "node": ">=18.0.0"
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "dev": "tsup --watch",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "pnpm run type-check && biome check .",
+    "lint:fix": "pnpm run type-check && biome check --write .",
+    "prepare": "pnpm run build && husky",
+    "prepublishOnly": "pnpm run clean && pnpm run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:eval": "vitest run src/__tests__/integration/eval-live.test.ts",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit"
   },
-  "dependencies": {
-    "@openai/agents": "^0.1.11",
-    "chalk": "^5.6.2",
-    "commander": "^14.0.1",
-    "execa": "^9.6.0",
-    "ts-pattern": "^5.8.0",
-    "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "@types/eslint-config-prettier": "^6.11.3",
-    "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.15.0",
-    "@typescript-eslint/parser": "^8.15.0",
-    "@vitest/coverage-v8": "3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "eslint": "^9.15.0",
-    "eslint-config-prettier": "^9.1.2",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-jest": "^29.0.1",
-    "eslint-plugin-perfectionist": "^4.1.2",
-    "eslint-plugin-promise": "^7.2.1",
-    "eslint-plugin-unicorn": "^56.0.1",
-    "eslint-plugin-vitest": "^0.5.4",
-    "husky": "^9.1.7",
-    "jiti": "^2.6.0",
-    "prettier": "^3.6.2",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
-  }
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "version": "1.0.0"
 }

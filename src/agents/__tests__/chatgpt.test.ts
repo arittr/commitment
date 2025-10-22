@@ -7,8 +7,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EvalError } from '../../errors.js';
-import { ChatGPTAgent } from '../chatgpt.js';
+import { EvalError } from '../../errors.ts';
+import { ChatGPTAgent } from '../chatgpt.ts';
 
 // Mock the OpenAI Agents SDK
 vi.mock('@openai/agents', () => {
@@ -69,9 +69,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 9,
-                clarity: 8,
                 accuracy: 9,
+                clarity: 8,
+                conventionalCompliance: 9,
                 detailLevel: 7,
                 feedback: 'Good conventional commit format. Clear description of null safety fix.',
               },
@@ -83,15 +83,15 @@ describe('ChatGPTAgent', () => {
 
         // Verify metrics structure
         expect(result.metrics).toEqual({
-          conventionalCompliance: 9,
-          clarity: 8,
           accuracy: 9,
+          clarity: 8,
+          conventionalCompliance: 9,
           detailLevel: 7,
         });
 
         // Verify feedback
         expect(result.feedback).toBe(
-          'Good conventional commit format. Clear description of null safety fix.',
+          'Good conventional commit format. Clear description of null safety fix.'
         );
       });
 
@@ -100,9 +100,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 9,
-                clarity: 8,
                 accuracy: 9,
+                clarity: 8,
+                conventionalCompliance: 9,
                 detailLevel: 7,
                 feedback: 'Test feedback',
               },
@@ -129,9 +129,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 10,
-                clarity: 10,
                 accuracy: 10,
+                clarity: 10,
+                conventionalCompliance: 10,
                 detailLevel: 10,
                 feedback: 'Perfect commit message in every dimension.',
               },
@@ -152,9 +152,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 0,
-                clarity: 0,
                 accuracy: 0,
+                clarity: 0,
+                conventionalCompliance: 0,
                 detailLevel: 0,
                 feedback: 'Poor commit message. Missing conventional format, unclear, inaccurate.',
               },
@@ -176,9 +176,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 8.5,
-                clarity: 7.5,
                 accuracy: 9,
+                clarity: 7.5,
+                conventionalCompliance: 8.5,
                 detailLevel: 6.5,
                 feedback: 'Generally good with minor issues.',
               },
@@ -204,7 +204,7 @@ describe('ChatGPTAgent', () => {
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /OpenAI API key is not configured/,
+          /OpenAI API key is not configured/
         );
 
         // Restore API key
@@ -221,11 +221,11 @@ describe('ChatGPTAgent', () => {
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /evaluation failed/i,
+          /evaluation failed/i
         );
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /API rate limit exceeded/,
+          /API rate limit exceeded/
         );
       });
 
@@ -240,7 +240,7 @@ describe('ChatGPTAgent', () => {
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /No tool call in response/,
+          /No tool call in response/
         );
       });
 
@@ -260,7 +260,7 @@ describe('ChatGPTAgent', () => {
         mockAgent.run.mockRejectedValue(new Error('Network error: ECONNREFUSED'));
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /Network error/,
+          /Network error/
         );
       });
 
@@ -273,7 +273,7 @@ describe('ChatGPTAgent', () => {
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(EvalError);
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
-          /Unknown error/,
+          /Unknown error/
         );
       });
     });
@@ -290,9 +290,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 7,
-                clarity: 6,
                 accuracy: 8,
+                clarity: 6,
+                conventionalCompliance: 7,
                 detailLevel: 4, // Too verbose
                 feedback: 'Message is too verbose. Could be more concise.',
               },
@@ -311,9 +311,9 @@ describe('ChatGPTAgent', () => {
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 5,
-                clarity: 5,
                 accuracy: 0, // No changes to evaluate
+                clarity: 5,
+                conventionalCompliance: 5,
                 detailLevel: 5,
                 feedback: 'No changes in diff. Cannot evaluate accuracy.',
               },
@@ -339,9 +339,9 @@ Weaknesses:
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 8,
-                clarity: 7,
                 accuracy: 9,
+                clarity: 7,
+                conventionalCompliance: 8,
                 detailLevel: 6,
                 feedback: multilineFeedback,
               },
@@ -363,9 +363,9 @@ Weaknesses:
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 7,
-                clarity: 8,
                 accuracy: 9,
+                clarity: 8,
+                conventionalCompliance: 7,
                 detailLevel: 7,
                 feedback: feedbackWithSpecialChars,
               },
@@ -387,9 +387,9 @@ Weaknesses:
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 9,
-                clarity: 8,
                 accuracy: 9,
+                clarity: 8,
+                conventionalCompliance: 9,
                 detailLevel: 7,
                 feedback: 'Test',
               },
@@ -420,9 +420,9 @@ Weaknesses:
           toolCalls: [
             {
               arguments: {
-                conventionalCompliance: 9,
-                clarity: 8,
                 accuracy: 9,
+                clarity: 8,
+                conventionalCompliance: 9,
                 detailLevel: 7,
                 feedback: 'Test',
               },
