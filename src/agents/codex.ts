@@ -1,21 +1,18 @@
 import { execa } from 'execa';
 
-import { AgentError } from '../errors';
-
-import type { Agent } from './types';
+import { BaseAgent } from './base-agent.js';
 
 /**
  * Codex CLI agent for commit message generation
  *
- * This agent uses the codex CLI to generate conventional commit messages.
- * It handles CLI execution, response parsing, and provides actionable error
- * messages when the CLI is unavailable or returns invalid output.
+ * Extends BaseAgent with Codex-specific CLI execution and response cleaning.
+ * Handles Codex activity logs, metadata fields, and commit message markers.
  *
- * Implementation Philosophy:
- * - Standalone implementation (no base classes)
- * - All logic inlined (~50-100 LOC)
- * - Actionable error messages with installation instructions
- * - Cleans AI artifacts (code fences, extra whitespace)
+ * Implementation:
+ * - Uses template method pattern from BaseAgent
+ * - Overrides executeCommand() for Codex-specific CLI invocation
+ * - Overrides cleanResponse() for Codex-specific artifact removal
+ * - Inherits standard validation and error handling from BaseAgent
  *
  * @example
  * ```typescript
@@ -27,36 +24,24 @@ import type { Agent } from './types';
  * // Returns: "feat: add dark mode toggle\n\nImplement theme switching..."
  * ```
  */
-export class CodexAgent implements Agent {
+export class CodexAgent extends BaseAgent {
   /**
    * Human-readable name of the agent
    */
   readonly name = 'Codex CLI';
 
   /**
-   * Generate a commit message using Codex CLI
+   * Execute Codex CLI command to generate commit message
    *
-   * Executes codex with the provided prompt and parses the response.
-   * Cleans AI artifacts like code fences and validates the output format.
+   * Overrides BaseAgent.executeCommand() to implement Codex-specific CLI invocation.
+   * Uses temp file for output and handles file I/O with fallback to stdout.
    *
-   * @param prompt - The prompt to send to Codex (includes git diff, context, etc.)
-   * @param workdir - Working directory for git operations
-   * @returns Promise resolving to the generated commit message in conventional commit format
-   * @throws {Error} If Codex CLI is not available (with installation instructions)
-   * @throws {Error} If response is empty or malformed (with diagnostic context)
-   *
-   * @example
-   * ```typescript
-   * const agent = new CodexAgent();
-   * const message = await agent.generate(
-   *   'Generate a commit message for these changes:\n\nModified: src/feature.ts',
-   *   '/path/to/repo'
-   * );
-   * console.log(message);
-   * // "feat: add new feature\n\nImplement feature in feature.ts"
-   * ```
+   * @param prompt - The prompt to send to Codex
+   * @param workdir - Working directory for command execution
+   * @returns Promise resolving to raw Codex output
+   * @throws {Error} If command execution fails
    */
-  async generate(prompt: string, workdir: string): Promise<string> {
+  protected async executeCommand(prompt: string, workdir: string): Promise<string> {
     const tmpFile = `/tmp/codex-output-${Date.now()}.txt`;
 
     try {
@@ -67,13 +52,10 @@ export class CodexAgent implements Agent {
       });
 
       // Read output from temp file or fallback to stdout
-      const output = await this._readOutput(tmpFile, result.stdout);
-
-      // Process and validate the response
-      return this._processResponse(output);
+      return await this._readOutput(tmpFile, result.stdout);
     } catch (error) {
       await this._cleanupTempFile(tmpFile);
-      this._handleExecutionError(error);
+      throw error;
     }
   }
 
@@ -100,34 +82,6 @@ export class CodexAgent implements Agent {
   }
 
   /**
-   * Process and validate the CLI response
-   *
-   * @param output - Raw output from Codex CLI
-   * @returns Cleaned and validated commit message
-   * @throws {AgentError} If response is invalid
-   */
-  private _processResponse(output: string): string {
-    // Clean AI artifacts (code fences, extra whitespace)
-    const cleaned = this._cleanResponse(output);
-
-    // Validate response is not empty
-    if (cleaned.length === 0 || cleaned.trim().length === 0) {
-      throw AgentError.executionFailed(
-        this.name,
-        0,
-        'Empty response - CLI may not be properly configured'
-      );
-    }
-
-    // Validate conventional commit format
-    if (!this._isValidCommitFormat(cleaned)) {
-      throw AgentError.malformedResponse(this.name, cleaned);
-    }
-
-    return cleaned;
-  }
-
-  /**
    * Clean up temporary file (best effort)
    *
    * @param tmpFile - Path to temporary file
@@ -144,58 +98,33 @@ export class CodexAgent implements Agent {
   }
 
   /**
-   * Handle execution errors and convert to AgentError
+   * Clean AI artifacts from Codex response
    *
-   * @param error - The error that occurred
-   * @throws {AgentError} Always throws with appropriate error type
-   */
-  private _handleExecutionError(error: unknown): never {
-    // Re-throw AgentError as-is (already properly formatted)
-    if (error instanceof AgentError) {
-      throw error;
-    }
-
-    // Handle CLI not found error
-    if (error !== null && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-      throw AgentError.cliNotFound('codex', this.name);
-    }
-
-    // Handle execution errors
-    if (error !== null && typeof error === 'object' && 'code' in error) {
-      const execError = error as { code?: number | string; message?: string; stderr?: string };
-      const details = execError.stderr ?? execError.message ?? 'Unknown error';
-      const code = execError.code ?? 'unknown';
-      throw AgentError.executionFailed(
-        this.name,
-        code,
-        details,
-        error instanceof Error ? error : undefined
-      );
-    }
-
-    // Fallback for unknown errors
-    const message = error instanceof Error ? error.message : String(error);
-    throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
-      agentName: this.name,
-      cause: error instanceof Error ? error : undefined,
-    });
-  }
-
-  /**
-   * Clean AI artifacts from response
-   *
-   * Removes:
+   * Overrides BaseAgent.cleanResponse() to add Codex-specific cleaning.
+   * First applies base cleaning (code fences, thinking tags, etc.), then removes:
    * - Codex activity logs (timestamps, workdir info, etc.)
+   * - Codex metadata fields (model, provider, approval, etc.)
    * - Commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
-   * - Code fences (```...```)
-   * - Extra leading/trailing whitespace
-   * - Common AI prefixes/suffixes
    *
    * @param response - Raw response from Codex CLI
-   * @returns Cleaned commit message
+   * @returns Cleaned commit message with all artifacts removed
+   *
+   * @example
+   * ```typescript
+   * // Input:
+   * // [2025-10-22T00:50:28] OpenAI Codex v0.42.0
+   * // workdir: /path/to/repo
+   * // <<<COMMIT_MESSAGE_START>>>
+   * // feat: add feature
+   * // <<<COMMIT_MESSAGE_END>>>
+   * //
+   * // Output:
+   * // feat: add feature
+   * ```
    */
-  private _cleanResponse(response: string): string {
-    let cleaned = response;
+  protected override cleanResponse(response: string): string {
+    // First apply base cleaning (from BaseAgent)
+    let cleaned = super.cleanResponse(response);
 
     // Remove Codex activity logs (lines starting with timestamps, workdir, etc.)
     // Example: "[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)"
@@ -221,11 +150,7 @@ export class CodexAgent implements Agent {
     cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
     cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
 
-    // Remove code fences
-    cleaned = cleaned.replaceAll(/^```[a-z]*\n?/gm, '');
-    cleaned = cleaned.replaceAll(/\n?```$/gm, '');
-
-    // Remove common AI artifacts
+    // Remove common AI artifacts (not covered by base cleanAIResponse)
     cleaned = cleaned.replace(/^(here is|here's) (the|a) commit message:?\s*/i, '');
     cleaned = cleaned.replace(/^commit message:?\s*/i, '');
 
@@ -234,22 +159,5 @@ export class CodexAgent implements Agent {
     cleaned = cleaned.replaceAll(/\n{3,}/g, '\n\n'); // Max 2 consecutive newlines
 
     return cleaned;
-  }
-
-  /**
-   * Validate commit message format
-   *
-   * Checks if response looks like a conventional commit:
-   * - Starts with a type (feat, fix, etc.)
-   * - Has colon after type
-   * - Has description after colon
-   *
-   * @param message - Cleaned commit message
-   * @returns true if format is valid
-   */
-  private _isValidCommitFormat(message: string): boolean {
-    // Basic pattern: type: description or type(scope): description
-    const conventionalPattern = /^(feat|fix|docs|style|refactor|test|chore|perf)(\([^)]+\))?:\s+.+/;
-    return conventionalPattern.test(message);
   }
 }
