@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import { EvalRunner, EvalReporter } from './eval/index.js';
+ * import { EvalRunner, EvalReporter } from './eval/index';
  *
  * const runner = new EvalRunner();
  * const reporter = new EvalReporter();
@@ -29,6 +29,6 @@ export * from './schemas';
 
 // Export core evaluation components (will be implemented in later tasks)
 // These are placeholder exports for now - actual implementations come in Task 3
-// export { Evaluator } from './evaluator.js';
-// export { EvalRunner } from './runner.js';
-// export { EvalReporter } from './reporter.js';
+// export { Evaluator } from './evaluator';
+// export { EvalRunner } from './runner';
+// export { EvalReporter } from './reporter';

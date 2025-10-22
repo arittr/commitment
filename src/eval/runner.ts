@@ -29,11 +29,11 @@ import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EvalError } from '../errors.js';
-import { CommitMessageGenerator } from '../generator.js';
-import { hasContent } from '../utils/guards.js';
-import { Evaluator } from './evaluator.js';
-import type { EvalComparison, EvalFixture } from './schemas.js';
+import { EvalError } from '../errors';
+import { CommitMessageGenerator } from '../generator';
+import { hasContent } from '../utils/guards';
+import { Evaluator } from './evaluator';
+import type { EvalComparison, EvalFixture } from './schemas';
 
 /**
  * EvalRunner class that loads fixtures and runs evaluation pipeline
