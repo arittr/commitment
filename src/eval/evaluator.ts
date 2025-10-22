@@ -65,7 +65,7 @@ export class Evaluator {
    * @param fixtureName - Name of the fixture being evaluated
    * @param agentName - Name of the agent that generated the message (claude or codex)
    * @returns Complete evaluation result with metrics, feedback, and overall score
-   * @throws {EvalError} If ChatGPT evaluation fails (API key missing, network error, etc.)
+   * @throws {EvaluationError} If ChatGPT evaluation fails (API key missing, network error, etc.)
    *
    * @example
    * ```typescript
