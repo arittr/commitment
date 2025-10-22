@@ -1,7 +1,6 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import chalk from 'chalk';
 import { execa } from 'execa';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createCommit,

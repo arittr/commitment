@@ -469,9 +469,9 @@ Update all constitution documents and project documentation to reflect Bun as th
      - `vi.spyOn()` → `spyOn()`
      - `vi.mock()` → `mock.module()`
    - Update test running commands:
-     - `pnpm test` → `bun test`
-     - `pnpm test --watch` → `bun test --watch`
-     - `pnpm test --coverage` → `bun test --coverage`
+     - `bun test` → `bun test`
+     - `bun test --watch` → `bun test --watch`
+     - `bun test --coverage` → `bun test --coverage`
    - Update coverage configuration (bunfig.toml instead of vitest.config.ts)
    - Keep test organization patterns (co-located \_\_tests\_\_/ directories)
    - Update examples to use Bun mock API
@@ -480,7 +480,7 @@ Update all constitution documents and project documentation to reflect Bun as th
 
    - Remove pnpm-specific patterns:
      - `pnpm install` → `bun install`
-     - `pnpm run build` → `bun run build`
+     - `bun run build` → `bun run build`
      - pnpm workspaces → Bun workspaces (if applicable)
    - Add Bun-specific patterns:
      - Extensionless imports (moduleResolution: "bundler")
@@ -493,10 +493,10 @@ Update all constitution documents and project documentation to reflect Bun as th
 
    - Replace all pnpm commands with bun equivalents:
      - `pnpm install` → `bun install`
-     - `pnpm run build` → `bun run build`
+     - `bun run build` → `bun run build`
      - `pnpm run dev` → `bun run dev`
-     - `pnpm test` → `bun test`
-     - `pnpm run lint` → `bun run lint`
+     - `bun test` → `bun test`
+     - `bun run lint` → `bun run lint`
    - Update "Development Commands" section
    - Update "Testing" section with Bun test patterns
    - Update "Adding a New AI Agent" section (if it references build/test)
@@ -608,9 +608,9 @@ Update GitHub Actions workflows to use Bun, update all spec/plan/example documen
          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
      ```
    - Update install command: `pnpm install` → `bun install`
-   - Update build command: `pnpm run build` → `bun run build`
-   - Update test command: `pnpm test` → `bun test`
-   - Update lint command: `pnpm run lint` → `bun run lint`
+   - Update build command: `bun run build` → `bun run build`
+   - Update test command: `bun test` → `bun test`
+   - Update lint command: `bun run lint` → `bun run lint`
    - Verify all CI steps (install, build, test, lint) work
 
 2. **Update spec and plan files**:

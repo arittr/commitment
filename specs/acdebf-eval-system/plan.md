@@ -48,7 +48,7 @@ Set up the evaluation system foundation with Zod schemas, error types, and depen
 
 1. **Install Dependencies**
    ```bash
-   pnpm add @openai/agents
+   bun add @openai/agents
    ```
 
 2. **Create Zod Schemas** (`src/eval/schemas.ts`)
@@ -89,7 +89,7 @@ Set up the evaluation system foundation with Zod schemas, error types, and depen
    - Follow existing `AgentError` pattern (extends Error with static factories)
 
 4. **Update package.json**
-   - Add script: `"test:eval": "vitest run src/__tests__/integration/eval-live.test.ts"`
+   - Add script: `"test:eval": "bun test src/__tests__/integration/eval-live.test.ts"`
    - Verify @openai/agents dependency is added
 
 5. **Create Barrel Export** (`src/eval/index.ts`)
@@ -105,7 +105,7 @@ Set up the evaluation system foundation with Zod schemas, error types, and depen
 - [ ] Types inferred from schemas (no manual type definitions)
 - [ ] EvalError class follows AgentError pattern with 5 factory methods
 - [ ] @openai/agents dependency installed and in package.json
-- [ ] `pnpm test:eval` script added to package.json
+- [ ] `bun test:eval` script added to package.json
 - [ ] All schemas validate correctly (unit tests pass)
 
 **Mandatory Patterns**:
@@ -127,8 +127,8 @@ Set up the evaluation system foundation with Zod schemas, error types, and depen
 
 **Quality Gates**:
 ```bash
-pnpm run lint:fix
-pnpm test src/eval/__tests__/schemas.test.ts
+bun run lint:fix
+bun test src/eval/__tests__/schemas.test.ts
 ```
 
 ---
@@ -270,8 +270,8 @@ Implement a ChatGPT agent for evaluating commit message quality using OpenAI Age
 
 **Quality Gates**:
 ```bash
-pnpm run lint:fix
-pnpm test src/agents/__tests__/chatgpt.test.ts
+bun run lint:fix
+bun test src/agents/__tests__/chatgpt.test.ts
 ```
 
 ---
@@ -891,10 +891,10 @@ Implement the core evaluation logic: orchestrating ChatGPT evaluation, running f
 
 **Quality Gates**:
 ```bash
-pnpm run lint:fix
-pnpm test src/eval/__tests__/evaluator.test.ts
-pnpm test src/eval/__tests__/runner.test.ts
-pnpm test src/eval/__tests__/reporter.test.ts
+bun run lint:fix
+bun test src/eval/__tests__/evaluator.test.ts
+bun test src/eval/__tests__/runner.test.ts
+bun test src/eval/__tests__/reporter.test.ts
 ```
 
 ---
@@ -928,7 +928,7 @@ Create integration test that runs the full evaluation pipeline with live AI call
 
 2. **Create Integration Test** (`src/__tests__/integration/eval-live.test.ts`)
    ```typescript
-   import { describe, it, expect, beforeAll } from 'vitest';
+   // Bun test globals (describe, it, expect) provided by bun-types;
    import { EvalRunner } from '../../eval/runner.js';
    import { EvalReporter } from '../../eval/reporter.js';
    import { existsSync, rmSync } from 'node:fs';
@@ -1109,7 +1109,7 @@ Create integration test that runs the full evaluation pipeline with live AI call
    ```
 
 3. **Verify Test Script** (`package.json`)
-   - Ensure `"test:eval": "vitest run src/__tests__/integration/eval-live.test.ts"` exists
+   - Ensure `"test:eval": "bun test src/__tests__/integration/eval-live.test.ts"` exists
    - Test script should run integration test only (not full suite)
 
 4. **Create Results Directory** (at runtime)
@@ -1118,7 +1118,7 @@ Create integration test that runs the full evaluation pipeline with live AI call
 
 5. **Document Usage**
    - Add section to README or docs explaining:
-     - How to run eval tests: `pnpm test:eval`
+     - How to run eval tests: `bun test:eval`
      - Prerequisites: OPENAI_API_KEY, claude CLI, codex CLI
      - Result location: `.eval-results/`
      - Baseline workflow: Copy `latest-{fixture}.json` to `baseline-{fixture}.json`
@@ -1133,7 +1133,7 @@ Create integration test that runs the full evaluation pipeline with live AI call
 - [ ] Symlinks created for latest results per fixture
 - [ ] Markdown reports generated
 - [ ] Baseline comparison works when baseline exists
-- [ ] `pnpm test:eval` runs eval tests only
+- [ ] `bun test:eval` runs eval tests only
 
 **Mandatory Patterns**:
 
@@ -1157,8 +1157,8 @@ Create integration test that runs the full evaluation pipeline with live AI call
 
 **Quality Gates**:
 ```bash
-pnpm run lint:fix
-pnpm test:eval  # Requires OPENAI_API_KEY
+bun run lint:fix
+bun test:eval  # Requires OPENAI_API_KEY
 ```
 
 ---
@@ -1180,7 +1180,7 @@ This plan implements a commit message quality evaluation system with:
 - Structured ChatGPT evaluation (4 metrics + feedback)
 - Mocked and live git fixture modes
 - Timestamped results with baseline comparison
-- Separate test command (`pnpm test:eval`) to avoid CI impact
+- Separate test command (`bun test:eval`) to avoid CI impact
 
 **Next Steps**:
 ```bash
