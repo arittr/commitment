@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
 import { validateCliOptions } from '../../cli/schemas';

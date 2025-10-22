@@ -18,8 +18,6 @@
  * See: @docs/constitutions/current/schema-rules.md
  */
 
-import { describe, expect, it } from 'vitest';
-
 import type { Agent, AgentConfig } from '../types';
 
 describe('Agent interface', () => {

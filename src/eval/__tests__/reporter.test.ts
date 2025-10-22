@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 /**
  * Unit tests for EvalReporter module
  *
@@ -11,16 +12,16 @@ import { EvalReporter } from '../reporter.js';
 import type { EvalComparison, EvalMetrics } from '../schemas.js';
 
 // Mock node:fs
-vi.mock('node:fs', async () => {
-  const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
+mock.module('node:fs', async () => {
+  const actual = await import('node:fs');
   return {
     ...actual,
-    existsSync: vi.fn(),
-    mkdirSync: vi.fn(),
-    readFileSync: vi.fn(),
-    symlinkSync: vi.fn(),
-    unlinkSync: vi.fn(),
-    writeFileSync: vi.fn(),
+    existsSync: mock(),
+    mkdirSync: mock(),
+    readFileSync: mock(),
+    symlinkSync: mock(),
+    unlinkSync: mock(),
+    writeFileSync: mock(),
   };
 });
 
@@ -28,19 +29,19 @@ describe('EvalReporter', () => {
   let reporter: EvalReporter;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.restore();
     reporter = new EvalReporter('.eval-results-test');
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    mock.restore();
   });
 
   describe('constructor', () => {
     it('should create results directory if it does not exist', async () => {
       // Arrange
       const { existsSync, mkdirSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(false);
+      existsSync.mockReturnValue(false);
 
       // Act
       new EvalReporter('.test-results');
@@ -52,8 +53,8 @@ describe('EvalReporter', () => {
     it('should not create directory if it already exists', async () => {
       // Arrange
       const { existsSync, mkdirSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(true);
-      vi.clearAllMocks(); // Clear mock calls from beforeEach
+      existsSync.mockReturnValue(true);
+      mock.restore(); // Clear mock calls from beforeEach
 
       // Act
       new EvalReporter('.existing-results');
@@ -65,7 +66,7 @@ describe('EvalReporter', () => {
     it('should use default directory when not specified', async () => {
       // Arrange
       const { existsSync, mkdirSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(false);
+      existsSync.mockReturnValue(false);
 
       // Act
       new EvalReporter();
@@ -116,7 +117,7 @@ describe('EvalReporter', () => {
 
       // Assert
       expect(writeFileSync).toHaveBeenCalled();
-      const writeCall = vi.mocked(writeFileSync).mock.calls[0];
+      const writeCall = writeFileSync.mock.calls[0];
       expect(writeCall?.[0]).toMatch(/simple-.*\.json$/); // Timestamped filename
       expect(writeCall?.[1]).toBe(JSON.stringify(comparison, null, 2));
     });
@@ -124,7 +125,7 @@ describe('EvalReporter', () => {
     it('should create symlink to latest result', async () => {
       // Arrange
       const { existsSync, symlinkSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(false); // No existing symlink
+      existsSync.mockReturnValue(false); // No existing symlink
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -162,7 +163,7 @@ describe('EvalReporter', () => {
 
       // Assert
       expect(symlinkSync).toHaveBeenCalled();
-      const symlinkCall = vi.mocked(symlinkSync).mock.calls[0];
+      const symlinkCall = symlinkSync.mock.calls[0];
       expect(symlinkCall?.[0]).toMatch(/test-fixture-.*\.json$/); // Source (timestamped file)
       expect(symlinkCall?.[1]).toMatch(/latest-test-fixture\.json$/); // Target (latest symlink)
     });
@@ -170,7 +171,7 @@ describe('EvalReporter', () => {
     it('should remove existing symlink before creating new one', async () => {
       // Arrange
       const { existsSync, unlinkSync, symlinkSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(true); // Existing symlink
+      existsSync.mockReturnValue(true); // Existing symlink
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -211,8 +212,8 @@ describe('EvalReporter', () => {
       expect(symlinkSync).toHaveBeenCalled();
 
       // Verify unlink called before symlink
-      const unlinkCall = vi.mocked(unlinkSync).mock.invocationCallOrder[0];
-      const symlinkCall = vi.mocked(symlinkSync).mock.invocationCallOrder[0];
+      const unlinkCall = unlinkSync.mock.invocationCallOrder[0];
+      const symlinkCall = symlinkSync.mock.invocationCallOrder[0];
 
       // Type assertion after checking they're defined
       expect(unlinkCall).toBeDefined();
@@ -261,7 +262,7 @@ describe('EvalReporter', () => {
       reporter.storeResults(comparison);
 
       // Assert
-      const writeCall = vi.mocked(writeFileSync).mock.calls[0];
+      const writeCall = writeFileSync.mock.calls[0];
       const filename = writeCall?.[0]?.toString() ?? '';
 
       // Filename should not contain colons (Windows-incompatible)
@@ -604,7 +605,7 @@ describe('EvalReporter', () => {
 
       // Assert
       expect(writeFileSync).toHaveBeenCalled();
-      const writeCall = vi.mocked(writeFileSync).mock.calls[0];
+      const writeCall = writeFileSync.mock.calls[0];
       expect(writeCall?.[0]).toMatch(/report-.*\.md$/); // Timestamped filename
       expect(writeCall?.[1]).toContain('# Commit Message Quality Evaluation Report');
     });
@@ -612,7 +613,7 @@ describe('EvalReporter', () => {
     it('should create symlink to latest report', async () => {
       // Arrange
       const { existsSync, symlinkSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(false);
+      existsSync.mockReturnValue(false);
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -652,7 +653,7 @@ describe('EvalReporter', () => {
 
       // Assert
       expect(symlinkSync).toHaveBeenCalled();
-      const symlinkCall = vi.mocked(symlinkSync).mock.calls[0];
+      const symlinkCall = symlinkSync.mock.calls[0];
       expect(symlinkCall?.[0]).toMatch(/report-.*\.md$/);
       expect(symlinkCall?.[1]).toMatch(/latest-report\.md$/);
     });
@@ -662,7 +663,7 @@ describe('EvalReporter', () => {
     it('should return null when no baseline exists', async () => {
       // Arrange
       const { existsSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(false);
+      existsSync.mockReturnValue(false);
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -705,7 +706,7 @@ describe('EvalReporter', () => {
     it('should calculate differences when baseline exists', async () => {
       // Arrange
       const { existsSync, readFileSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(true);
+      existsSync.mockReturnValue(true);
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -738,7 +739,7 @@ describe('EvalReporter', () => {
         winner: 'tie',
       };
 
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(baseline));
+      readFileSync.mockReturnValue(JSON.stringify(baseline));
 
       const current: EvalComparison = {
         claudeResult: {
@@ -779,7 +780,7 @@ describe('EvalReporter', () => {
     it('should handle negative differences correctly', async () => {
       // Arrange
       const { existsSync, readFileSync } = await import('node:fs');
-      vi.mocked(existsSync).mockReturnValue(true);
+      existsSync.mockReturnValue(true);
 
       const mockMetrics: EvalMetrics = {
         accuracy: 8,
@@ -812,7 +813,7 @@ describe('EvalReporter', () => {
         winner: 'tie',
       };
 
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(baseline));
+      readFileSync.mockReturnValue(JSON.stringify(baseline));
 
       const current: EvalComparison = {
         claudeResult: {

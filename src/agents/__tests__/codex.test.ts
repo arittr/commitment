@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+
 
 import { CodexAgent } from '../codex';
 
 // Mock execa module
-vi.mock('execa', () => ({
-  execa: vi.fn(),
+mock.module('execa', () => ({
+  execa: mock(),
 }));
 
 describe('CodexAgent', () => {
@@ -12,7 +13,7 @@ describe('CodexAgent', () => {
 
   beforeEach(async () => {
     agent = new CodexAgent();
-    vi.clearAllMocks();
+    mock.restore();
   });
 
   describe('name', () => {
@@ -24,7 +25,7 @@ describe('CodexAgent', () => {
   describe('generate', () => {
     it('should generate commit message from prompt', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -73,7 +74,7 @@ describe('CodexAgent', () => {
 
     it('should clean AI artifacts from response', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -103,7 +104,7 @@ describe('CodexAgent', () => {
 
     it('should clean AI prefix artifacts from response', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -133,7 +134,7 @@ describe('CodexAgent', () => {
 
     it('should throw error when CLI is not found', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       // Mock ENOENT error for which command
       const error = new Error('Command not found') as any;
@@ -147,7 +148,7 @@ describe('CodexAgent', () => {
 
     it('should throw error when response is empty', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -177,7 +178,7 @@ describe('CodexAgent', () => {
 
     it('should throw error when response is only whitespace', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -207,7 +208,7 @@ describe('CodexAgent', () => {
 
     it('should throw error when response is malformed', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -237,7 +238,7 @@ describe('CodexAgent', () => {
 
     it('should accept valid conventional commit types', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       const validTypes = [
         'feat: add feature',
@@ -251,7 +252,7 @@ describe('CodexAgent', () => {
       ];
 
       for (const commitMessage of validTypes) {
-        vi.clearAllMocks();
+        mock.restore();
         mockExeca
           .mockResolvedValueOnce({
             command: 'which',
@@ -279,7 +280,7 @@ describe('CodexAgent', () => {
 
     it('should accept commit messages with scope', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -307,7 +308,7 @@ describe('CodexAgent', () => {
 
     it('should clean COMMIT_MESSAGE markers from response', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -339,7 +340,7 @@ feat: add feature
 
     it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -374,7 +375,7 @@ feat: add feature
 
     it('should clean Codex activity logs from response', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
@@ -408,7 +409,7 @@ feat: add feature
 
     it('should clean Codex configuration metadata from response', async () => {
       const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof vi.fn>;
+      const mockExeca = execa as ReturnType<typeof mock>;
 
       mockExeca
         .mockResolvedValueOnce({
