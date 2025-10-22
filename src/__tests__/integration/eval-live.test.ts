@@ -70,10 +70,11 @@ describe('Eval System Integration (Live AI)', () => {
     expect(() => runner.loadFixture('nonexistent')).toThrow('Fixture "nonexistent" not found');
   });
 
-  it(
-    'should run full eval pipeline for simple fixture',
-    { skip: !hasOpenAiKey(), timeout: 120_000 }, // 2 minutes for live AI calls
-    async () => {
+  it('should run full eval pipeline for simple fixture', async () => {
+    if (!hasOpenAiKey()) {
+      console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
+      return;
+    }
       const fixture = runner.loadFixture('simple', 'mocked');
       const comparison = await runner.runFixture(fixture);
 
@@ -109,10 +110,13 @@ describe('Eval System Integration (Live AI)', () => {
       // Verify files created
       const latestPath = join(testResultsDir, 'latest-simple.json');
       expect(existsSync(latestPath)).toBe(true);
-    }
-  );
+  });
 
-  it('should generate markdown report', { skip: !hasOpenAiKey(), timeout: 120_000 }, async () => {
+  it('should generate markdown report', async () => {
+    if (!hasOpenAiKey()) {
+      console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
+      return;
+    }
     const fixture = runner.loadFixture('simple', 'mocked');
     const comparison = await runner.runFixture(fixture);
 
@@ -122,23 +126,24 @@ describe('Eval System Integration (Live AI)', () => {
     expect(existsSync(reportPath)).toBe(true);
   });
 
-  it(
-    'should run all fixtures',
-    { skip: !hasOpenAiKey(), timeout: 300_000 }, // 5 minutes for multiple fixtures
-    async () => {
+  it('should run all fixtures', async () => {
+    if (!hasOpenAiKey()) {
+      console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
+      return;
+    }
       const comparisons = await runner.runAll('mocked');
 
       expect(comparisons.length).toBeGreaterThan(0);
       for (const comparison of comparisons) {
         expect(comparison.winner).toMatch(/claude|codex|tie/);
       }
-    }
-  );
+  });
 
-  it(
-    'should compare with baseline (when baseline exists)',
-    { skip: !hasOpenAiKey(), timeout: 240_000 }, // 4 minutes for two runs
-    async () => {
+  it('should compare with baseline (when baseline exists)', async () => {
+    if (!hasOpenAiKey()) {
+      console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
+      return;
+    }
       const fixture = runner.loadFixture('simple', 'mocked');
       const comparison = await runner.runFixture(fixture);
 
@@ -161,10 +166,9 @@ describe('Eval System Integration (Live AI)', () => {
       if (baselineComparison !== null) {
         expect(baselineComparison).toContain('Baseline Comparison');
       }
-    }
-  );
+  });
 
-  it('should throw when OPENAI_API_KEY missing', { timeout: 10_000 }, async () => {
+  it('should throw when OPENAI_API_KEY missing', async () => {
     const originalKey = process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_API_KEY;
 

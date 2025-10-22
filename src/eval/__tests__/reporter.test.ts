@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 /**
  * Unit tests for EvalReporter module
  *
@@ -660,7 +660,6 @@ describe('EvalReporter', () => {
   describe('compareWithBaseline', () => {
     it('should return null when no baseline exists', async () => {
       // Arrange
-      const { existsSync } = await import('node:fs');
       mockExistsSync.mockReturnValue(false);
 
       const mockMetrics: EvalMetrics = {
