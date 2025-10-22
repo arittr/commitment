@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EvalError } from '../../errors.js';
+import { EvaluationError } from '../../errors.js';
 import { CommitMessageGenerator } from '../../generator.js';
 import type { Evaluator } from '../evaluator.js';
 import { EvalRunner } from '../runner.js';
@@ -67,7 +67,7 @@ describe('EvalRunner', () => {
       expect(fixture.description).toBe('Single-file bug fix');
     });
 
-    it('should throw EvalError.fixtureNotFound for missing fixture', async () => {
+    it('should throw EvaluationError.fixtureNotFound for missing fixture', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
       vi.mocked(readFileSync).mockImplementation(() => {
@@ -75,11 +75,11 @@ describe('EvalRunner', () => {
       });
 
       // Act & Assert
-      expect(() => runner.loadFixture('nonexistent')).toThrow(EvalError);
+      expect(() => runner.loadFixture('nonexistent')).toThrow(EvaluationError);
       expect(() => runner.loadFixture('nonexistent')).toThrow('Fixture "nonexistent" not found');
     });
 
-    it('should throw EvalError.fixtureNotFound for missing metadata.json', async () => {
+    it('should throw EvaluationError.fixtureNotFound for missing metadata.json', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
       vi.mocked(readFileSync).mockImplementation((path) => {
@@ -90,10 +90,10 @@ describe('EvalRunner', () => {
       });
 
       // Act & Assert
-      expect(() => runner.loadFixture('broken')).toThrow(EvalError);
+      expect(() => runner.loadFixture('broken')).toThrow(EvaluationError);
     });
 
-    it('should throw EvalError.fixtureNotFound for missing mock files', async () => {
+    it('should throw EvaluationError.fixtureNotFound for missing mock files', async () => {
       // Arrange
       const { readFileSync } = await import('node:fs');
       vi.mocked(readFileSync).mockImplementation((path) => {
@@ -105,7 +105,7 @@ describe('EvalRunner', () => {
       });
 
       // Act & Assert
-      expect(() => runner.loadFixture('incomplete', 'mocked')).toThrow(EvalError);
+      expect(() => runner.loadFixture('incomplete', 'mocked')).toThrow(EvaluationError);
     });
 
     it('should use correct paths for mocked mode', async () => {
@@ -449,7 +449,7 @@ describe('EvalRunner', () => {
       expect(comparison.scoreDiff).toBeCloseTo(-0.3, 1);
     });
 
-    it('should throw EvalError.generationFailed when Claude generation fails', async () => {
+    it('should throw EvaluationError.generationFailed when Claude generation fails', async () => {
       // Arrange
       const fixture: EvalFixture = {
         description: 'Test',
@@ -466,13 +466,13 @@ describe('EvalRunner', () => {
       });
 
       // Act & Assert
-      await expect(runner.runFixture(fixture)).rejects.toThrow(EvalError);
+      await expect(runner.runFixture(fixture)).rejects.toThrow(EvaluationError);
       await expect(runner.runFixture(fixture)).rejects.toThrow(
         'Agent "claude" failed to generate commit message'
       );
     });
 
-    it('should throw EvalError.generationFailed when Codex generation fails', async () => {
+    it('should throw EvaluationError.generationFailed when Codex generation fails', async () => {
       // Arrange
       const fixture: EvalFixture = {
         description: 'Test',
@@ -492,7 +492,7 @@ describe('EvalRunner', () => {
       });
 
       // Act & Assert
-      await expect(runner.runFixture(fixture)).rejects.toThrow(EvalError);
+      await expect(runner.runFixture(fixture)).rejects.toThrow(EvaluationError);
       await expect(runner.runFixture(fixture)).rejects.toThrow(
         'Agent "codex" failed to generate commit message'
       );

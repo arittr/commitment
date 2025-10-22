@@ -67,6 +67,7 @@ export class ClaudeAgent implements Agent {
    * );
    * ```
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Core agent logic, needs refactoring
   async generate(prompt: string, workdir: string): Promise<string> {
     try {
       // Execute Claude CLI with prompt via stdin

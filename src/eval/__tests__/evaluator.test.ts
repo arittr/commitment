@@ -9,7 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatGPTAgent } from '../../agents/chatgpt.js';
-import { EvalError } from '../../errors.js';
+import { EvaluationError } from '../../errors.js';
 import { Evaluator } from '../evaluator.js';
 import type { EvalMetrics } from '../schemas.js';
 
@@ -206,7 +206,7 @@ describe('Evaluator', () => {
       expect(result.overallScore).toBe(0);
     });
 
-    it('should propagate EvalError from ChatGPT agent', async () => {
+    it('should propagate EvaluationError from ChatGPT agent', async () => {
       // Arrange
       const commitMessage = 'fix: test';
       const gitStatus = 'M  file.ts';
@@ -214,14 +214,14 @@ describe('Evaluator', () => {
       const fixtureName = 'test';
       const agentName = 'claude';
 
-      const mockError = EvalError.apiKeyMissing('OpenAI');
+      const mockError = EvaluationError.apiKeyMissing('OpenAI');
 
       vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
         evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
-      ).rejects.toThrow(EvalError);
+      ).rejects.toThrow(EvaluationError);
 
       await expect(
         evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
@@ -236,14 +236,14 @@ describe('Evaluator', () => {
       const fixtureName = 'test';
       const agentName = 'codex';
 
-      const mockError = EvalError.evaluationFailed('API rate limit exceeded');
+      const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
 
       vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
         evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
-      ).rejects.toThrow(EvalError);
+      ).rejects.toThrow(EvaluationError);
 
       await expect(
         evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)

@@ -110,11 +110,6 @@
               {
                 "formats": ["PascalCase"],
                 "selector": { "kind": "typeLike" }
-              },
-              {
-                "formats": ["camelCase"],
-                "match": "_",
-                "selector": { "kind": "classMember", "modifiers": ["private"] }
               }
             ],
             "strictCase": false

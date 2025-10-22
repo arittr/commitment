@@ -24,7 +24,7 @@
  */
 
 import { Agent, run, type Tool } from '@openai/agents';
-import { EvalError } from '../errors';
+import { EvaluationError } from '../errors';
 import type { EvalMetrics } from '../eval/schemas';
 
 /**
@@ -44,7 +44,7 @@ export class ChatGPTAgent {
    * @param gitDiff - Git diff output showing actual changes
    * @param gitStatus - Git status output showing file changes
    * @returns Structured metrics (0-10 scale) and textual feedback
-   * @throws {EvalError} If API key is missing or evaluation fails
+   * @throws {EvaluationError} If API key is missing or evaluation fails
    *
    * @example
    * ```typescript
@@ -66,7 +66,7 @@ export class ChatGPTAgent {
     // 1. Check API key
     const apiKey = process.env.OPENAI_API_KEY;
     if (typeof apiKey !== 'string' || apiKey.trim().length === 0) {
-      throw EvalError.apiKeyMissing('OpenAI');
+      throw EvaluationError.apiKeyMissing('OpenAI');
     }
 
     // 2. Initialize OpenAI Agents SDK
@@ -202,9 +202,9 @@ Use the score_commit tool to provide structured evaluation.`
       };
     } catch (error: unknown) {
       if (error instanceof Error) {
-        throw EvalError.evaluationFailed(error.message);
+        throw EvaluationError.evaluationFailed(error.message);
       }
-      throw EvalError.evaluationFailed('Unknown error');
+      throw EvaluationError.evaluationFailed('Unknown error');
     }
   }
 }

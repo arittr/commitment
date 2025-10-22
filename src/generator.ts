@@ -290,6 +290,7 @@ ${changeAnalysis}`;
   /**
    * Generate commit message using rule-based analysis
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Rule-based logic, needs refactoring
   private _generateRuleBasedCommitMessage(task: CommitTask, options: CommitMessageOptions): string {
     // Use guard to safely handle optional files array
     const files = isDefined(options.files) ? options.files : [];
@@ -432,6 +433,7 @@ ${changeAnalysis}`;
   /**
    * Analyze code changes to provide more accurate context
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Code analysis logic, needs refactoring
   private _analyzeCodeChanges(diffContent: string, files: string[]): string {
     // Validate inputs
     if (!isString(diffContent)) {
