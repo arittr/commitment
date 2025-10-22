@@ -82,13 +82,13 @@ describe('ClaudeAgent', () => {
       const error = new Error('Command "which" not found');
       mockExec.mockRejectedValue(error);
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Command "which" not found/);
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Command "which" not found/);
     });
 
     it('should throw error when response is empty', async () => {
       mockSuccessfulGeneration('');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
@@ -96,7 +96,7 @@ describe('ClaudeAgent', () => {
     it('should throw error when response is whitespace only', async () => {
       mockSuccessfulGeneration('   \n\n  ');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
@@ -104,7 +104,7 @@ describe('ClaudeAgent', () => {
     it('should throw error when response is malformed', async () => {
       mockSuccessfulGeneration('Not a valid commit message format');
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
