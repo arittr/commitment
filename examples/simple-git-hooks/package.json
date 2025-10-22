@@ -1,0 +1,16 @@
+{
+  "name": "commitment-simple-git-hooks-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example simple-git-hooks configuration for commitment",
+  "scripts": {
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1 || exit 0"
+  },
+  "devDependencies": {
+    "commitment": "^0.1.0",
+    "simple-git-hooks": "^2.11.1"
+  }
+}

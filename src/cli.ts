@@ -3,6 +3,7 @@ import { program } from 'commander';
 import { execa } from 'execa';
 import { ZodError } from 'zod';
 
+import { initCommand } from './cli/commands/init';
 import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import { parseGitStatus } from './utils/git-schemas';
@@ -56,34 +57,15 @@ async function createCommit(message: string, cwd: string): Promise<void> {
 }
 
 /**
- * Main CLI function
+ * Generate commit command (default action)
  */
-async function main(): Promise<void> {
-  program
-    .name('commitment')
-    .description(
-      'AI-powered commit message generator with intelligent fallback\n\n' +
-        'Available agents:\n' +
-        '  claude    - Claude CLI (default)\n' +
-        '  codex     - OpenAI Codex CLI\n\n' +
-        'Example: commitment --agent claude --dry-run',
-    )
-    .version('0.1.0')
-    .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
-    .option('--no-ai', 'Disable AI generation, use rule-based only')
-    .option('--dry-run', 'Generate message without creating commit')
-    .option('--message-only', 'Output only the commit message (no commit)')
-    .option('--cwd <path>', 'Working directory', process.cwd())
-    .parse();
-
-  const rawOptions = program.opts<{
-    agent?: string;
-    ai: boolean;
-    cwd: string;
-    dryRun?: boolean;
-    messageOnly?: boolean;
-  }>();
-
+async function generateCommitCommand(rawOptions: {
+  agent?: string;
+  ai: boolean;
+  cwd: string;
+  dryRun?: boolean;
+  messageOnly?: boolean;
+}): Promise<void> {
   // Validate CLI options
   let options;
   try {
@@ -183,6 +165,59 @@ async function main(): Promise<void> {
     console.error(chalk.red('❌ Error:'), error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
+}
+
+/**
+ * Main CLI function
+ */
+async function main(): Promise<void> {
+  program
+    .name('commitment')
+    .description('AI-powered commit message generator with intelligent fallback')
+    .version('0.1.0');
+
+  // Init command - setup git hooks
+  program
+    .command('init')
+    .description('Initialize commitment hooks in your project')
+    .option('--hook-manager <type>', 'Hook manager to use: husky, simple-git-hooks, plain')
+    .option('--cwd <path>', 'Working directory', process.cwd())
+    .action(
+      async (options: { cwd: string; hookManager?: 'husky' | 'simple-git-hooks' | 'plain' }) => {
+        await initCommand({
+          hookManager: options.hookManager,
+          cwd: options.cwd,
+        });
+      },
+    );
+
+  // Default command - generate commit message
+  program
+    .description(
+      'Generate commit message and create commit\n\n' +
+        'Available agents:\n' +
+        '  claude    - Claude CLI (default)\n' +
+        '  codex     - OpenAI Codex CLI\n\n' +
+        'Example: commitment --agent claude --dry-run',
+    )
+    .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
+    .option('--no-ai', 'Disable AI generation, use rule-based only')
+    .option('--dry-run', 'Generate message without creating commit')
+    .option('--message-only', 'Output only the commit message (no commit)')
+    .option('--cwd <path>', 'Working directory', process.cwd())
+    .action(
+      async (options: {
+        agent?: string;
+        ai: boolean;
+        cwd: string;
+        dryRun?: boolean;
+        messageOnly?: boolean;
+      }) => {
+        await generateCommitCommand(options);
+      },
+    );
+
+  await program.parseAsync();
 }
 
 // Run CLI
