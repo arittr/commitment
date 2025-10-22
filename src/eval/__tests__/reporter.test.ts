@@ -19,24 +19,23 @@ const mockUnlinkSync = mock();
 const mockWriteFileSync = mock();
 
 // Mock node:fs
-mock.module('node:fs', async () => {
-  const actual = await import('node:fs');
-  return {
-    ...actual,
-    existsSync: mockExistsSync,
-    mkdirSync: mockMkdirSync,
-    readFileSync: mockReadFileSync,
-    symlinkSync: mockSymlinkSync,
-    unlinkSync: mockUnlinkSync,
-    writeFileSync: mockWriteFileSync,
-  };
-});
+mock.module('node:fs', () => ({
+  existsSync: mockExistsSync,
+  mkdirSync: mockMkdirSync,
+  readFileSync: mockReadFileSync,
+  symlinkSync: mockSymlinkSync,
+  unlinkSync: mockUnlinkSync,
+  writeFileSync: mockWriteFileSync,
+}));
 
 describe('EvalReporter', () => {
   let reporter: EvalReporter;
 
   beforeEach(() => {
     mock.restore();
+    // Configure default mock behavior before creating reporter
+    mockExistsSync.mockReturnValue(true); // Default: directory exists
+    mockMkdirSync.mockReturnValue(undefined);
     reporter = new EvalReporter('.eval-results-test');
   });
 
@@ -59,7 +58,7 @@ describe('EvalReporter', () => {
     it('should not create directory if it already exists', async () => {
       // Arrange
       mockExistsSync.mockReturnValue(true);
-      mock.restore(); // Clear mock calls from beforeEach
+      mockMkdirSync.mockClear(); // Clear calls from beforeEach
 
       // Act
       new EvalReporter('.existing-results');
