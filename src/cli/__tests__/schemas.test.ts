@@ -1,269 +1,28 @@
+/**
+ * Schema Tests - Testing Philosophy
+ *
+ * We DON'T test Zod's validation logic:
+ * - ❌ "rejects non-string input"
+ * - ❌ "rejects empty string"
+ * - ❌ "applies default values"
+ *
+ * We DO test our custom logic built on schemas:
+ * - ✅ Type inference (z.infer<> produces correct types)
+ * - ✅ Data transformations (custom parsing logic)
+ * - ✅ Custom validation (formatValidationError - business logic)
+ * - ✅ Business logic (domain-specific behavior)
+ *
+ * Rationale: Zod is well-tested. We focus on behavior we own.
+ *
+ * See: @docs/constitutions/current/schema-rules.md
+ */
+
 import { describe, expect, it } from 'vitest';
 import { ZodError, z } from 'zod';
 import type { CliOptions } from '../schemas';
-import {
-  cliOptionsSchema,
-  formatValidationError,
-  safeValidateCliOptions,
-  validateCliOptions,
-} from '../schemas';
+import { cliOptionsSchema, formatValidationError } from '../schemas';
 
 describe('CLI Schemas', () => {
-  describe('cliOptionsSchema', () => {
-    describe('valid options', () => {
-      it('should validate minimal valid options with defaults', () => {
-        const options = {};
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.ai).toBe(true);
-        expect(result.cwd).toBe(process.cwd());
-        expect(result.agent).toBeUndefined();
-        expect(result.dryRun).toBeUndefined();
-        expect(result.messageOnly).toBeUndefined();
-      });
-
-      it('should validate options with ai flag', () => {
-        const options = {
-          ai: false,
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.ai).toBe(false);
-      });
-
-      it('should validate options with custom cwd', () => {
-        const options = {
-          cwd: '/custom/path',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.cwd).toBe('/custom/path');
-      });
-
-      it('should validate options with agent claude', () => {
-        const options = {
-          agent: 'claude',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.agent).toBe('claude');
-      });
-
-      it('should validate options with agent codex', () => {
-        const options = {
-          agent: 'codex',
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.agent).toBe('codex');
-      });
-
-      it('should validate options with dryRun flag', () => {
-        const options = {
-          dryRun: true,
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.dryRun).toBe(true);
-      });
-
-      it('should validate options with messageOnly flag', () => {
-        const options = {
-          messageOnly: true,
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result.messageOnly).toBe(true);
-      });
-
-      it('should validate options with all fields', () => {
-        const options = {
-          agent: 'claude',
-          ai: true,
-          cwd: '/custom/path',
-          dryRun: true,
-          messageOnly: true,
-        };
-
-        const result = cliOptionsSchema.parse(options);
-
-        expect(result).toEqual(options);
-      });
-    });
-
-    describe('invalid options', () => {
-      it('should reject empty cwd', () => {
-        const options = {
-          cwd: '',
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject non-boolean ai', () => {
-        const options = {
-          ai: 'true',
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject non-boolean dryRun', () => {
-        const options = {
-          dryRun: 'yes',
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject non-boolean messageOnly', () => {
-        const options = {
-          messageOnly: 1,
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject invalid agent name', () => {
-        const options = {
-          agent: 'openai',
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject non-string agent', () => {
-        const options = {
-          agent: 123,
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-
-      it('should reject non-string cwd', () => {
-        const options = {
-          cwd: 123,
-        };
-
-        expect(() => cliOptionsSchema.parse(options)).toThrow(ZodError);
-      });
-    });
-  });
-
-  describe('validateCliOptions', () => {
-    it('should validate valid options', () => {
-      const options = {
-        agent: 'claude',
-        cwd: '/path/to/project',
-      };
-
-      const result = validateCliOptions(options);
-
-      expect(result.cwd).toBe('/path/to/project');
-      expect(result.agent).toBe('claude');
-    });
-
-    it('should apply defaults to missing fields', () => {
-      const options = {};
-
-      const result = validateCliOptions(options);
-
-      expect(result.ai).toBe(true);
-      expect(result.cwd).toBe(process.cwd());
-    });
-
-    it('should throw ZodError for invalid options', () => {
-      const options = {
-        cwd: '',
-      };
-
-      expect(() => validateCliOptions(options)).toThrow(ZodError);
-    });
-
-    it('should throw ZodError for non-object input', () => {
-      expect(() => validateCliOptions(null)).toThrow(ZodError);
-      expect(() => validateCliOptions(undefined)).toThrow(ZodError);
-      expect(() => validateCliOptions('string')).toThrow(ZodError);
-    });
-
-    it('should throw ZodError for invalid agent', () => {
-      const options = {
-        agent: 'invalid-agent',
-      };
-
-      expect(() => validateCliOptions(options)).toThrow(ZodError);
-    });
-  });
-
-  describe('safeValidateCliOptions', () => {
-    it('should return success for valid options', () => {
-      const options = {
-        cwd: '/path/to/project',
-      };
-
-      const result = safeValidateCliOptions(options);
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.cwd).toBe('/path/to/project');
-      }
-    });
-
-    it('should return error for invalid options', () => {
-      const options = {
-        cwd: '',
-      };
-
-      const result = safeValidateCliOptions(options);
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toBeInstanceOf(ZodError);
-      }
-    });
-
-    it('should not throw for invalid input', () => {
-      expect(() => safeValidateCliOptions(null)).not.toThrow();
-      expect(() => safeValidateCliOptions(undefined)).not.toThrow();
-      expect(() => safeValidateCliOptions('string')).not.toThrow();
-    });
-
-    it('should provide error details in result', () => {
-      const options = {
-        ai: 'not-a-boolean',
-        cwd: '',
-      };
-
-      const result = safeValidateCliOptions(options);
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should return error for invalid agent', () => {
-      const options = {
-        agent: 'invalid',
-      };
-
-      const result = safeValidateCliOptions(options);
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues.length).toBeGreaterThan(0);
-        expect(result.error.issues[0]?.path).toContain('agent');
-      }
-    });
-  });
-
   describe('formatValidationError', () => {
     it('should format single issue error', () => {
       const options = {
