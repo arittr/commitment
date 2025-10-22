@@ -1,4 +1,4 @@
-import { execa } from 'execa';
+import { exec } from '../utils/shell.js';
 
 import { BaseAgent } from './base-agent';
 
@@ -46,7 +46,7 @@ export class CodexAgent extends BaseAgent {
 
     try {
       // Execute Codex CLI in non-interactive mode
-      const result = await execa('codex', ['exec', '--output-last-message', tmpFile, prompt], {
+      const result = await exec('codex', ['exec', '--output-last-message', tmpFile, prompt], {
         cwd: workdir,
         timeout: 120_000, // 2 minutes
       });
