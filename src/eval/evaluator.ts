@@ -23,9 +23,9 @@
  * ```
  */
 
-import { ChatGPTAgent } from '../agents/chatgpt.js';
+import { ChatGPTAgent } from '../agents/chatgpt';
 
-import type { EvalResult } from './schemas.js';
+import type { EvalResult } from './schemas';
 
 /**
  * Evaluator class that orchestrates ChatGPT-based commit message evaluation
