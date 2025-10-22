@@ -13,7 +13,7 @@
  * @module agents
  */
 
-export { BaseAgent } from './base-agent.js';
+export { BaseAgent } from './base-agent';
 export { ClaudeAgent } from './claude';
 export { CodexAgent } from './codex';
 export type { Agent, AgentConfig, AgentName } from './types';

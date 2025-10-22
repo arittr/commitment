@@ -1,6 +1,6 @@
 import { execa } from 'execa';
-import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from './agent-utils.js';
-import type { Agent } from './types.js';
+import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from './agent-utils';
+import type { Agent } from './types';
 
 /**
  * Abstract base class for AI agents using template method pattern

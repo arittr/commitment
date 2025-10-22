@@ -14,7 +14,7 @@
  *
  * @example
  * ```typescript
- * import { cleanAIResponse, validateConventionalCommit, isCLINotFoundError } from './agent-utils.js';
+ * import { cleanAIResponse, validateConventionalCommit, isCLINotFoundError } from './agent-utils';
  *
  * // Clean AI response
  * const cleaned = cleanAIResponse(rawOutput);
