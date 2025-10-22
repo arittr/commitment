@@ -31,6 +31,7 @@ import { join } from 'node:path';
 
 import { EvalError } from '../errors.js';
 import { CommitMessageGenerator } from '../generator.js';
+import { hasContent } from '../utils/guards.js';
 
 import type { EvalComparison, EvalFixture } from './schemas.js';
 
@@ -188,7 +189,8 @@ export class EvalRunner {
       workdir,
     });
 
-    if (claudeMessage.trim().length === 0) {
+    // Type assertion: At runtime, mocked generators may return null
+    if (!hasContent(claudeMessage as string | null)) {
       throw EvalError.generationFailed('claude', 'No message generated');
     }
 
@@ -202,7 +204,8 @@ export class EvalRunner {
       workdir,
     });
 
-    if (codexMessage.trim().length === 0) {
+    // Type assertion: At runtime, mocked generators may return null
+    if (!hasContent(codexMessage as string | null)) {
       throw EvalError.generationFailed('codex', 'No message generated');
     }
 
