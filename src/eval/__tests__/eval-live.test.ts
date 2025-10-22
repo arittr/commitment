@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from 'bun:test';
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EvalReporter } from '../../eval/reporter.js';
-import { EvalRunner } from '../../eval/runner.js';
+import { EvalReporter } from '../reporter.js';
+import { EvalRunner } from '../runner.js';
 
 /**
  * Check if OPENAI_API_KEY is set and non-empty
@@ -75,41 +75,41 @@ describe('Eval System Integration (Live AI)', () => {
       console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
       return;
     }
-      const fixture = runner.loadFixture('simple', 'mocked');
-      const comparison = await runner.runFixture(fixture);
+    const fixture = runner.loadFixture('simple', 'mocked');
+    const comparison = await runner.runFixture(fixture);
 
-      // Verify structure
-      expect(comparison.fixture).toBe('simple');
-      expect(comparison.claudeResult).toBeDefined();
-      expect(comparison.codexResult).toBeDefined();
-      expect(comparison.winner).toMatch(/claude|codex|tie/);
-      expect(comparison.scoreDiff).toBeTypeOf('number');
+    // Verify structure
+    expect(comparison.fixture).toBe('simple');
+    expect(comparison.claudeResult).toBeDefined();
+    expect(comparison.codexResult).toBeDefined();
+    expect(comparison.winner).toMatch(/claude|codex|tie/);
+    expect(comparison.scoreDiff).toBeTypeOf('number');
 
-      // Verify Claude result
-      expect(comparison.claudeResult.agent).toBe('claude');
-      expect(comparison.claudeResult.commitMessage.length).toBeGreaterThan(0);
-      expect(comparison.claudeResult.overallScore).toBeGreaterThanOrEqual(0);
-      expect(comparison.claudeResult.overallScore).toBeLessThanOrEqual(10);
-      expect(comparison.claudeResult.metrics).toMatchObject({
-        accuracy: expect.any(Number),
-        clarity: expect.any(Number),
-        conventionalCompliance: expect.any(Number),
-        detailLevel: expect.any(Number),
-      });
-      expect(comparison.claudeResult.feedback.length).toBeGreaterThan(0);
+    // Verify Claude result
+    expect(comparison.claudeResult.agent).toBe('claude');
+    expect(comparison.claudeResult.commitMessage.length).toBeGreaterThan(0);
+    expect(comparison.claudeResult.overallScore).toBeGreaterThanOrEqual(0);
+    expect(comparison.claudeResult.overallScore).toBeLessThanOrEqual(10);
+    expect(comparison.claudeResult.metrics).toMatchObject({
+      accuracy: expect.any(Number),
+      clarity: expect.any(Number),
+      conventionalCompliance: expect.any(Number),
+      detailLevel: expect.any(Number),
+    });
+    expect(comparison.claudeResult.feedback.length).toBeGreaterThan(0);
 
-      // Verify Codex result
-      expect(comparison.codexResult.agent).toBe('codex');
-      expect(comparison.codexResult.commitMessage.length).toBeGreaterThan(0);
-      expect(comparison.codexResult.overallScore).toBeGreaterThanOrEqual(0);
-      expect(comparison.codexResult.overallScore).toBeLessThanOrEqual(10);
+    // Verify Codex result
+    expect(comparison.codexResult.agent).toBe('codex');
+    expect(comparison.codexResult.commitMessage.length).toBeGreaterThan(0);
+    expect(comparison.codexResult.overallScore).toBeGreaterThanOrEqual(0);
+    expect(comparison.codexResult.overallScore).toBeLessThanOrEqual(10);
 
-      // Store results
-      reporter.storeResults(comparison);
+    // Store results
+    reporter.storeResults(comparison);
 
-      // Verify files created
-      const latestPath = join(testResultsDir, 'latest-simple.json');
-      expect(existsSync(latestPath)).toBe(true);
+    // Verify files created
+    const latestPath = join(testResultsDir, 'latest-simple.json');
+    expect(existsSync(latestPath)).toBe(true);
   });
 
   it('should generate markdown report', async () => {
@@ -131,12 +131,12 @@ describe('Eval System Integration (Live AI)', () => {
       console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
       return;
     }
-      const comparisons = await runner.runAll('mocked');
+    const comparisons = await runner.runAll('mocked');
 
-      expect(comparisons.length).toBeGreaterThan(0);
-      for (const comparison of comparisons) {
-        expect(comparison.winner).toMatch(/claude|codex|tie/);
-      }
+    expect(comparisons.length).toBeGreaterThan(0);
+    for (const comparison of comparisons) {
+      expect(comparison.winner).toMatch(/claude|codex|tie/);
+    }
   });
 
   it('should compare with baseline (when baseline exists)', async () => {
@@ -144,28 +144,28 @@ describe('Eval System Integration (Live AI)', () => {
       console.warn('⚠️  Skipping: OPENAI_API_KEY not set');
       return;
     }
-      const fixture = runner.loadFixture('simple', 'mocked');
-      const comparison = await runner.runFixture(fixture);
+    const fixture = runner.loadFixture('simple', 'mocked');
+    const comparison = await runner.runFixture(fixture);
 
-      // Store as baseline
-      reporter.storeResults(comparison);
-      const baselinePath = join(testResultsDir, `baseline-${comparison.fixture}.json`);
-      const latestPath = join(testResultsDir, `latest-${comparison.fixture}.json`);
-      if (existsSync(baselinePath)) {
-        rmSync(baselinePath);
-      }
-      // Copy latest to baseline
-      const { copyFileSync } = await import('node:fs');
-      copyFileSync(latestPath, baselinePath);
+    // Store as baseline
+    reporter.storeResults(comparison);
+    const baselinePath = join(testResultsDir, `baseline-${comparison.fixture}.json`);
+    const latestPath = join(testResultsDir, `latest-${comparison.fixture}.json`);
+    if (existsSync(baselinePath)) {
+      rmSync(baselinePath);
+    }
+    // Copy latest to baseline
+    const { copyFileSync } = await import('node:fs');
+    copyFileSync(latestPath, baselinePath);
 
-      // Run again and compare
-      const comparison2 = await runner.runFixture(fixture);
-      const baselineComparison = reporter.compareWithBaseline(comparison2);
+    // Run again and compare
+    const comparison2 = await runner.runFixture(fixture);
+    const baselineComparison = reporter.compareWithBaseline(comparison2);
 
-      expect(baselineComparison).not.toBeNull();
-      if (baselineComparison !== null) {
-        expect(baselineComparison).toContain('Baseline Comparison');
-      }
+    expect(baselineComparison).not.toBeNull();
+    if (baselineComparison !== null) {
+      expect(baselineComparison).toContain('Baseline Comparison');
+    }
   });
 
   it('should throw when OPENAI_API_KEY missing', async () => {
@@ -173,7 +173,7 @@ describe('Eval System Integration (Live AI)', () => {
     delete process.env.OPENAI_API_KEY;
 
     // Create a new evaluator with missing key
-    const { Evaluator } = await import('../../eval/evaluator.js');
+    const { Evaluator } = await import('../evaluator.js');
     const evaluator = new Evaluator();
 
     try {

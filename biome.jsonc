@@ -128,11 +128,14 @@
   },
   "overrides": [
     {
-      "includes": ["*.config.ts", "*.config.js", "*.config.mjs", "eslint.config.ts"],
+      "includes": ["build.ts", "*.config.ts", "*.config.js", "*.config.mjs", "eslint.config.ts"],
       "linter": {
         "rules": {
           "style": {
             "noDefaultExport": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
           }
         }
       }
