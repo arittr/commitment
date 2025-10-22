@@ -1,5 +1,5 @@
-import { execa } from 'execa';
-import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from './agent-utils';
+import { exec } from '../utils/shell.js';
+import { cleanAIResponse, validateConventionalCommit } from './agent-utils';
 import type { Agent } from './types';
 
 /**
@@ -93,7 +93,7 @@ export abstract class BaseAgent implements Agent {
    */
   async generate(prompt: string, workdir: string): Promise<string> {
     // Step 1: Check CLI availability
-    await this.checkAvailability(this.name);
+    await this.checkAvailability(this.name, workdir);
 
     // Step 2: Execute agent-specific command
     const rawOutput = await this.executeCommand(prompt, workdir);
@@ -114,19 +114,12 @@ export abstract class BaseAgent implements Agent {
    * Concrete method used by all agents.
    *
    * @param cliCommand - Name of the CLI command to check
+   * @param workdir - Working directory for command execution
    * @throws {Error} If CLI not found (ENOENT) or other execution error
    */
-  protected async checkAvailability(cliCommand: string): Promise<void> {
-    try {
-      await execa('which', [cliCommand]);
-    } catch (error) {
-      if (isCLINotFoundError(error)) {
-        throw new Error(
-          `CLI command "${cliCommand}" not found. Please install it and ensure it's in your PATH.`
-        );
-      }
-      throw error;
-    }
+  protected async checkAvailability(cliCommand: string, workdir: string): Promise<void> {
+    // exec() already throws helpful errors for ENOENT and other failures
+    await exec('which', [cliCommand], { cwd: workdir });
   }
 
   /**

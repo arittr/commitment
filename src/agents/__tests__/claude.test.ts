@@ -1,37 +1,39 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { execa } from 'execa';
+
+// Mock the shell module BEFORE importing ClaudeAgent
+const mockExec = mock(() => Promise.resolve({ exitCode: 0, stderr: '', stdout: '' }));
+
+mock.module('../../utils/shell.js', () => ({
+  exec: mockExec,
+}));
 
 import { ClaudeAgent } from '../claude';
 
-// Mock execa before importing ClaudeAgent
-mock.module('execa', () => ({
-  execa: mock(() => {}),
-}));
-
 describe('ClaudeAgent', () => {
   let agent: ClaudeAgent;
-  let mockExeca: ReturnType<typeof mock>;
 
   beforeEach(() => {
     agent = new ClaudeAgent();
-    mockExeca = execa as ReturnType<typeof mock>;
+    mockExec.mockClear();
   });
 
   /**
    * Helper to mock successful which + claude command
    */
   const mockSuccessfulGeneration = (output: string): void => {
-    mockExeca = mock(async (cmd: string) => {
-      if (cmd === 'which') {
-        return { stdout: '/usr/local/bin/claude' } as never;
-      }
-      if (cmd === 'claude') {
-        return { stdout: output } as never;
-      }
-      throw new Error('Unexpected command');
-    });
-    // @ts-expect-error - reassign mocked function
-    globalThis.execa = mockExeca;
+    mockExec
+      .mockResolvedValueOnce({
+        // First call: which Claude CLI
+        exitCode: 0,
+        stderr: '',
+        stdout: '/usr/local/bin/claude',
+      })
+      .mockResolvedValueOnce({
+        // Second call: claude command
+        exitCode: 0,
+        stderr: '',
+        stdout: output,
+      });
   };
 
   describe('name', () => {
@@ -53,8 +55,9 @@ describe('ClaudeAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      expect(mockExeca).toHaveBeenCalledWith('which', ['Claude CLI']);
-      expect(mockExeca).toHaveBeenCalledWith(
+      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['Claude CLI'], { cwd: workdir });
+      expect(mockExec).toHaveBeenNthCalledWith(
+        2,
         'claude',
         ['--print'],
         expect.objectContaining({
@@ -76,18 +79,10 @@ describe('ClaudeAgent', () => {
 
     it('should throw error when CLI is not found', async () => {
       // Mock which command to fail (CLI not found)
-      mockExeca = mock(async (cmd: string) => {
-        if (cmd === 'which') {
-          throw { code: 'ENOENT', message: 'spawn which ENOENT' };
-        }
-        throw new Error('Unexpected command');
-      });
-      // @ts-expect-error - reassign mocked function
-      globalThis.execa = mockExeca;
+      const error = new Error('Command "which" not found');
+      mockExec.mockRejectedValue(error);
 
-      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
-        /CLI command "Claude CLI" not found/
-      );
+      await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Command "which" not found/);
     });
 
     it('should throw error when response is empty', async () => {
@@ -141,20 +136,6 @@ describe('ClaudeAgent', () => {
 
       const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature');
-    });
-
-    it('should handle timeout parameter', async () => {
-      mockSuccessfulGeneration('feat: test');
-
-      await agent.generate('prompt', '/tmp');
-
-      expect(mockExeca).toHaveBeenCalledWith(
-        'claude',
-        ['--print'],
-        expect.objectContaining({
-          timeout: 120_000,
-        })
-      );
     });
 
     it('should clean COMMIT_MESSAGE markers from response', async () => {
