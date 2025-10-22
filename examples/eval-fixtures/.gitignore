@@ -1,0 +1,2 @@
+# Ignore .git directories in live fixtures (they are real git repos for testing)
+*-live/.git/
