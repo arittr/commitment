@@ -1,12 +1,15 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { execa } from 'execa';
 
 import { BaseAgent } from '../base-agent.js';
 import type { Agent } from '../types.js';
 
-// Mock execa
+// Create mock for execa
+const mockExeca = mock(() => Promise.resolve({ stdout: '', stderr: '', exitCode: 0 }));
+
+// Mock execa module
 mock.module('execa', () => ({
-  execa: mock(() => Promise.resolve({ stdout: '', stderr: '', exitCode: 0 })),
+  execa: mockExeca,
 }));
 
 /**
@@ -89,7 +92,7 @@ describe('BaseAgent', () => {
       const agent = new TestAgent();
 
       // Mock execa for availability check
-      execa.mockResolvedValue({
+      mockExeca.mockResolvedValue({
         exitCode: 0,
         stderr: '',
         stdout: '',
@@ -115,7 +118,7 @@ describe('BaseAgent', () => {
     it('should check CLI availability with which command', async () => {
       const agent = new TestAgent();
 
-      execa.mockResolvedValue({
+      mockExeca.mockResolvedValue({
         exitCode: 0,
         stderr: '',
         stdout: '/usr/bin/claude',
@@ -132,7 +135,7 @@ describe('BaseAgent', () => {
       // Mock ENOENT error
       const error = new Error('Command failed') as any;
       error.code = 'ENOENT';
-      execa.mockRejectedValue(error);
+      mockExeca.mockRejectedValue(error);
 
       await expect(agent.testCheckAvailability('nonexistent')).rejects.toThrow(
         'CLI command "nonexistent" not found'
@@ -143,7 +146,7 @@ describe('BaseAgent', () => {
       const agent = new TestAgent();
 
       const error = new Error('Permission denied');
-      execa.mockRejectedValue(error);
+      mockExeca.mockRejectedValue(error);
 
       await expect(agent.testCheckAvailability('claude')).rejects.toThrow('Permission denied');
     });
@@ -156,7 +159,7 @@ describe('BaseAgent', () => {
       // Mock executeCommand to return response with markdown
       agent.executeCommand = mock().mockResolvedValue('```\nfeat: test\n\nDescription\n```');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -169,7 +172,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock(async () => '<thinking>analyzing</thinking>\nfeat: test\n\nDescription');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -181,7 +184,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('feat: test\n\n\n\nDescription');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -195,7 +198,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('feat: valid message');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -207,7 +210,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('invalid message format');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
         'Invalid conventional commit format'
@@ -218,7 +221,7 @@ describe('BaseAgent', () => {
       const agent = new TestAgent();
       const validTypes = ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf'];
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       for (const type of validTypes) {
         agent.executeCommand = mock().mockResolvedValue(`${type}: test message`);
@@ -232,7 +235,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('feat(core): add feature');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -244,7 +247,7 @@ describe('BaseAgent', () => {
     it('should allow subclasses to override cleanResponse', async () => {
       const agent = new CustomCleanAgent();
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       const result = await agent.generate('prompt', '/test');
 
@@ -255,7 +258,7 @@ describe('BaseAgent', () => {
     it('should allow subclasses to override validateResponse', async () => {
       const agent = new CustomValidateAgent();
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       // Should succeed with "test" in message
       const result = await agent.generate('prompt', '/test');
@@ -268,7 +271,7 @@ describe('BaseAgent', () => {
       // Override to return message without "test"
       agent.executeCommand = mock().mockResolvedValue('feat: no keyword');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
         'Message must include "test"'
@@ -282,7 +285,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockRejectedValue(new Error('Execution failed'));
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow('Execution failed');
     });
@@ -292,7 +295,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
         'Invalid conventional commit format'
@@ -304,7 +307,7 @@ describe('BaseAgent', () => {
 
       agent.executeCommand = mock().mockResolvedValue('   \n\n   ');
 
-      execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
+      mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
         'Invalid conventional commit format'
@@ -317,7 +320,7 @@ describe('BaseAgent', () => {
       const agent = new TestAgent();
 
       // Mock successful CLI check
-      execa.mockResolvedValue({
+      mockExeca.mockResolvedValue({
         exitCode: 0,
         stderr: '',
         stdout: '/usr/bin/test',

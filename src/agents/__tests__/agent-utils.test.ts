@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from '../agent-utils.js';
 
 describe('cleanAIResponse', () => {
