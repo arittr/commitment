@@ -57,8 +57,6 @@
     "check-types": "tsc --noEmit",
     "clean": "rm -rf dist",
     "dev": "tsup --watch",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
     "lint": "pnpm check-types && biome check --write",
     "prepare": "pnpm run build && husky",
     "prepublishOnly": "pnpm run clean && pnpm run build",
