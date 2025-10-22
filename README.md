@@ -2,6 +2,8 @@
 
 > AI-powered commit message generator
 
+<img width="500" height="304" alt="Untitled" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
+
 We all know we should write better commit messages. But we don't.
 
 `commitment` analyzes your git diffs using AI (Claude CLI or Codex CLI) and generates professional, conventional commit messages.
