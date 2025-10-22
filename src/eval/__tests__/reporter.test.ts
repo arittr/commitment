@@ -33,6 +33,13 @@ describe('EvalReporter', () => {
 
   beforeEach(() => {
     mock.restore();
+    // Clear mock call history
+    mockExistsSync.mockClear();
+    mockMkdirSync.mockClear();
+    mockReadFileSync.mockClear();
+    mockSymlinkSync.mockClear();
+    mockUnlinkSync.mockClear();
+    mockWriteFileSync.mockClear();
     // Configure default mock behavior before creating reporter
     mockExistsSync.mockReturnValue(true); // Default: directory exists
     mockMkdirSync.mockReturnValue(undefined);
