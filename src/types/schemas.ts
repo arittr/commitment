@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
 /**
+ * Schema for agent names used in commit message generation
+ *
+ * Only includes agents that can generate commit messages.
+ * ChatGPTAgent is excluded as it's evaluation-only.
+ */
+export const agentNameSchema = z.enum(['claude', 'codex']);
+
+/**
  * Schema for commit task validation
  *
  * Represents a minimal task interface for commit message generation.
@@ -21,22 +29,16 @@ export const commitTaskSchema = z.object({
   /**
    * Detailed description of what the task accomplishes
    */
-  description: z
-    .string()
-    .min(1, 'Task description must not be empty')
-    .max(1000, 'Task description must not exceed 1000 characters'),
+  description: z.string().min(1, 'Task description must not be empty'),
 
   /**
    * List of files or outputs produced by this task
    */
-  produces: z.array(z.string()).min(0, 'Produces array must be defined').default([]),
+  produces: z.array(z.string()).default([]),
   /**
    * Short, descriptive title of the task
    */
-  title: z
-    .string()
-    .min(1, 'Task title must not be empty')
-    .max(200, 'Task title must not exceed 200 characters'),
+  title: z.string().min(1, 'Task title must not be empty'),
 });
 
 /**
@@ -113,7 +115,7 @@ export const commitMessageGeneratorConfigSchema = z.object({
    * Valid options: 'claude' | 'codex'
    * Defaults to 'claude' if not specified
    */
-  agent: z.enum(['claude', 'codex']).optional(),
+  agent: agentNameSchema.optional(),
 
   /**
    * Enable/disable AI generation (default: true)
@@ -135,6 +137,7 @@ export const commitMessageGeneratorConfigSchema = z.object({
 /**
  * TypeScript types inferred from Zod schemas
  */
+export type AgentName = z.infer<typeof agentNameSchema>;
 export type CommitTask = z.infer<typeof commitTaskSchema>;
 export type CommitMessageOptions = z.infer<typeof commitMessageOptionsSchema>;
 export type CommitMessageGeneratorConfig = z.infer<typeof commitMessageGeneratorConfigSchema>;
