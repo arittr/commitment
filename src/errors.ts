@@ -458,9 +458,9 @@ export function isGeneratorError(error: unknown): error is GeneratorError {
 }
 
 /**
- * Options for creating an EvalError
+ * Options for creating an EvaluationError
  */
-export type EvalErrorOptions = {
+export type EvaluationErrorOptions = {
   /** Original error that caused this error */
   cause?: Error;
   /** Additional context about the error (fixture, agent, etc.) */
@@ -484,24 +484,24 @@ export type EvalErrorOptions = {
  * @example
  * ```typescript
  * // Fixture not found error
- * throw EvalError.fixtureNotFound('simple');
+ * throw EvaluationError.fixtureNotFound('simple');
  *
  * // Agent generation failed
- * throw EvalError.generationFailed('claude', 'CLI not found');
+ * throw EvaluationError.generationFailed('claude', 'CLI not found');
  *
  * // Evaluation failed
- * throw EvalError.evaluationFailed('API rate limit exceeded');
+ * throw EvaluationError.evaluationFailed('API rate limit exceeded');
  *
  * // API key missing
- * throw EvalError.apiKeyMissing('OpenAI');
+ * throw EvaluationError.apiKeyMissing('OpenAI');
  *
  * // Agent unavailable
- * throw EvalError.agentUnavailable('claude');
+ * throw EvaluationError.agentUnavailable('claude');
  * ```
  */
-export class EvalError extends Error {
+export class EvaluationError extends Error {
   /** Name of the error class */
-  public override readonly name = 'EvalError';
+  public override readonly name = 'EvaluationError';
 
   /** Original error that caused this failure */
   public override readonly cause?: Error;
@@ -513,27 +513,27 @@ export class EvalError extends Error {
   public readonly suggestedAction?: string;
 
   /**
-   * Create a new EvalError
+   * Create a new EvaluationError
    *
    * @param message - Error message describing what failed
    * @param options - Additional error context and metadata
    *
    * @example
    * ```typescript
-   * throw new EvalError('Fixture not found', {
+   * throw new EvaluationError('Fixture not found', {
    *   context: { fixtureName: 'simple' },
    *   suggestedAction: 'Check that fixture exists in examples/eval-fixtures/'
    * });
    * ```
    */
-  constructor(message: string, options?: EvalErrorOptions) {
+  constructor(message: string, options?: EvaluationErrorOptions) {
     super(message);
     this.cause = options?.cause;
     this.context = options?.context;
     this.suggestedAction = options?.suggestedAction;
 
     // Maintain proper prototype chain for instanceof checks
-    Object.setPrototypeOf(this, EvalError.prototype);
+    Object.setPrototypeOf(this, EvaluationError.prototype);
   }
 
   /**
@@ -542,16 +542,16 @@ export class EvalError extends Error {
    * Includes guidance on fixture location and structure.
    *
    * @param name - Name of the fixture that was not found
-   * @returns EvalError with fixture location guidance
+   * @returns EvaluationError with fixture location guidance
    *
    * @example
    * ```typescript
-   * throw EvalError.fixtureNotFound('simple');
+   * throw EvaluationError.fixtureNotFound('simple');
    * // Error includes examples/eval-fixtures/ path
    * ```
    */
-  static fixtureNotFound(name: string): EvalError {
-    return new EvalError(
+  static fixtureNotFound(name: string): EvaluationError {
+    return new EvaluationError(
       `Fixture "${name}" not found.\n\nThe fixture directory or required files are missing.`,
       {
         context: { fixtureName: name },
@@ -578,15 +578,15 @@ Verify the fixture name is correct and files exist.`,
    *
    * @param agent - Name of the agent that failed (claude, codex)
    * @param reason - Why generation failed
-   * @returns EvalError with troubleshooting guidance
+   * @returns EvaluationError with troubleshooting guidance
    *
    * @example
    * ```typescript
-   * throw EvalError.generationFailed('claude', 'CLI not found');
+   * throw EvaluationError.generationFailed('claude', 'CLI not found');
    * ```
    */
-  static generationFailed(agent: string, reason: string): EvalError {
-    return new EvalError(
+  static generationFailed(agent: string, reason: string): EvaluationError {
+    return new EvaluationError(
       `Agent "${agent}" failed to generate commit message.\n\nReason: ${reason}`,
       {
         context: { agent, reason },
@@ -609,15 +609,15 @@ Or skip this agent:
    * Includes reason and suggestions for common issues.
    *
    * @param reason - Why evaluation failed
-   * @returns EvalError with diagnostic guidance
+   * @returns EvaluationError with diagnostic guidance
    *
    * @example
    * ```typescript
-   * throw EvalError.evaluationFailed('API rate limit exceeded');
+   * throw EvaluationError.evaluationFailed('API rate limit exceeded');
    * ```
    */
-  static evaluationFailed(reason: string): EvalError {
-    return new EvalError(`ChatGPT evaluation failed.\n\nReason: ${reason}`, {
+  static evaluationFailed(reason: string): EvaluationError {
+    return new EvaluationError(`ChatGPT evaluation failed.\n\nReason: ${reason}`, {
       context: { reason },
       suggestedAction: `Common issues:
   - API rate limit exceeded: Wait and retry
@@ -636,15 +636,15 @@ Or set OPENAI_API_KEY environment variable.`,
    * Includes instructions for setting up the API key.
    *
    * @param service - Name of the service (OpenAI, Anthropic, etc.)
-   * @returns EvalError with API key setup instructions
+   * @returns EvaluationError with API key setup instructions
    *
    * @example
    * ```typescript
-   * throw EvalError.apiKeyMissing('OpenAI');
+   * throw EvaluationError.apiKeyMissing('OpenAI');
    * ```
    */
-  static apiKeyMissing(service: string): EvalError {
-    return new EvalError(
+  static apiKeyMissing(service: string): EvaluationError {
+    return new EvaluationError(
       `${service} API key is not configured.\n\nThe evaluation system requires an API key to function.`,
       {
         context: { service },
@@ -673,14 +673,14 @@ Then run evaluation tests again.`,
    * Includes installation instructions for the specific agent.
    *
    * @param name - Name of the agent (claude, codex, cursor)
-   * @returns EvalError with installation instructions
+   * @returns EvaluationError with installation instructions
    *
    * @example
    * ```typescript
-   * throw EvalError.agentUnavailable('claude');
+   * throw EvaluationError.agentUnavailable('claude');
    * ```
    */
-  static agentUnavailable(name: string): EvalError {
+  static agentUnavailable(name: string): EvaluationError {
     let installInstructions = '';
 
     if (name === 'claude') {
@@ -699,7 +699,7 @@ For more information: https://github.com/your-org/codex`;
       installInstructions = `Please install the ${name} CLI and ensure it's in your PATH.`;
     }
 
-    return new EvalError(
+    return new EvaluationError(
       `Agent "${name}" is not available.\n\nThe CLI is not installed or not working properly.`,
       {
         context: { agentName: name },
@@ -718,22 +718,22 @@ If already installed, check:
 }
 
 /**
- * Type guard to check if an error is an EvalError
+ * Type guard to check if an error is an EvaluationError
  *
  * @param error - Error to check
- * @returns True if error is an EvalError instance
+ * @returns True if error is an EvaluationError instance
  *
  * @example
  * ```typescript
  * try {
  *   await runner.runFixture(fixture);
  * } catch (error) {
- *   if (isEvalError(error)) {
+ *   if (isEvaluationError(error)) {
  *     console.error('Evaluation failed:', error.suggestedAction);
  *   }
  * }
  * ```
  */
-export function isEvalError(error: unknown): error is EvalError {
-  return error instanceof EvalError;
+export function isEvaluationError(error: unknown): error is EvaluationError {
+  return error instanceof EvaluationError;
 }
