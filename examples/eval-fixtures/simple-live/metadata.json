@@ -1,0 +1,6 @@
+{
+  "name": "simple",
+  "description": "Single-file bug fix (null safety) - live git mode",
+  "expectedType": "fix",
+  "complexity": "simple"
+}

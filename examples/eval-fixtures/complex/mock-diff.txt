@@ -1,0 +1,71 @@
+diff --git a/src/features/export.ts b/src/features/export.ts
+new file mode 100644
+index 0000000..1234567
+--- /dev/null
++++ b/src/features/export.ts
+@@ -0,0 +1,17 @@
++/**
++ * Export functionality for data serialization
++ */
++export class Exporter {
++  /**
++   * Export data to JSON format
++   *
++   * @param data - Data to export
++   * @returns JSON string with pretty formatting
++   */
++  async exportToJSON(data: unknown): Promise<string> {
++    return JSON.stringify(data, null, 2);
++  }
++}
+diff --git a/src/types/index.ts b/src/types/index.ts
+index abcdef0..1234567 100644
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -1,3 +1,8 @@
+ export type Status = 'pending' | 'completed';
+ export type Priority = 'low' | 'medium' | 'high';
+
++/**
++ * Supported export formats
++ */
++export type ExportFormat = 'json' | 'csv';
+diff --git a/src/features/__tests__/export.test.ts b/src/features/__tests__/export.test.ts
+new file mode 100644
+index 0000000..abcdef0
+--- /dev/null
++++ b/src/features/__tests__/export.test.ts
+@@ -0,0 +1,15 @@
++import { describe, expect, it } from 'vitest';
++import { Exporter } from '../export.js';
++
++describe('Exporter', () => {
++  it('exports to JSON', async () => {
++    const exporter = new Exporter();
++    const result = await exporter.exportToJSON({ foo: 'bar' });
++    expect(result).toBe('{\n  "foo": "bar"\n}');
++  });
++
++  it('handles empty objects', async () => {
++    const exporter = new Exporter();
++    const result = await exporter.exportToJSON({});
++    expect(result).toBe('{}');
++  });
++});
+diff --git a/README.md b/README.md
+index 1234567..abcdef0 100644
+--- a/README.md
++++ b/README.md
+@@ -15,6 +15,12 @@ npm install commitment
+
+ ## Usage
+
++## Export Feature
++
++The export feature allows you to serialize data to various formats:
++
++- JSON export with pretty formatting
++
+ ## License
+
+ MIT
