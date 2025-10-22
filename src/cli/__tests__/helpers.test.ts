@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import chalk from 'chalk';
-import { execa } from 'execa';
 
 import {
   createCommit,
@@ -15,8 +14,8 @@ import {
 const mockConsoleLog = mock();
 const mockConsoleError = mock();
 
-// Mock execa
-const mockExeca = mock();
+// Mock exec function
+const mockExec = mock();
 
 beforeEach(() => {
   spyOn(console, 'log').mockImplementation(mockConsoleLog);
@@ -27,12 +26,12 @@ afterEach(() => {
   mock.restore();
   mockConsoleLog.mockClear();
   mockConsoleError.mockClear();
-  mockExeca.mockClear();
+  mockExec.mockClear();
 });
 
-// Mock execa module
-mock.module('execa', () => ({
-  execa: mockExeca,
+// Mock shell module
+mock.module('../../utils/shell', () => ({
+  exec: mockExec,
 }));
 
 describe('displayStagedChanges', () => {
@@ -172,7 +171,7 @@ describe('executeCommit', () => {
     await executeCommit('feat: message', '/tmp/repo', false, true);
 
     expect(mockConsoleLog).not.toHaveBeenCalled();
-    expect(execa).not.toHaveBeenCalled();
+    expect(mockExec).not.toHaveBeenCalled();
   });
 
   it('should display dry-run message without creating commit', async () => {
@@ -182,19 +181,19 @@ describe('executeCommit', () => {
     expect(mockConsoleLog).toHaveBeenCalledWith(
       chalk.gray('   Remove --dry-run to create the commit')
     );
-    expect(execa).not.toHaveBeenCalled();
+    expect(mockExec).not.toHaveBeenCalled();
   });
 
   it('should create commit and display success message', async () => {
-    mockExeca.mockResolvedValue({
+    mockExec.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
-    } as any);
+    });
 
     await executeCommit('feat: message', '/tmp/repo', false, false);
 
-    expect(execa).toHaveBeenCalledWith('git', ['commit', '-m', 'feat: message'], {
+    expect(mockExec).toHaveBeenCalledWith('git', ['commit', '-m', 'feat: message'], {
       cwd: '/tmp/repo',
     });
     expect(mockConsoleLog).toHaveBeenCalledWith(chalk.green('✅ Commit created successfully'));
@@ -202,7 +201,7 @@ describe('executeCommit', () => {
 
   it('should throw error if commit creation fails', async () => {
     const error = new Error('Git error');
-    mockExeca.mockRejectedValue(error);
+    mockExec.mockRejectedValue(error);
 
     await expect(executeCommit('feat: message', '/tmp/repo', false, false)).rejects.toThrow(
       'Failed to create commit: Git error'
@@ -212,22 +211,22 @@ describe('executeCommit', () => {
 
 describe('createCommit', () => {
   it('should execute git commit with message', async () => {
-    mockExeca.mockResolvedValue({
+    mockExec.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
-    } as any);
+    });
 
     await createCommit('feat: add feature', '/tmp/repo');
 
-    expect(execa).toHaveBeenCalledWith('git', ['commit', '-m', 'feat: add feature'], {
+    expect(mockExec).toHaveBeenCalledWith('git', ['commit', '-m', 'feat: add feature'], {
       cwd: '/tmp/repo',
     });
   });
 
   it('should throw error on git failure', async () => {
     const error = new Error('Commit failed');
-    mockExeca.mockRejectedValue(error);
+    mockExec.mockRejectedValue(error);
 
     await expect(createCommit('feat: message', '/tmp/repo')).rejects.toThrow(
       'Failed to create commit: Commit failed'
@@ -235,7 +234,7 @@ describe('createCommit', () => {
   });
 
   it('should handle non-Error exceptions', async () => {
-    mockExeca.mockRejectedValue('string error');
+    mockExec.mockRejectedValue('string error');
 
     await expect(createCommit('feat: message', '/tmp/repo')).rejects.toThrow(
       'Failed to create commit: string error'
@@ -246,25 +245,25 @@ describe('createCommit', () => {
 describe('getGitStatus', () => {
   it('should parse git status output successfully', async () => {
     const gitOutput = 'M  src/file1.ts\nA  src/file2.ts';
-    mockExeca.mockResolvedValue({
+    mockExec.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: gitOutput,
-    } as any);
+    });
 
     const result = await getGitStatus('/tmp/repo');
 
-    expect(execa).toHaveBeenCalledWith('git', ['status', '--porcelain'], { cwd: '/tmp/repo' });
+    expect(mockExec).toHaveBeenCalledWith('git', ['status', '--porcelain'], { cwd: '/tmp/repo' });
     expect(result.hasChanges).toBe(true);
     expect(result.stagedFiles).toEqual(['src/file1.ts', 'src/file2.ts']);
   });
 
   it('should handle empty git status', async () => {
-    mockExeca.mockResolvedValue({
+    mockExec.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: '',
-    } as any);
+    });
 
     const result = await getGitStatus('/tmp/repo');
 
@@ -274,7 +273,7 @@ describe('getGitStatus', () => {
 
   it('should throw error on git command failure', async () => {
     const error = new Error('Git command failed');
-    mockExeca.mockRejectedValue(error);
+    mockExec.mockRejectedValue(error);
 
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(
       'Failed to get git status: Git command failed'
@@ -283,18 +282,18 @@ describe('getGitStatus', () => {
 
   it('should provide helpful error for malformed git status', async () => {
     const gitOutput = 'INVALID LINE FORMAT';
-    mockExeca.mockResolvedValue({
+    mockExec.mockResolvedValue({
       exitCode: 0,
       stderr: '',
       stdout: gitOutput,
-    } as any);
+    });
 
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(/Invalid git status output/);
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(/git version incompatibility/);
   });
 
   it('should handle non-Error exceptions from git', async () => {
-    mockExeca.mockRejectedValue('string error');
+    mockExec.mockRejectedValue('string error');
 
     await expect(getGitStatus('/tmp/repo')).rejects.toThrow(
       'Failed to get git status: string error'
