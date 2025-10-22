@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Exporter } from '../export.js';
+import { Exporter } from '../export.ts';
 
 describe('Exporter', () => {
   it('exports to JSON', async () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
-import { validateCliOptions } from '../../cli/schemas';
-import { CommitMessageGenerator } from '../../generator';
+import { validateCliOptions } from '../../cli/schemas.ts';
+import { CommitMessageGenerator } from '../../generator.ts';
 
 /**
  * Integration Tests for Validation Across System Boundaries
@@ -17,8 +17,8 @@ describe('Validation Integration Tests', () => {
   describe('CLI → Generator Boundary', () => {
     it('should catch invalid CLI options at boundary', () => {
       const invalidOptions = {
-        cwd: '', // Invalid: empty string
         ai: true,
+        cwd: '', // Invalid: empty string
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
@@ -26,8 +26,8 @@ describe('Validation Integration Tests', () => {
 
     it('should catch invalid agent name in CLI options', () => {
       const invalidOptions = {
-        cwd: '/valid/path',
         agent: 'openai', // Invalid: must be 'claude' or 'codex'
+        cwd: '/valid/path',
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
@@ -35,8 +35,8 @@ describe('Validation Integration Tests', () => {
 
     it('should catch invalid boolean flags at CLI boundary', () => {
       const invalidOptions = {
-        cwd: '/valid/path',
         ai: 'true', // Invalid: must be boolean
+        cwd: '/valid/path',
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
@@ -45,8 +45,8 @@ describe('Validation Integration Tests', () => {
 
     it('should catch invalid agent type in CLI options', () => {
       const invalidOptions = {
-        cwd: '/valid/path',
         agent: 123, // Invalid: must be string enum
+        cwd: '/valid/path',
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
@@ -69,9 +69,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const invalidTask = {
-        title: '', // Invalid: empty string
         description: 'Valid description',
         produces: [],
+        title: '', // Invalid: empty string
       };
 
       const options = {
@@ -79,7 +79,7 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
-        /Invalid task parameter/,
+        /Invalid task parameter/
       );
     });
 
@@ -89,9 +89,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const invalidTask = {
-        title: 'a'.repeat(201), // Invalid: exceeds 200 chars
         description: 'Valid description',
         produces: [],
+        title: 'a'.repeat(201), // Invalid: exceeds 200 chars
       };
 
       const options = {
@@ -99,10 +99,10 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
-        /Invalid task parameter/,
+        /Invalid task parameter/
       );
       await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
-        /must not exceed 200 characters/,
+        /must not exceed 200 characters/
       );
     });
 
@@ -112,9 +112,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const validTask = {
-        title: 'Add feature',
         description: 'Implement new feature',
         produces: [],
+        title: 'Add feature',
       };
 
       const invalidOptions = {
@@ -122,7 +122,7 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(
-        generator.generateCommitMessage(validTask, invalidOptions as any),
+        generator.generateCommitMessage(validTask, invalidOptions as any)
       ).rejects.toThrow(/Invalid options parameter/);
     });
 
@@ -132,18 +132,18 @@ describe('Validation Integration Tests', () => {
       });
 
       const validTask = {
-        title: 'Add feature',
         description: 'Implement new feature',
         produces: [],
+        title: 'Add feature',
       };
 
       const invalidOptions = {
-        workdir: process.cwd(),
         files: 'not-an-array', // Invalid: must be array
+        workdir: process.cwd(),
       };
 
       await expect(
-        generator.generateCommitMessage(validTask, invalidOptions as any),
+        generator.generateCommitMessage(validTask, invalidOptions as any)
       ).rejects.toThrow(/Invalid options parameter/);
     });
 
@@ -153,9 +153,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const invalidTask = {
-        title: 'Valid title',
         description: '', // Invalid: empty description
         produces: [],
+        title: 'Valid title',
       };
 
       const options = {
@@ -183,7 +183,7 @@ describe('Validation Integration Tests', () => {
       };
 
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /Invalid CommitMessageGenerator configuration/,
+        /Invalid CommitMessageGenerator configuration/
       );
     });
 
@@ -193,7 +193,7 @@ describe('Validation Integration Tests', () => {
       };
 
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /Invalid CommitMessageGenerator configuration/,
+        /Invalid CommitMessageGenerator configuration/
       );
       // Check error context contains validation details
       try {
@@ -203,7 +203,7 @@ describe('Validation Integration Tests', () => {
         expect(error).toBeInstanceOf(Error);
         const genError = error as { context?: { validationErrors?: string[] } };
         const hasSignatureError = genError.context?.validationErrors?.some((error_) =>
-          error_.includes('signature'),
+          error_.includes('signature')
         );
         expect(hasSignatureError).toBe(true);
       }
@@ -215,7 +215,7 @@ describe('Validation Integration Tests', () => {
       };
 
       expect(() => new CommitMessageGenerator(invalidConfig as any)).toThrow(
-        /Invalid CommitMessageGenerator configuration/,
+        /Invalid CommitMessageGenerator configuration/
       );
       // The error contains validation context but not in the main message anymore
       try {
@@ -230,8 +230,8 @@ describe('Validation Integration Tests', () => {
 
     it('should accept valid claude agent config', () => {
       const validConfig = {
-        enableAI: true,
         agent: 'claude' as const,
+        enableAI: true,
       };
 
       expect(() => new CommitMessageGenerator(validConfig)).not.toThrow();
@@ -239,8 +239,8 @@ describe('Validation Integration Tests', () => {
 
     it('should accept valid codex agent config', () => {
       const validConfig = {
-        enableAI: true,
         agent: 'codex' as const,
+        enableAI: true,
       };
 
       expect(() => new CommitMessageGenerator(validConfig)).not.toThrow();
@@ -260,14 +260,14 @@ describe('Validation Integration Tests', () => {
       });
 
       const task = {
-        title: 'Update documentation',
         description: 'Fix typos in README',
         produces: ['README.md'],
+        title: 'Update documentation',
       };
 
       const options = {
-        workdir: process.cwd(),
         files: ['README.md'],
+        workdir: process.cwd(),
       };
 
       // Should not throw, just generate rule-based message
@@ -282,9 +282,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const task = {
-        title: 'Add feature',
         description: 'New feature',
         produces: [],
+        title: 'Add feature',
       };
 
       const invalidOptions = {
@@ -292,7 +292,7 @@ describe('Validation Integration Tests', () => {
       };
 
       await expect(generator.generateCommitMessage(task, invalidOptions as any)).rejects.toThrow(
-        /Invalid options parameter/,
+        /Invalid options parameter/
       );
     });
   });
@@ -300,9 +300,9 @@ describe('Validation Integration Tests', () => {
   describe('Performance Tests', () => {
     it('should have validation overhead < 5ms for CLI options', () => {
       const options = {
+        ai: true,
         cwd: '/path/to/project',
         provider: 'claude',
-        ai: true,
       };
 
       const iterations = 100;
@@ -324,14 +324,14 @@ describe('Validation Integration Tests', () => {
       });
 
       const task = {
-        title: 'Add feature',
         description: 'Implement new feature',
         produces: ['src/feature.ts'],
+        title: 'Add feature',
       };
 
       const options = {
-        workdir: process.cwd(),
         files: ['src/feature.ts'],
+        workdir: process.cwd(),
       };
 
       const iterations = 10;
@@ -360,7 +360,7 @@ describe('Validation Integration Tests', () => {
       for (let index = 0; index < iterations; index++) {
         const config = {
           enableAI: true,
-          provider: { type: 'cli' as const, provider: 'claude' as const },
+          provider: { provider: 'claude' as const, type: 'cli' as const },
           signature: 'Test signature',
         };
 
@@ -379,14 +379,14 @@ describe('Validation Integration Tests', () => {
       });
 
       const task = {
-        title: 'Add comprehensive feature',
         description: 'a'.repeat(999), // Near max length
         produces: Array.from({ length: 10 }, (_, index) => `file${index}.ts`),
+        title: 'Add comprehensive feature',
       };
 
       const options = {
-        workdir: process.cwd(),
         files: task.produces,
+        workdir: process.cwd(),
       };
 
       const start = performance.now();
@@ -405,9 +405,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const invalidTask = {
-        title: 'a'.repeat(201), // Too long
         description: 'Valid',
         produces: [],
+        title: 'a'.repeat(201), // Too long
       };
 
       try {
@@ -441,8 +441,8 @@ describe('Validation Integration Tests', () => {
 
     it('should format multiple validation errors clearly', () => {
       const invalidOptions = {
-        cwd: '',
         ai: 'not-boolean',
+        cwd: '',
         provider: 12_345,
       };
 

@@ -7,16 +7,16 @@ import {
   agentConfigSchema,
   safeValidateAgentConfig,
   validateAgentConfig,
-} from '../types.js';
+} from '../types.ts';
 
 describe('Agent interface', () => {
   it('should define Agent interface with name property', () => {
     // Type-only test to ensure Agent interface has required shape
     const mockAgent: Agent = {
-      name: 'test-agent',
       generate: async (_prompt: string, _workdir: string): Promise<string> => {
         return 'test message';
       },
+      name: 'test-agent',
     };
 
     expect(mockAgent.name).toBe('test-agent');
@@ -25,10 +25,10 @@ describe('Agent interface', () => {
 
   it('should have generate method that returns Promise<string>', async () => {
     const mockAgent: Agent = {
-      name: 'test-agent',
       generate: async (prompt: string, workdir: string): Promise<string> => {
         return `Generated from ${prompt} in ${workdir}`;
       },
+      name: 'test-agent',
     };
 
     const result = await mockAgent.generate('test prompt', '/tmp');

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CodexAgent } from '../codex.js';
+import { CodexAgent } from '../codex.ts';
 
 // Mock execa module
 vi.mock('execa', () => ({
@@ -27,12 +27,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: 'feat: add dark mode toggle\n\nImplement theme switching functionality',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: 'feat: add dark mode toggle\n\nImplement theme switching functionality',
         timedOut: false,
       } as any);
 
@@ -53,7 +53,7 @@ describe('CodexAgent', () => {
         expect.objectContaining({
           cwd: workdir,
           timeout: 120_000,
-        }),
+        })
       );
     });
 
@@ -62,12 +62,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: '```\nfeat: add feature\n\nImplement new feature\n```',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: '```\nfeat: add feature\n\nImplement new feature\n```',
         timedOut: false,
       } as any);
 
@@ -82,12 +82,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: 'Here is the commit message:\nfeat: add feature\n\nImplement new feature',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: 'Here is the commit message:\nfeat: add feature\n\nImplement new feature',
         timedOut: false,
       } as any);
 
@@ -119,12 +119,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: '',
         timedOut: false,
       } as any);
 
@@ -136,12 +136,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: '   \n\n   ',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: '   \n\n   ',
         timedOut: false,
       } as any);
 
@@ -153,21 +153,21 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: 'This is not a conventional commit message at all',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: 'This is not a conventional commit message at all',
         timedOut: false,
       } as any);
 
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
-        /malformed response/i,
+        /malformed response/i
       );
 
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
-        /conventional commit format/i,
+        /conventional commit format/i
       );
     });
 
@@ -188,12 +188,12 @@ describe('CodexAgent', () => {
 
       for (const commitMessage of validTypes) {
         mockExeca.mockResolvedValue({
-          stdout: commitMessage,
-          stderr: '',
-          exitCode: 0,
           command: 'codex',
+          exitCode: 0,
           failed: false,
           killed: false,
+          stderr: '',
+          stdout: commitMessage,
           timedOut: false,
         } as any);
 
@@ -207,12 +207,12 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
-        stdout: 'feat(auth): add OAuth support',
-        stderr: '',
-        exitCode: 0,
         command: 'codex',
+        exitCode: 0,
         failed: false,
         killed: false,
+        stderr: '',
+        stdout: 'feat(auth): add OAuth support',
         timedOut: false,
       } as any);
 
@@ -225,16 +225,16 @@ describe('CodexAgent', () => {
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
+        command: 'codex',
+        exitCode: 0,
+        failed: false,
+        killed: false,
+        stderr: '',
         stdout: `<<<COMMIT_MESSAGE_START>>>
 feat: add feature
 
 - Implement new functionality
 <<<COMMIT_MESSAGE_END>>>`,
-        stderr: '',
-        exitCode: 0,
-        command: 'codex',
-        failed: false,
-        killed: false,
         timedOut: false,
       } as any);
 
@@ -247,6 +247,11 @@ feat: add feature
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
+        command: 'codex',
+        exitCode: 0,
+        failed: false,
+        killed: false,
+        stderr: '',
         stdout: `
 <<<COMMIT_MESSAGE_START>>>
 
@@ -255,11 +260,6 @@ feat: add feature
 - Implement new functionality
 <<<COMMIT_MESSAGE_END>>>
 `,
-        stderr: '',
-        exitCode: 0,
-        command: 'codex',
-        failed: false,
-        killed: false,
         timedOut: false,
       } as any);
 
@@ -272,6 +272,11 @@ feat: add feature
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
+        command: 'codex',
+        exitCode: 0,
+        failed: false,
+        killed: false,
+        stderr: '',
         stdout: `[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)
 --------
 workdir: /Users/user/project
@@ -279,11 +284,6 @@ workdir: /Users/user/project
 feat: add feature
 
 - Implement new functionality`,
-        stderr: '',
-        exitCode: 0,
-        command: 'codex',
-        failed: false,
-        killed: false,
         timedOut: false,
       } as any);
 
@@ -296,6 +296,11 @@ feat: add feature
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
       mockExeca.mockResolvedValue({
+        command: 'codex',
+        exitCode: 0,
+        failed: false,
+        killed: false,
+        stderr: '',
         stdout: `model: gpt-5-codex
 provider: openai
 approval: never
@@ -305,11 +310,6 @@ reasoning effort: none
 feat: add feature
 
 - Implement new functionality`,
-        stderr: '',
-        exitCode: 0,
-        command: 'codex',
-        failed: false,
-        killed: false,
         timedOut: false,
       } as any);
 
