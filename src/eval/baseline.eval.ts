@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from 'bun:test';
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EvalReporter } from '../reporter.js';
-import { EvalRunner } from '../runner.js';
+import { EvalReporter } from './reporter.js';
+import { EvalRunner } from './runner.js';
 
 /**
  * Check if OPENAI_API_KEY is set and non-empty
@@ -173,7 +173,7 @@ describe('Eval System Integration (Live AI)', () => {
     delete process.env.OPENAI_API_KEY;
 
     // Create a new evaluator with missing key
-    const { Evaluator } = await import('../evaluator.js');
+    const { Evaluator } = await import('./evaluator.js');
     const evaluator = new Evaluator();
 
     try {

@@ -160,7 +160,13 @@
       }
     },
     {
-      "includes": ["src/**/__tests__/**", "src/**/__mocks__/**", "**/*.test.ts", "**/*.spec.ts"],
+      "includes": [
+        "src/**/__tests__/**",
+        "src/**/__mocks__/**",
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "src/eval/**"
+      ],
       "linter": {
         "rules": {
           "complexity": {

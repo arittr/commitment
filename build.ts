@@ -2,16 +2,6 @@
 import { chmod } from 'node:fs/promises';
 import { build } from 'bun';
 
-// Build library entry point
-await build({
-  entrypoints: ['./src/index.ts'],
-  format: 'esm',
-  minify: false,
-  outdir: './dist',
-  sourcemap: 'external',
-  target: 'node',
-});
-
 // Build CLI entry point
 await build({
   entrypoints: ['./src/cli.ts'],
