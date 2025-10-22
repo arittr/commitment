@@ -1,8 +1,10 @@
 # commitment
 
-> AI-powered commit message generator with intelligent fallback
+> AI-powered commit message generator
 
-`commitment` analyzes your git diffs using AI (Claude CLI or Codex CLI) and generates professional, conventional commit messages. When AI is unavailable, it falls back to intelligent rule-based generation.
+We all know we should write better commit messages. But we don't.
+
+`commitment` analyzes your git diffs using AI (Claude CLI or Codex CLI) and generates professional, conventional commit messages.
 
 ## Features
 
