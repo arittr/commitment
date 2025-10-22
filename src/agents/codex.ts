@@ -1,6 +1,6 @@
 import { execa } from 'execa';
 
-import { BaseAgent } from './base-agent.js';
+import { BaseAgent } from './base-agent';
 
 /**
  * Codex CLI agent for commit message generation

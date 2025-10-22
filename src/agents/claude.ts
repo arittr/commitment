@@ -1,6 +1,6 @@
 import { execa } from 'execa';
 
-import { BaseAgent } from './base-agent.js';
+import { BaseAgent } from './base-agent';
 
 /**
  * Claude CLI agent for AI-powered commit message generation
