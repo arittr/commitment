@@ -1,6 +1,6 @@
 {
-  "name": "complex",
+  "complexity": "complex",
   "description": "Multi-file feature (export functionality) - live git mode",
   "expectedType": "feat",
-  "complexity": "complex"
+  "name": "complex"
 }

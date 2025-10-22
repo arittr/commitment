@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-
-import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas';
-
+import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas.ts';
 import {
   analyzeChanges,
   categorizeFiles,
@@ -19,7 +17,7 @@ import {
   validateFileCategories,
   validateGitStatus,
   validateGitStatusLine,
-} from '../git-schemas';
+} from '../git-schemas.ts';
 
 describe('Git Schemas', () => {
   describe('gitStatusLineSchema', () => {
@@ -386,12 +384,12 @@ describe('Git Schemas', () => {
 
       it('should validate categories with all fields', () => {
         const categories = {
-          tests: ['file.test.ts'],
+          apis: ['api.ts'],
           components: ['Button.tsx'],
-          types: ['types.ts'],
           configs: ['package.json'],
           docs: ['README.md'],
-          apis: ['api.ts'],
+          tests: ['file.test.ts'],
+          types: ['types.ts'],
         };
 
         const result = fileCategoriesSchema.parse(categories);
@@ -401,8 +399,8 @@ describe('Git Schemas', () => {
 
       it('should validate categories with some fields', () => {
         const categories = {
-          tests: ['file.test.ts'],
           components: ['Button.tsx'],
+          tests: ['file.test.ts'],
         };
 
         const result = fileCategoriesSchema.parse(categories);
@@ -522,8 +520,8 @@ describe('Git Schemas', () => {
     describe('validateFileCategories', () => {
       it('should validate valid categories', () => {
         const categories = {
-          tests: ['test.ts'],
           components: [],
+          tests: ['test.ts'],
         };
 
         const result = validateFileCategories(categories);
@@ -927,8 +925,8 @@ D  src/old-file.ts
       it('should validate stats with all fields', () => {
         const stats = {
           added: 5,
-          modified: 10,
           deleted: 2,
+          modified: 10,
           renamed: 1,
         };
 
@@ -967,8 +965,8 @@ D  src/old-file.ts
       it('should validate zero values explicitly', () => {
         const stats = {
           added: 0,
-          modified: 0,
           deleted: 0,
+          modified: 0,
           renamed: 0,
         };
 
@@ -980,8 +978,8 @@ D  src/old-file.ts
       it('should validate large numbers', () => {
         const stats = {
           added: 1000,
-          modified: 5000,
           deleted: 500,
+          modified: 5000,
           renamed: 100,
         };
 
@@ -1171,8 +1169,8 @@ D  src/old-file.ts
     it('should validate valid stats', () => {
       const stats = {
         added: 1,
-        modified: 2,
         deleted: 0,
+        modified: 2,
         renamed: 0,
       };
 
@@ -1231,8 +1229,8 @@ D  src/old-file.ts
     it('should infer correct ChangeStats type', () => {
       const stats: ChangeStats = {
         added: 1,
-        modified: 2,
         deleted: 0,
+        modified: 2,
         renamed: 0,
       };
 
@@ -1244,10 +1242,10 @@ D  src/old-file.ts
 
     it('should infer correct GitStatusLine type', () => {
       const line: GitStatusLine = {
-        statusCode: 'M ',
         filename: 'src/file.ts',
         isStaged: true,
         stagedStatus: 'M',
+        statusCode: 'M ',
         unstagedStatus: ' ',
       };
 
@@ -1276,12 +1274,12 @@ D  src/old-file.ts
 
     it('should infer correct FileCategories type', () => {
       const categories: FileCategories = {
-        tests: ['test.ts'],
+        apis: [],
         components: ['Button.tsx'],
-        types: [],
         configs: [],
         docs: [],
-        apis: [],
+        tests: ['test.ts'],
+        types: [],
       };
 
       expect(categories.tests).toEqual(['test.ts']);
