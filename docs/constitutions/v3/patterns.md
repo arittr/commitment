@@ -8,6 +8,118 @@ If you find yourself needing to violate a pattern, you must either:
 1. Refactor to conform to the pattern, OR
 2. Propose a new constitution version with rationale
 
+## Bun Development Patterns
+
+### Extensionless Imports
+
+**Mandatory:** With `moduleResolution: "bundler"`, remove `.js` extensions from imports.
+
+```typescript
+✅ Correct (Bun):
+import { hasContent } from './utils/guards';
+import { ClaudeAgent } from './agents/claude';
+
+❌ Wrong (legacy):
+import { hasContent } from './utils/guards.js';
+import { ClaudeAgent } from './agents/claude.js';
+```
+
+**Why:** Bun's bundler resolution doesn't require file extensions. This is the modern standard.
+
+### Build Script Pattern
+
+**Mandatory:** Use `build.ts` for Bun build configuration.
+
+```typescript
+#!/usr/bin/env bun
+import { build } from 'bun';
+import { chmod } from 'node:fs/promises';
+
+// Build library entry point
+await build({
+  entrypoints: ['./src/index.ts'],
+  outdir: './dist',
+  target: 'node',
+  format: 'esm',
+  minify: false,
+  sourcemap: 'external',
+});
+
+// Build CLI entry point
+await build({
+  entrypoints: ['./src/cli.ts'],
+  outdir: './dist',
+  target: 'node',
+  format: 'esm',
+  minify: false,
+  sourcemap: 'external',
+});
+
+// Add shebang to CLI
+const cliPath = './dist/cli.js';
+const content = await Bun.file(cliPath).text();
+await Bun.write(cliPath, `#!/usr/bin/env node\n${content}`);
+
+// Make executable (Unix only)
+if (process.platform !== 'win32') {
+  await chmod(cliPath, 0o755);
+}
+
+console.log('✅ Build complete');
+```
+
+**Why:** Bun's native build API is fast and requires no configuration files.
+
+### Test Configuration
+
+**Mandatory:** Use `bunfig.toml` for test settings.
+
+```toml
+[test]
+# Coverage configuration
+coverage = true
+coverageThreshold = 80
+coverageReporters = ["text", "json", "html"]
+coverageDir = "coverage"
+
+# Test execution
+timeout = 30000  # 30 seconds per test
+```
+
+**Why:** Centralized configuration for all test settings.
+
+### Development Commands
+
+**Standard commands:**
+
+```bash
+# Install dependencies
+bun install
+
+# Build project
+bun run build
+
+# Watch mode development
+bun run dev   # or bun --watch build.ts
+
+# Run tests
+bun test
+
+# Run tests with coverage
+bun test --coverage
+
+# Watch mode testing
+bun test --watch
+
+# Type checking
+bun run type-check   # or bun tsc --noEmit
+
+# Linting
+bun run lint
+```
+
+**Why:** All commands use `bun` for consistency and performance.
+
 ## V3 Pattern Changes
 
 ### New Patterns in V3
@@ -652,7 +764,7 @@ export function listProvidersCommand(): void {
 ```typescript
 // test file only
 const mockProvider = {
-  generate: vi.fn() as any,  // eslint-disable-line @typescript-eslint/no-explicit-any
+  generate: mock(() => {}) as any,  // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 ```
 
@@ -663,8 +775,8 @@ const mockProvider = {
 **Allowed:** Config files may use default exports.
 
 ```typescript
-// vitest.config.ts, tsup.config.ts - config files
-export default defineConfig({ /* ... */ });
+// bunfig.toml, build.ts - config files
+export default { /* ... */ };
 ```
 
 **All other files:** Named exports only.

@@ -30,6 +30,9 @@ pnpm add -D commitment
 
 # Using yarn
 yarn add -D commitment
+
+# Using bun (for development)
+bun add -D commitment
 ```
 
 ## Requirements
@@ -37,6 +40,9 @@ yarn add -D commitment
 - Node.js >= 18
 - Git repository
 - Optional: [Claude CLI](https://claude.ai/code) or [Codex CLI](https://developers.openai.com/codex) for AI generation
+
+**For Contributors:**
+- Bun 1.1.0+ (faster development experience with built-in testing and bundling)
 
 ## Quick Start
 
