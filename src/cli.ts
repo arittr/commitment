@@ -6,28 +6,18 @@ import { ZodError } from 'zod';
 import { initCommand } from './cli/commands/init';
 import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
-import { parseGitStatus } from './utils/git-schemas';
+import { type GitStatus, parseGitStatus } from './utils/git-schemas';
 
 /**
  * Get git status and check for staged changes
  */
-async function getGitStatus(cwd: string): Promise<{
-  hasChanges: boolean;
-  stagedFiles: string[];
-  statusLines: string[];
-}> {
+async function getGitStatus(cwd: string): Promise<GitStatus> {
   try {
     const { stdout } = await execa('git', ['status', '--porcelain'], { cwd });
 
     // Parse and validate git status output
     try {
-      const parsedStatus = parseGitStatus(stdout);
-
-      return {
-        hasChanges: parsedStatus.hasChanges,
-        stagedFiles: parsedStatus.stagedFiles,
-        statusLines: parsedStatus.statusLines,
-      };
+      return parseGitStatus(stdout);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Malformed git status line')) {
         throw new Error(
@@ -59,7 +49,6 @@ async function createCommit(message: string, cwd: string): Promise<void> {
 /**
  * Generate commit command (default action)
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main CLI logic, needs refactoring
 async function generateCommitCommand(rawOptions: {
   agent?: string;
   ai: boolean;
@@ -67,59 +56,19 @@ async function generateCommitCommand(rawOptions: {
   dryRun?: boolean;
   messageOnly?: boolean;
 }): Promise<void> {
-  // Validate CLI options
-  let options: ReturnType<typeof validateCliOptions>;
-  try {
-    options = validateCliOptions(rawOptions);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      console.error(chalk.red('❌ Invalid CLI options:'));
-      console.error(chalk.yellow(formatValidationError(error)));
-      console.log(chalk.gray('\nPlease check your command-line flags and try again.'));
-      process.exit(1);
-    }
-    throw error;
-  }
-
-  // Use default agent if not specified
+  const options = validateOptionsOrExit(rawOptions);
   const agentName = options.agent ?? 'claude';
 
   try {
-    // Check for staged changes
-    const gitStatus = await getGitStatus(options.cwd);
+    const gitStatus = await checkGitStatusOrExit(options.cwd);
+    displayStagedChanges(gitStatus, options.messageOnly === true);
+    displayGenerationStatus(agentName, options.ai, options.messageOnly === true);
 
-    if (!gitStatus.hasChanges) {
-      console.log(chalk.yellow('No staged changes to commit'));
-      console.log(chalk.gray('Run `git add` to stage changes first'));
-      process.exit(1);
-    }
-
-    // Show what will be committed
-    if (options.messageOnly !== true) {
-      console.log(chalk.cyan('📝 Staged changes:'));
-      for (const line of gitStatus.statusLines) {
-        const status = line.slice(0, 2);
-        const file = line.slice(3);
-        console.log(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
-      }
-      console.log('');
-    }
-
-    // Create task from git status
     const task = {
       description: 'Analyze git diff to generate appropriate commit message',
       produces: gitStatus.stagedFiles,
       title: 'Code changes',
     };
-
-    // Show generation status
-    if (options.messageOnly !== true) {
-      if (options.ai) {
-        console.log(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
-      } else {
-        console.log(chalk.cyan('📝 Generating commit message with rules...'));
-      }
-    }
 
     const generator = new CommitMessageGenerator({
       agent: agentName,
@@ -136,35 +85,126 @@ async function generateCommitCommand(rawOptions: {
       workdir: options.cwd,
     });
 
-    if (options.messageOnly !== true) {
-      console.log(chalk.green('✅ Generated commit message'));
-    }
-
-    // Output the message
-    if (options.messageOnly === true) {
-      // Just output the message for hooks
-      console.log(message);
-      return;
-    }
-
-    console.log(chalk.green('\n💬 Commit message:'));
-    const lines = message.split('\n');
-    for (const line of lines) {
-      console.log(chalk.white(`   ${line}`));
-    }
-    console.log('');
-
-    // Create commit if not dry run
-    if (options.dryRun === true) {
-      console.log(chalk.blue('🚀 DRY RUN - No commit created'));
-      console.log(chalk.gray('   Remove --dry-run to create the commit'));
-    } else {
-      await createCommit(message, options.cwd);
-      console.log(chalk.green('✅ Commit created successfully'));
-    }
+    displayCommitMessage(message, options.messageOnly === true);
+    await executeCommit(
+      message,
+      options.cwd,
+      options.dryRun === true,
+      options.messageOnly === true
+    );
   } catch (error) {
     console.error(chalk.red('❌ Error:'), error instanceof Error ? error.message : String(error));
     process.exit(1);
+  }
+}
+
+/**
+ * Validate CLI options or exit with error
+ */
+function validateOptionsOrExit(
+  rawOptions: Parameters<typeof validateCliOptions>[0]
+): ReturnType<typeof validateCliOptions> {
+  try {
+    return validateCliOptions(rawOptions);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      console.error(chalk.red('❌ Invalid CLI options:'));
+      console.error(chalk.yellow(formatValidationError(error)));
+      console.log(chalk.gray('\nPlease check your command-line flags and try again.'));
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Check git status and exit if no changes
+ *
+ * Returns a simplified GitStatus-like object with just the fields we need
+ */
+async function checkGitStatusOrExit(cwd: string): Promise<GitStatus> {
+  const gitStatus = await getGitStatus(cwd);
+
+  if (!gitStatus.hasChanges) {
+    console.log(chalk.yellow('No staged changes to commit'));
+    console.log(chalk.gray('Run `git add` to stage changes first'));
+    process.exit(1);
+  }
+
+  // Return full GitStatus from getGitStatus which already has all required fields
+  return gitStatus;
+}
+
+/**
+ * Display staged changes to user
+ */
+function displayStagedChanges(gitStatus: GitStatus, silent: boolean): void {
+  if (silent) {
+    return;
+  }
+
+  console.log(chalk.cyan('📝 Staged changes:'));
+  for (const line of gitStatus.statusLines) {
+    const status = line.slice(0, 2);
+    const file = line.slice(3);
+    console.log(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
+  }
+  console.log('');
+}
+
+/**
+ * Display generation status to user
+ */
+function displayGenerationStatus(agentName: string, useAI: boolean, silent: boolean): void {
+  if (silent) {
+    return;
+  }
+
+  if (useAI) {
+    console.log(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
+  } else {
+    console.log(chalk.cyan('📝 Generating commit message with rules...'));
+  }
+}
+
+/**
+ * Display commit message to user
+ */
+function displayCommitMessage(message: string, messageOnly: boolean): void {
+  if (messageOnly) {
+    // Just output the message for hooks
+    console.log(message);
+    return;
+  }
+
+  console.log(chalk.green('✅ Generated commit message'));
+  console.log(chalk.green('\n💬 Commit message:'));
+  const lines = message.split('\n');
+  for (const line of lines) {
+    console.log(chalk.white(`   ${line}`));
+  }
+  console.log('');
+}
+
+/**
+ * Execute commit or show dry-run message
+ */
+async function executeCommit(
+  message: string,
+  cwd: string,
+  dryRun: boolean,
+  messageOnly: boolean
+): Promise<void> {
+  if (messageOnly) {
+    return;
+  }
+
+  if (dryRun) {
+    console.log(chalk.blue('🚀 DRY RUN - No commit created'));
+    console.log(chalk.gray('   Remove --dry-run to create the commit'));
+  } else {
+    await createCommit(message, cwd);
+    console.log(chalk.green('✅ Commit created successfully'));
   }
 }
 

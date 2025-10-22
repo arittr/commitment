@@ -56,99 +56,129 @@ export class CodexAgent implements Agent {
    * // "feat: add new feature\n\nImplement feature in feature.ts"
    * ```
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Core agent logic, needs refactoring
   async generate(prompt: string, workdir: string): Promise<string> {
-    // Use a temporary file to capture just the final message
     const tmpFile = `/tmp/codex-output-${Date.now()}.txt`;
 
     try {
-      // Execute Codex CLI in non-interactive mode using 'exec' subcommand
-      // Use --output-last-message to write just the final response to a file
+      // Execute Codex CLI in non-interactive mode
       const result = await execa('codex', ['exec', '--output-last-message', tmpFile, prompt], {
         cwd: workdir,
         timeout: 120_000, // 2 minutes
       });
 
-      // Try to read from temp file first (actual Codex execution)
-      // Fall back to stdout for testing/mocking
-      let output: string;
-      try {
-        const { readFileSync, unlinkSync, existsSync } = await import('node:fs');
-        if (existsSync(tmpFile)) {
-          output = readFileSync(tmpFile, 'utf8');
-          unlinkSync(tmpFile);
-        } else {
-          output = result.stdout;
-        }
-      } catch {
-        // If file operations fail, use stdout (for mocked tests)
-        output = result.stdout;
-      }
+      // Read output from temp file or fallback to stdout
+      const output = await this._readOutput(tmpFile, result.stdout);
 
-      // Clean AI artifacts (code fences, extra whitespace)
-      const cleaned = this._cleanResponse(output);
-
-      // Validate response format
-      if (cleaned.length === 0 || cleaned.trim().length === 0) {
-        throw AgentError.executionFailed(
-          this.name,
-          0,
-          'Empty response - CLI may not be properly configured'
-        );
-      }
-
-      // Basic validation: should look like a conventional commit
-      if (!this._isValidCommitFormat(cleaned)) {
-        throw AgentError.malformedResponse(this.name, cleaned);
-      }
-
-      return cleaned;
+      // Process and validate the response
+      return this._processResponse(output);
     } catch (error) {
-      // Clean up temp file on error (best effort)
-      try {
-        const { unlinkSync, existsSync } = await import('node:fs');
-        if (existsSync(tmpFile)) {
-          unlinkSync(tmpFile);
-        }
-      } catch {
-        // Ignore cleanup errors
-      }
-
-      // Re-throw AgentError as-is (already properly formatted)
-      if (error instanceof AgentError) {
-        throw error;
-      }
-
-      // Handle CLI not found error
-      if (
-        error !== null &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'ENOENT'
-      ) {
-        throw AgentError.cliNotFound('codex', this.name);
-      }
-
-      // Handle execution errors
-      if (error !== null && typeof error === 'object' && 'code' in error) {
-        const execError = error as { code?: number | string; message?: string; stderr?: string };
-        const details = execError.stderr ?? execError.message ?? 'Unknown error';
-        const code = execError.code ?? 'unknown';
-        throw AgentError.executionFailed(
-          this.name,
-          code,
-          details,
-          error instanceof Error ? error : undefined
-        );
-      }
-
-      // Fallback for unknown errors
-      const message = error instanceof Error ? error.message : String(error);
-      throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
-        agentName: this.name,
-        cause: error instanceof Error ? error : undefined,
-      });
+      await this._cleanupTempFile(tmpFile);
+      this._handleExecutionError(error);
     }
+  }
+
+  /**
+   * Read output from temp file with fallback to stdout
+   *
+   * @param tmpFile - Path to temporary output file
+   * @param fallbackOutput - Fallback output (stdout) if file doesn't exist
+   * @returns Output content
+   */
+  private async _readOutput(tmpFile: string, fallbackOutput: string): Promise<string> {
+    try {
+      const { readFileSync, unlinkSync, existsSync } = await import('node:fs');
+      if (existsSync(tmpFile)) {
+        const output = readFileSync(tmpFile, 'utf8');
+        unlinkSync(tmpFile);
+        return output;
+      }
+      return fallbackOutput;
+    } catch {
+      // If file operations fail, use stdout (for mocked tests)
+      return fallbackOutput;
+    }
+  }
+
+  /**
+   * Process and validate the CLI response
+   *
+   * @param output - Raw output from Codex CLI
+   * @returns Cleaned and validated commit message
+   * @throws {AgentError} If response is invalid
+   */
+  private _processResponse(output: string): string {
+    // Clean AI artifacts (code fences, extra whitespace)
+    const cleaned = this._cleanResponse(output);
+
+    // Validate response is not empty
+    if (cleaned.length === 0 || cleaned.trim().length === 0) {
+      throw AgentError.executionFailed(
+        this.name,
+        0,
+        'Empty response - CLI may not be properly configured'
+      );
+    }
+
+    // Validate conventional commit format
+    if (!this._isValidCommitFormat(cleaned)) {
+      throw AgentError.malformedResponse(this.name, cleaned);
+    }
+
+    return cleaned;
+  }
+
+  /**
+   * Clean up temporary file (best effort)
+   *
+   * @param tmpFile - Path to temporary file
+   */
+  private async _cleanupTempFile(tmpFile: string): Promise<void> {
+    try {
+      const { unlinkSync, existsSync } = await import('node:fs');
+      if (existsSync(tmpFile)) {
+        unlinkSync(tmpFile);
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  /**
+   * Handle execution errors and convert to AgentError
+   *
+   * @param error - The error that occurred
+   * @throws {AgentError} Always throws with appropriate error type
+   */
+  private _handleExecutionError(error: unknown): never {
+    // Re-throw AgentError as-is (already properly formatted)
+    if (error instanceof AgentError) {
+      throw error;
+    }
+
+    // Handle CLI not found error
+    if (error !== null && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      throw AgentError.cliNotFound('codex', this.name);
+    }
+
+    // Handle execution errors
+    if (error !== null && typeof error === 'object' && 'code' in error) {
+      const execError = error as { code?: number | string; message?: string; stderr?: string };
+      const details = execError.stderr ?? execError.message ?? 'Unknown error';
+      const code = execError.code ?? 'unknown';
+      throw AgentError.executionFailed(
+        this.name,
+        code,
+        details,
+        error instanceof Error ? error : undefined
+      );
+    }
+
+    // Fallback for unknown errors
+    const message = error instanceof Error ? error.message : String(error);
+    throw new AgentError(`Unexpected error during ${this.name} execution: ${message}`, {
+      agentName: this.name,
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 
   /**

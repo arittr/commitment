@@ -290,25 +290,43 @@ ${changeAnalysis}`;
   /**
    * Generate commit message using rule-based analysis
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Rule-based logic, needs refactoring
   private _generateRuleBasedCommitMessage(task: CommitTask, options: CommitMessageOptions): string {
-    // Use guard to safely handle optional files array
     const files = isDefined(options.files) ? options.files : [];
-
-    // Analyze file patterns for intelligent categorization
     const categories = this._categorizeFiles(files);
+    const bulletPoints = this._createBulletPoints(categories, files);
+    const { prefix, title } = this._determineCommitType(categories, task);
+
+    return this._formatCommitMessage(prefix, title, bulletPoints, task.description);
+  }
+
+  /**
+   * Create bullet points from file categories
+   */
+  private _createBulletPoints(
+    categories: ReturnType<typeof this._categorizeFiles>,
+    files: string[]
+  ): string[] {
     const bulletPoints: string[] = [];
 
-    // Generate detailed bullet points based on file changes
     if (categories.components.length > 0) {
       bulletPoints.push(
-        `- Add ${categories.components.length} component${categories.components.length > 1 ? 's' : ''}: ${categories.components.slice(0, 3).join(', ')}${categories.components.length > 3 ? '...' : ''}`
+        this._createFileBulletPoint(
+          'Add',
+          'component',
+          categories.components.length,
+          categories.components
+        )
       );
     }
 
     if (categories.apis.length > 0) {
       bulletPoints.push(
-        `- Implement ${categories.apis.length} API endpoint${categories.apis.length > 1 ? 's' : ''}: ${categories.apis.slice(0, 3).join(', ')}${categories.apis.length > 3 ? '...' : ''}`
+        this._createFileBulletPoint(
+          'Implement',
+          'API endpoint',
+          categories.apis.length,
+          categories.apis
+        )
       );
     }
 
@@ -328,7 +346,7 @@ ${changeAnalysis}`;
       bulletPoints.push(`- Update documentation and README files`);
     }
 
-    // Add file count summary if we have uncategorized files
+    // Add uncategorized files summary
     const categorizedCount =
       categories.components.length +
       categories.apis.length +
@@ -336,43 +354,83 @@ ${changeAnalysis}`;
       categories.configs.length +
       categories.docs.length;
     const uncategorizedCount = files.length - categorizedCount;
+
     if (uncategorizedCount > 0) {
       bulletPoints.push(
         `- Modify ${uncategorizedCount} additional file${uncategorizedCount > 1 ? 's' : ''}`
       );
     }
 
-    // Generate title based on predominant file type
-    let title = '';
-    let prefix = '';
+    return bulletPoints;
+  }
 
-    if (categories.tests.length > categories.components.length + categories.apis.length) {
-      prefix = 'test';
-      title = `add test coverage for ${task.title.toLowerCase()}`;
-    } else if (categories.components.length > 0) {
-      prefix = 'feat';
-      title = `add ${task.title.toLowerCase()}`;
-    } else if (categories.apis.length > 0) {
-      prefix = 'feat';
-      title = `implement ${task.title.toLowerCase()}`;
-    } else if (categories.docs.length > 0) {
-      prefix = 'docs';
-      title = `update ${task.title.toLowerCase()}`;
-    } else if (categories.configs.length > 0) {
-      prefix = 'chore';
-      title = `update ${task.title.toLowerCase()}`;
-    } else {
-      prefix = task.produces.length > 0 ? 'feat' : 'chore';
-      title = task.title.toLowerCase();
+  /**
+   * Create a bullet point for a file category
+   */
+  private _createFileBulletPoint(
+    verb: string,
+    type: string,
+    count: number,
+    fileList: string[]
+  ): string {
+    const plural = count > 1 ? 's' : '';
+    const preview = fileList.slice(0, 3).join(', ');
+    const ellipsis = fileList.length > 3 ? '...' : '';
+    return `- ${verb} ${count} ${type}${plural}: ${preview}${ellipsis}`;
+  }
+
+  /**
+   * Determine commit type prefix and title based on file categories
+   */
+  private _determineCommitType(
+    categories: ReturnType<typeof this._categorizeFiles>,
+    task: CommitTask
+  ): { prefix: string; title: string } {
+    const isTestDominant =
+      categories.tests.length > categories.components.length + categories.apis.length;
+
+    if (isTestDominant) {
+      return { prefix: 'test', title: `add test coverage for ${task.title.toLowerCase()}` };
     }
 
-    // Create complete commit message
+    if (categories.components.length > 0) {
+      return { prefix: 'feat', title: `add ${task.title.toLowerCase()}` };
+    }
+
+    if (categories.apis.length > 0) {
+      return { prefix: 'feat', title: `implement ${task.title.toLowerCase()}` };
+    }
+
+    if (categories.docs.length > 0) {
+      return { prefix: 'docs', title: `update ${task.title.toLowerCase()}` };
+    }
+
+    if (categories.configs.length > 0) {
+      return { prefix: 'chore', title: `update ${task.title.toLowerCase()}` };
+    }
+
+    return {
+      prefix: task.produces.length > 0 ? 'feat' : 'chore',
+      title: task.title.toLowerCase(),
+    };
+  }
+
+  /**
+   * Format the final commit message
+   */
+  private _formatCommitMessage(
+    prefix: string,
+    title: string,
+    bulletPoints: string[],
+    fallbackDescription: string
+  ): string {
     const commitTitle = `${prefix}: ${title}`;
 
     if (bulletPoints.length > 0) {
       return `${commitTitle}\n\n${bulletPoints.join('\n')}`;
     }
-    return `${commitTitle}\n\n- ${task.description}`;
+
+    return `${commitTitle}\n\n- ${fallbackDescription}`;
   }
 
   private _categorizeFiles(files: string[]): {
@@ -433,25 +491,39 @@ ${changeAnalysis}`;
   /**
    * Analyze code changes to provide more accurate context
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Code analysis logic, needs refactoring
   private _analyzeCodeChanges(diffContent: string, files: string[]): string {
-    // Validate inputs
     if (!isString(diffContent)) {
       throw new Error('Diff content must be a string');
     }
 
-    const analysis: string[] = [];
+    const { addedLines, removedLines } = this._parseDiffLines(diffContent);
+    const patterns = this._detectPatterns(diffContent, addedLines, removedLines);
 
-    // Analyze diff patterns
-    const addedLines = diffContent
-      .split('\n')
-      .filter((line) => line.startsWith('+') && !line.startsWith('+++'));
-    const removedLines = diffContent
-      .split('\n')
-      .filter((line) => line.startsWith('-') && !line.startsWith('---'));
+    const analysis = [
+      ...this._analyzePatterns(patterns),
+      ...this._analyzeFileScope(files.length),
+      ...this._analyzeChangeMagnitude(addedLines.length, removedLines.length),
+    ];
 
-    // Detect significant patterns only
-    const patterns = {
+    return analysis.length > 0 ? analysis.join('\n- ') : 'Minor code modifications';
+  }
+
+  /**
+   * Parse diff content into added and removed lines
+   */
+  private _parseDiffLines(diffContent: string): { addedLines: string[]; removedLines: string[] } {
+    const lines = diffContent.split('\n');
+    return {
+      addedLines: lines.filter((line) => line.startsWith('+') && !line.startsWith('++')),
+      removedLines: lines.filter((line) => line.startsWith('-') && !line.startsWith('---')),
+    };
+  }
+
+  /**
+   * Detect code patterns in diff
+   */
+  private _detectPatterns(diffContent: string, addedLines: string[], removedLines: string[]) {
+    return {
       mockChanges:
         diffContent.includes('vi.mock') ||
         diffContent.includes('jest.mock') ||
@@ -469,8 +541,15 @@ ${changeAnalysis}`;
         diffContent.includes('type ') ||
         diffContent.includes('.d.ts'),
     };
+  }
 
-    // Generate concise analysis - only significant changes
+  /**
+   * Analyze patterns and generate insights
+   */
+  private _analyzePatterns(patterns: ReturnType<typeof this._detectPatterns>): string[] {
+    const analysis: string[] = [];
+
+    // Function changes
     if (patterns.newFunctions > patterns.removedFunctions + 1) {
       analysis.push(`Added ${patterns.newFunctions} new functions/methods`);
     } else if (patterns.removedFunctions > patterns.newFunctions + 1) {
@@ -479,12 +558,14 @@ ${changeAnalysis}`;
       analysis.push('Modified function definitions');
     }
 
+    // Test changes
     if (patterns.newTests > 0) {
       analysis.push(`Added ${patterns.newTests} test cases`);
     } else if (patterns.removedTests > 0) {
       analysis.push(`Removed ${patterns.removedTests} test cases`);
     }
 
+    // Other changes
     if (patterns.mockChanges) {
       analysis.push('Modified mocking/test patterns');
     }
@@ -493,22 +574,34 @@ ${changeAnalysis}`;
       analysis.push('Updated TypeScript definitions');
     }
 
-    // File scope context
-    const fileCount = files.length;
+    return analysis;
+  }
+
+  /**
+   * Analyze file scope
+   */
+  private _analyzeFileScope(fileCount: number): string[] {
     if (fileCount === 1) {
-      analysis.push('Single file modification');
-    } else if (fileCount > 5) {
-      analysis.push(`Broad changes across ${fileCount} files`);
+      return ['Single file modification'];
     }
+    if (fileCount > 5) {
+      return [`Broad changes across ${fileCount} files`];
+    }
+    return [];
+  }
 
-    // Change magnitude (only for significant changes)
-    const totalChanges = addedLines.length + removedLines.length;
+  /**
+   * Analyze change magnitude
+   */
+  private _analyzeChangeMagnitude(addedCount: number, removedCount: number): string[] {
+    const totalChanges = addedCount + removedCount;
+
     if (totalChanges > 100) {
-      analysis.push(`Substantial changes: ${addedLines.length}+ ${removedLines.length}- lines`);
-    } else if (totalChanges > 20) {
-      analysis.push('Moderate code changes');
+      return [`Substantial changes: ${addedCount}+ ${removedCount}- lines`];
     }
-
-    return analysis.length > 0 ? analysis.join('\n- ') : 'Minor code modifications';
+    if (totalChanges > 20) {
+      return ['Moderate code changes'];
+    }
+    return [];
   }
 }
