@@ -59,6 +59,7 @@ async function createCommit(message: string, cwd: string): Promise<void> {
 /**
  * Generate commit command (default action)
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main CLI logic, needs refactoring
 async function generateCommitCommand(rawOptions: {
   agent?: string;
   ai: boolean;
@@ -67,7 +68,7 @@ async function generateCommitCommand(rawOptions: {
   messageOnly?: boolean;
 }): Promise<void> {
   // Validate CLI options
-  let options;
+  let options: ReturnType<typeof validateCliOptions>;
   try {
     options = validateCliOptions(rawOptions);
   } catch (error) {
