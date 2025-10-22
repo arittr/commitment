@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import { execa } from 'execa';
 
 import { type GitStatus, parseGitStatus } from '../utils/git-schemas';
+import { exec } from '../utils/shell';
 
 /**
  * Get git status and check for staged changes
@@ -12,7 +12,7 @@ import { type GitStatus, parseGitStatus } from '../utils/git-schemas';
  */
 export async function getGitStatus(cwd: string): Promise<GitStatus> {
   try {
-    const { stdout } = await execa('git', ['status', '--porcelain'], { cwd });
+    const { stdout } = await exec('git', ['status', '--porcelain'], { cwd });
 
     // Parse and validate git status output
     try {
@@ -41,7 +41,7 @@ export async function getGitStatus(cwd: string): Promise<GitStatus> {
  */
 export async function createCommit(message: string, cwd: string): Promise<void> {
   try {
-    await execa('git', ['commit', '-m', message], { cwd });
+    await exec('git', ['commit', '-m', message], { cwd });
   } catch (error) {
     throw new Error(
       `Failed to create commit: ${error instanceof Error ? error.message : String(error)}`

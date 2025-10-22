@@ -117,10 +117,16 @@ async function main(): Promise<void> {
     .command('init')
     .description('Initialize commitment hooks in your project')
     .option('--hook-manager <type>', 'Hook manager to use: husky, simple-git-hooks, plain')
+    .option('--agent <name>', 'AI agent to use: claude, codex (default: claude)')
     .option('--cwd <path>', 'Working directory', process.cwd())
     .action(
-      async (options: { cwd: string; hookManager?: 'husky' | 'simple-git-hooks' | 'plain' }) => {
+      async (options: {
+        cwd: string;
+        hookManager?: 'husky' | 'simple-git-hooks' | 'plain';
+        agent?: 'claude' | 'codex';
+      }) => {
         await initCommand({
+          agent: options.agent,
           cwd: options.cwd,
           hookManager: options.hookManager,
         });
