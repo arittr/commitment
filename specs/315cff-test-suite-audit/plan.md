@@ -72,15 +72,15 @@ These tests verify that Zod works correctly (e.g., "rejects non-string input") r
 
 3. **Run quality gates:**
    ```bash
-   pnpm test src/types/__tests__/schemas.test.ts
-   pnpm test src/cli/__tests__/schemas.test.ts
-   pnpm run lint
+   bun test src/types/__tests__/schemas.test.ts
+   bun test src/cli/__tests__/schemas.test.ts
+   bun run lint
    ```
 
 **Acceptance Criteria:**
 - [ ] `src/types/__tests__/schemas.test.ts` reduced to <100 LOC (type inference only)
 - [ ] `src/cli/__tests__/schemas.test.ts` reduced to <50 LOC (formatValidationError only)
-- [ ] All tests pass: `pnpm test src/types/__tests__/schemas.test.ts src/cli/__tests__/schemas.test.ts`
+- [ ] All tests pass: `bun test src/types/__tests__/schemas.test.ts src/cli/__tests__/schemas.test.ts`
 - [ ] No Zod validation tests remain (e.g., "rejects non-string", "applies default")
 - [ ] Type inference tests verify z.infer<> produces correct types
 - [ ] formatValidationError tests verify custom error formatting logic
@@ -107,8 +107,8 @@ These tests verify that Zod works correctly (e.g., "rejects non-string input") r
 
 **Quality Gates:**
 ```bash
-pnpm test src/types/__tests__/schemas.test.ts src/cli/__tests__/schemas.test.ts
-pnpm run lint
+bun test src/types/__tests__/schemas.test.ts src/cli/__tests__/schemas.test.ts
+bun run lint
 ```
 
 ---
@@ -150,7 +150,7 @@ This file contains ~900 LOC of Zod validation tests and ~400 LOC of critical bus
 
 4. **Verify business logic coverage:**
    ```bash
-   pnpm test src/utils/__tests__/git-schemas.test.ts --coverage
+   bun test src/utils/__tests__/git-schemas.test.ts --coverage
    ```
    - parseGitStatus: Empty output, single file, multiple files, edge cases
    - categorizeFiles: Different file types (tests, components, configs, etc.)
@@ -159,15 +159,15 @@ This file contains ~900 LOC of Zod validation tests and ~400 LOC of critical bus
 
 5. **Run quality gates:**
    ```bash
-   pnpm test src/utils/__tests__/git-schemas.test.ts
-   pnpm run lint
+   bun test src/utils/__tests__/git-schemas.test.ts
+   bun run lint
    ```
 
 **Acceptance Criteria:**
 - [ ] `src/utils/__tests__/git-schemas.test.ts` reduced to ~400 LOC (business logic + type inference)
 - [ ] All business logic tests preserved: parseGitStatus, categorizeFiles, analyzeChanges
 - [ ] All type inference tests preserved
-- [ ] All tests pass: `pnpm test src/utils/__tests__/git-schemas.test.ts`
+- [ ] All tests pass: `bun test src/utils/__tests__/git-schemas.test.ts`
 - [ ] No Zod validation tests remain (e.g., "rejects invalid status code")
 - [ ] Business logic coverage maintained at 100%
 
@@ -193,8 +193,8 @@ This file contains ~900 LOC of Zod validation tests and ~400 LOC of critical bus
 
 **Quality Gates:**
 ```bash
-pnpm test src/utils/__tests__/git-schemas.test.ts --coverage
-pnpm run lint
+bun test src/utils/__tests__/git-schemas.test.ts --coverage
+bun run lint
 ```
 
 ---
@@ -264,20 +264,20 @@ The agents types test file follows the same pattern as others - mostly Zod valid
 
 4. **Verify all tests still pass:**
    ```bash
-   pnpm test
+   bun test
    ```
 
 5. **Run quality gates:**
    ```bash
-   pnpm run lint
-   pnpm test --coverage
+   bun run lint
+   bun test --coverage
    ```
 
 **Acceptance Criteria:**
 - [ ] `src/agents/__tests__/types.test.ts` reduced to <50 LOC (interface tests only)
 - [ ] All four test files have documentation comments explaining testing philosophy
 - [ ] Documentation references @docs/constitutions/current/schema-rules.md
-- [ ] All tests pass: `pnpm test`
+- [ ] All tests pass: `bun test`
 - [ ] Coverage maintained for all business logic functions
 - [ ] No Zod validation tests remain in any file
 
@@ -290,9 +290,9 @@ The agents types test file follows the same pattern as others - mostly Zod valid
 
 **Quality Gates:**
 ```bash
-pnpm test
-pnpm test --coverage
-pnpm run lint
+bun test
+bun test --coverage
+bun run lint
 ```
 
 ---
@@ -324,9 +324,9 @@ pnpm run lint
 After completing all tasks, verify:
 
 - [ ] Total test LOC reduced by ~1500 lines
-- [ ] All tests pass: `pnpm test`
-- [ ] Coverage maintained for business logic: `pnpm test --coverage`
-- [ ] Linting passes: `pnpm run lint`
+- [ ] All tests pass: `bun test`
+- [ ] Coverage maintained for business logic: `bun test --coverage`
+- [ ] Linting passes: `bun run lint`
 - [ ] No Zod validation tests remain (search for "should reject", "should apply default")
 - [ ] Business logic tests preserved (parseGitStatus, categorizeFiles, analyzeChanges, formatValidationError, type guards)
 - [ ] Documentation comments added to all modified files

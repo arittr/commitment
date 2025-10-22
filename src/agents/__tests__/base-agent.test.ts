@@ -167,9 +167,7 @@ describe('BaseAgent', () => {
     it('should remove thinking tags', async () => {
       const agent = new TestAgent();
 
-      agent.executeCommand = vi
-        .fn()
-        .mockResolvedValue('<thinking>analyzing</thinking>\nfeat: test\n\nDescription');
+      agent.executeCommand = mock(async () => '<thinking>analyzing</thinking>\nfeat: test\n\nDescription');
 
       execa.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -326,9 +324,7 @@ describe('BaseAgent', () => {
       } as any);
 
       // Mock executeCommand to return realistic output (no leading whitespace on lines)
-      agent.executeCommand = vi
-        .fn()
-        .mockResolvedValue(
+      agent.executeCommand = mock(async () =>
           '```\nfeat(core): add new feature\n\nImplemented feature X with support for Y.\nBreaking change: API signature changed.\n```'
         );
 
