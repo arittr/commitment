@@ -44,32 +44,41 @@ Adding a dependency requires understanding its trade-offs and ensuring it aligns
 
 ## Build and Tooling
 
-### tsup
+### Bun
 
-**Version:** Latest stable
+**Version:** 1.1.0+
 **Status:** ✅ MANDATORY
 
 **Rationale:**
-- Fast TypeScript bundler built on esbuild
-- Zero-config for simple projects
-- Dual entry points (CLI + library)
+- All-in-one toolkit: package manager, bundler, test runner
+- Significantly faster than traditional Node.js tools (2-3x faster installs, builds, tests)
+- Native TypeScript support with zero configuration
+- Built-in test runner with Jest-compatible API
+- Efficient bundler with ESM-first approach
+
+**Features:**
+- Package Manager: Fast, disk-efficient with binary lockfile (bun.lockb)
+- Build Tool: Native bundler via `Bun.build()` API
+- Test Runner: `bun:test` with native mocking support
+- See: https://bun.sh/docs
 
 **Alternatives Rejected:**
-- tsc alone - Too slow, doesn't bundle
-- webpack - Overkill for CLI tool
-- rollup - More complex configuration
+- pnpm - Good but Bun is faster and more integrated
+- tsup - Bun's bundler is built-in and faster
+- Vitest - Bun's test runner is built-in and faster
 
 ### pnpm
 
 **Version:** Latest stable
-**Status:** ✅ MANDATORY
+**Status:** ❌ REMOVED (replaced by Bun)
 
-**Rationale:**
-- Fast, efficient disk usage
-- Strict dependency resolution
-- Monorepo support (future-ready)
+**Removal Rationale:**
+- Bun provides all package management features
+- Bun is 2-3x faster for installs
+- Bun's lockfile is more efficient (binary format)
+- Consolidates tooling (one tool instead of pnpm + tsup + vitest)
 
-**Forbidden:** npm, yarn (use pnpm exclusively)
+**Migration:** Use `bun install` instead of `pnpm install`
 
 ## Core Dependencies
 
@@ -188,47 +197,41 @@ const result = match(provider)
 
 ## Development Dependencies
 
-### Vitest
+### bun:test
 
 **Purpose:** Testing framework
 **Status:** ✅ MANDATORY
 
 **Rationale:**
-- Fast, Vite-powered test runner
-- ESM-native
-- Jest-compatible API
-- Built-in coverage
+- Native Bun test runner (no additional dependencies)
+- Jest-compatible API (describe, it, expect)
+- Built-in mocking with `mock()` and `spyOn()`
+- Fast execution (significantly faster than Vitest)
+- Built-in coverage reporting
 
-**Forbidden:** Jest (use Vitest exclusively)
+**Configuration:** `bunfig.toml` for test settings
 
-### ESLint
+**Forbidden:** Jest, Vitest (use bun:test exclusively)
 
-**Purpose:** Code linting
+### Biome
+
+**Purpose:** Linting and formatting
 **Status:** ✅ MANDATORY
 
-**Configuration:**
+**Rationale:**
+- Fast Rust-based linter and formatter
+- Zero configuration out of the box
+- Replaces ESLint + Prettier with single tool
+- TypeScript-first design
+- Import sorting built-in
+
+**Configuration:** `biome.json` for rules
+
+**Key Features:**
 - TypeScript strict rules
 - Import organization
-- Unicorn rules for modern patterns
-- Sorted imports
-
-**Key Plugins:**
-- `@typescript-eslint` - TypeScript linting
-- `eslint-plugin-import` - Import organization
-- `eslint-plugin-unicorn` - Modern patterns
-
-### Prettier
-
-**Purpose:** Code formatting
-**Status:** ✅ MANDATORY
-
-**Configuration:**
-- Single quotes
-- No semicolons
-- Trailing commas (es5)
-- 100 line width
-
-**Integration:** Runs via `eslint-plugin-prettier` for unified linting.
+- Code formatting
+- Fast performance
 
 ### Husky + lint-staged
 
@@ -302,6 +305,24 @@ gs stack submit        # Submit PRs
 
 ## Forbidden Dependencies
 
+### ❌ pnpm
+
+**Reason:** Replaced by Bun.
+
+**Alternative:** Use `bun install` for package management.
+
+### ❌ tsup
+
+**Reason:** Replaced by Bun's built-in bundler.
+
+**Alternative:** Use `Bun.build()` API in `build.ts`.
+
+### ❌ Vitest
+
+**Reason:** Replaced by bun:test.
+
+**Alternative:** Use `bun test` with built-in test runner.
+
 ### ❌ Lodash
 
 **Reason:** Modern JavaScript has built-in alternatives.
@@ -364,6 +385,8 @@ When considering a new dependency:
 
 **Rationale:** Tooling updates less critical, want latest features.
 
+**Exception:** `bun-types` uses `latest` to match Bun runtime version.
+
 ### Critical Dependencies
 
 **Exact versions:** `5.2.0` (no updates without testing)
@@ -371,6 +394,7 @@ When considering a new dependency:
 **Examples:**
 - TypeScript (affects all code)
 - Zod (affects all validation)
+- Bun (specified in packageManager field)
 
 **Update explicitly after testing.**
 

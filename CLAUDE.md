@@ -16,32 +16,45 @@ This file provides guidance to Claude Code and other AI coding agents when worki
 
 ```bash
 # Build the project
-pnpm run build
+bun run build
 
 # Watch mode development
-pnpm run dev
+bun run dev
 
 # Clean build artifacts
-pnpm run clean
+bun run clean
 ```
 
 ### Code Quality
 
 ```bash
-# Run linting (type-check + format-check + eslint)
-pnpm run lint
+# Run linting (type-check + format-check + biome)
+bun run lint
 
 # Fix linting issues automatically
-pnpm run lint:fix
+bun run lint:fix
 
 # Format code
-pnpm run format
+bun run format
 
 # Check formatting
-pnpm run format:check
+bun run format:check
 
 # Type checking
-pnpm run type-check
+bun run type-check
+```
+
+### Testing
+
+```bash
+# Run tests
+bun test
+
+# Watch mode testing
+bun test --watch
+
+# Run tests with coverage
+bun test --coverage
 ```
 
 ## Git Workflow with git-spice
@@ -171,7 +184,7 @@ The project uses strict ESLint rules including:
 - Unicorn rules for modern JavaScript
 - Sorted imports and exports
 
-**Always run `pnpm run lint:fix` before committing.**
+**Always run `bun run lint:fix` before committing.**
 
 ### Import Organization
 
@@ -645,7 +658,7 @@ When migrating a type to schema-first:
 **Example Test**:
 
 ```typescript
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import { validateCommitTask, commitTaskSchema } from '../types/schemas.js';
 
 describe('commitTaskSchema', () => {
@@ -871,7 +884,7 @@ export { MyAgent } from './my-agent.js';
 Create `src/agents/__tests__/my-agent.test.ts`:
 
 ```typescript
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, mock } from 'bun:test';
 import { MyAgent } from '../my-agent.js';
 
 describe('MyAgent', () => {
@@ -1014,16 +1027,16 @@ src/
 
 ```bash
 # Run all tests
-pnpm test
+bun test
 
 # Run specific test file
-pnpm test src/cli/__tests__/schemas.test.ts
+bun test src/cli/__tests__/schemas.test.ts
 
 # Run tests in watch mode
-pnpm test --watch
+bun test --watch
 
 # Run tests with coverage
-pnpm test --coverage
+bun test --coverage
 ```
 
 ### Test Patterns
@@ -1123,8 +1136,8 @@ commitment is intended to be published to npm. Before publishing:
 
 ```bash
 # Clean and build
-pnpm run clean
-pnpm run build
+bun run clean
+bun run build
 
 # Verify everything works
 ./dist/cli.js --dry-run
@@ -1137,10 +1150,11 @@ The `prepublishOnly` script automatically cleans and builds before publishing.
 
 ## Development Notes
 
-- Package manager is strictly pnpm (not npm or yarn)
+- Package manager is Bun (for development) - end users can still use npm/yarn/pnpm
 - Build targets Node.js 18+ with ESM-only output
-- Uses tsup for fast builds with dual entry points (CLI + library)
-- CLI file has relaxed ESLint rules (allows `console.log` and `process.exit`)
+- Uses Bun's built-in bundler for fast builds with dual entry points (CLI + library)
+- Test runner is bun:test (Jest-compatible API)
+- CLI file has relaxed linter rules (allows `console.log` and `process.exit`)
 - Config files have relaxed rules (no default export restriction)
 - Always use commitment itself for commits (dogfooding!)
 
@@ -1150,7 +1164,7 @@ When working on commitment:
 
 1. Create a new stacked branch with `gs bc <branch-name>`
 2. Make your changes following the code style guidelines
-3. Run `pnpm run lint:fix` to ensure code quality
+3. Run `bun run lint:fix` to ensure code quality
 4. Use commitment itself to generate commit messages
 5. Continue with `gs bc` for the next ticket
 6. Submit the stack with `gs stack submit`

@@ -74,12 +74,12 @@ src/
 │       └── error-messages.test.ts # User-facing errors
 ```
 
-## Test Framework: Vitest
+## Test Framework: bun:test
 
-**Mandatory:** All tests use Vitest.
+**Mandatory:** All tests use bun:test.
 
 ```typescript
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, mock, spyOn, beforeEach, afterEach } from 'bun:test';
 
 describe('MyClass', () => {
   it('should do something', () => {
@@ -88,7 +88,9 @@ describe('MyClass', () => {
 });
 ```
 
-**Forbidden:** Jest, Mocha, Jasmine (use Vitest exclusively).
+**Note:** Bun provides `describe`, `it`, and `expect` as globals via `bun-types`, so the import is optional. However, `mock` and `spyOn` must be imported.
+
+**Forbidden:** Jest, Mocha, Jasmine, Vitest (use bun:test exclusively).
 
 ## Test Structure
 
@@ -130,7 +132,7 @@ it('#validateConfig')         // Just method name
 it('should generate commit message with AI', async () => {
   // Arrange - Set up test data and mocks
   const mockProvider = {
-    generateCommitMessage: vi.fn().mockResolvedValue('feat: add feature'),
+    generateCommitMessage: mock(async () => 'feat: add feature'),
   };
   const generator = new CommitMessageGenerator({
     provider: mockProvider,
@@ -144,7 +146,7 @@ it('should generate commit message with AI', async () => {
 
   // Assert - Verify the results
   expect(result).toBe('feat: add feature');
-  expect(mockProvider.generateCommitMessage).toHaveBeenCalledOnce();
+  expect(mockProvider.generateCommitMessage).toHaveBeenCalledTimes(1);
 });
 ```
 
@@ -182,7 +184,7 @@ it('should generate commit message with AI', async () => {
 ### Checking Coverage
 
 ```bash
-pnpm test --coverage
+bun test --coverage
 ```
 
 **CI Requirement:** Coverage must not decrease in PRs.
@@ -225,7 +227,7 @@ class CommitMessageGenerator {
 describe('CommitMessageGenerator', () => {
   it('should use provider for generation', async () => {
     const mockProvider = {
-      generateCommitMessage: vi.fn().mockResolvedValue('feat: test'),
+      generateCommitMessage: mock(async () => 'feat: test'),
     };
 
     const generator = new CommitMessageGenerator({
@@ -340,35 +342,36 @@ describe('providerConfigSchema', () => {
 ### Mocking External Commands
 
 ```typescript
-import { vi } from 'vitest';
+import { describe, it, expect, mock } from 'bun:test';
 import { execa } from 'execa';
 
-vi.mock('execa');
+mock.module('execa', () => ({
+  execa: mock(async () => ({
+    stdout: 'feat: test message',
+    stderr: '',
+    exitCode: 0,
+  })),
+}));
 
 describe('ClaudeProvider', () => {
   it('should call claude command', async () => {
-    vi.mocked(execa).mockResolvedValue({
-      stdout: 'feat: test message',
-      stderr: '',
-      exitCode: 0,
-    } as any);
-
     const provider = new ClaudeProvider();
     const result = await provider.generateCommitMessage('prompt', { workdir: '/tmp' });
 
-    expect(execa).toHaveBeenCalledWith('claude', ['--print', expect.any(String)]);
     expect(result).toBe('feat: test message');
   });
 });
 ```
 
+**Note:** Bun's `mock.module()` replaces entire modules. For more control, use dependency injection.
+
 ### Mocking Providers
 
 ```typescript
 const mockProvider: AIProvider = {
-  getName: vi.fn().mockReturnValue('MockProvider'),
-  isAvailable: vi.fn().mockResolvedValue(true),
-  generateCommitMessage: vi.fn().mockResolvedValue('feat: mock'),
+  getName: mock(() => 'MockProvider'),
+  isAvailable: mock(async () => true),
+  generateCommitMessage: mock(async () => 'feat: mock'),
 };
 ```
 
@@ -482,15 +485,15 @@ it('should timeout after delay', async () => {
 
 ✅ Correct:
 it('should timeout after delay', async () => {
-  vi.useFakeTimers();
-  const promise = doAsyncThing();
-  vi.advanceTimersByTime(100);
-  await expect(promise).rejects.toThrow('Timeout');
-  vi.useRealTimers();
+  // Use Bun.sleep() for controlled async timing
+  const start = Date.now();
+  await Bun.sleep(100);
+  const elapsed = Date.now() - start;
+  expect(elapsed).toBeGreaterThanOrEqual(100);
 });
 ```
 
-**Use fake timers, not real delays.**
+**Avoid real delays when possible. Use deterministic async patterns.**
 
 ### ❌ Tests Without Assertions
 
@@ -616,16 +619,16 @@ describe('Performance', () => {
 ### Pre-commit
 
 ```bash
-pnpm run lint      # Must pass
-pnpm run type-check # Must pass
-pnpm run test      # Must pass
+bun run lint      # Must pass
+bun run type-check # Must pass
+bun test          # Must pass
 ```
 
 ### Pre-merge
 
 ```bash
-pnpm test --coverage  # Coverage must not decrease
-pnpm run build        # Must build successfully
+bun test --coverage  # Coverage must not decrease
+bun run build        # Must build successfully
 ```
 
 ### Test Isolation
@@ -674,7 +677,7 @@ it('should work as shown in docs', () => {
 **Before merging, ensure:**
 
 - [ ] All new code has tests
-- [ ] All tests pass (`pnpm test`)
+- [ ] All tests pass (`bun test`)
 - [ ] Coverage is adequate (80%+)
 - [ ] Tests are co-located in `__tests__/`
 - [ ] Test names describe behavior
