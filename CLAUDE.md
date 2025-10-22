@@ -6,9 +6,9 @@ This file provides guidance to Claude Code and other AI coding agents when worki
 
 **commitment** is an AI-powered commit message generator with intelligent fallback. It uses AI agents (Claude CLI or Codex CLI) to generate high-quality, conventional commit messages from git diffs, with a rule-based fallback for when AI is unavailable.
 
-**Architecture Philosophy:** Streamlined and simple. No base classes, no factories, no provider chains. Each agent is a standalone class (~80 LOC) with inline logic. One-command setup with `commitment init` for automatic hook installation.
+**Architecture Philosophy:** Selective abstraction. Simple base class (≤3 extension points) + pure utilities, but no factories or provider chains. Agents extend BaseAgent (~40-60 LOC each). One-command setup with `commitment init` for automatic hook installation.
 
-**Constitution:** This project follows @docs/constitutions/v2/ (current). See v2/meta.md for changelog from v1.
+**Constitution:** This project follows @docs/constitutions/current/ (v3). See current/meta.md for version history.
 
 ## Development Commands
 
@@ -192,7 +192,7 @@ import { hasContent } from './utils/guards.js';
 
 ## Architecture Overview
 
-**See @docs/constitutions/v2/architecture.md for full architectural rules and boundaries.**
+**See @docs/constitutions/current/architecture.md for full architectural rules and boundaries.**
 
 ### Core Components
 
@@ -775,9 +775,9 @@ if (hasContent(str)) {
 
 ## Adding a New AI Agent
 
-**See @docs/constitutions/v2/architecture.md for full extension point documentation.**
+**See @docs/constitutions/current/architecture.md for full extension point documentation.**
 
-The agent system is designed for maximum simplicity - no base classes, no factories, no auto-detection. Each agent is a standalone class (~50-100 LOC) implementing a minimal interface with all logic inline.
+The agent system uses selective abstraction - simple base class (≤3 extension points), no factories, no auto-detection. Each agent extends BaseAgent (~40-60 LOC) implementing only executeCommand() with all flow inherited.
 
 ### Step 1: Create Agent Class
 
@@ -921,7 +921,7 @@ This ensures commitment is battle-tested on itself and provides a real-world exa
 
 ## CLI Architecture
 
-**See @docs/constitutions/v2/architecture.md for CLI module boundaries and responsibilities.**
+**See @docs/constitutions/current/architecture.md for CLI module boundaries and responsibilities.**
 
 The CLI is simplified to core functionality - no complex command modules, no provider chains, no auto-detection.
 
@@ -1074,7 +1074,7 @@ describe('MyProvider', () => {
 
 ## File Structure
 
-**See @docs/constitutions/v2/architecture.md for module organization rules.**
+**See @docs/constitutions/current/architecture.md for module organization rules.**
 
 ```
 src/
