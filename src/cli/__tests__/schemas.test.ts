@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'bun:test';
+
 /**
  * Schema Tests - Testing Philosophy
  *
@@ -17,7 +19,6 @@
  * See: @docs/constitutions/current/schema-rules.md
  */
 
-import { describe, expect, it } from 'bun:test';
 import { ZodError, z } from 'zod';
 import type { CliOptions } from '../schemas';
 import { cliOptionsSchema, formatValidationError } from '../schemas';
@@ -31,7 +32,7 @@ describe('CLI Schemas', () => {
 
       try {
         cliOptionsSchema.parse(options);
-        expect.fail('Should have thrown ZodError');
+        throw new Error('Should have thrown ZodError');
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const formatted = formatValidationError(error as ZodError);
@@ -49,7 +50,7 @@ describe('CLI Schemas', () => {
 
       try {
         cliOptionsSchema.parse(options);
-        expect.fail('Should have thrown ZodError');
+        throw new Error('Should have thrown ZodError');
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const formatted = formatValidationError(error as ZodError);
@@ -64,7 +65,7 @@ describe('CLI Schemas', () => {
 
       try {
         schema.parse(123);
-        expect.fail('Should have thrown ZodError');
+        throw new Error('Should have thrown ZodError');
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const formatted = formatValidationError(error as ZodError);

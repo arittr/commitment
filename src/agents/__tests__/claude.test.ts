@@ -14,7 +14,6 @@ describe('ClaudeAgent', () => {
 
   beforeEach(() => {
     agent = new ClaudeAgent();
-    // @ts-expect-error - execa is mocked
     mockExeca = execa as ReturnType<typeof mock>;
   });
 
