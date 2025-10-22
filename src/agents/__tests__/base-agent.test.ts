@@ -1,11 +1,11 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from 'bun:test';
 import { execa } from 'execa';
 
 import { BaseAgent } from '../base-agent.js';
 import type { Agent } from '../types.js';
 
 // Create mock for execa
-const mockExeca = mock(() => Promise.resolve({ stdout: '', stderr: '', exitCode: 0 }));
+const mockExeca = mock(() => Promise.resolve({ exitCode: 0, stderr: '', stdout: '' }));
 
 // Mock execa module
 mock.module('execa', () => ({
@@ -170,7 +170,9 @@ describe('BaseAgent', () => {
     it('should remove thinking tags', async () => {
       const agent = new TestAgent();
 
-      agent.executeCommand = mock(async () => '<thinking>analyzing</thinking>\nfeat: test\n\nDescription');
+      agent.executeCommand = mock(
+        async () => '<thinking>analyzing</thinking>\nfeat: test\n\nDescription'
+      );
 
       mockExeca.mockResolvedValue({ exitCode: 0, stderr: '', stdout: '' } as any);
 
@@ -327,9 +329,10 @@ describe('BaseAgent', () => {
       } as any);
 
       // Mock executeCommand to return realistic output (no leading whitespace on lines)
-      agent.executeCommand = mock(async () =>
+      agent.executeCommand = mock(
+        async () =>
           '```\nfeat(core): add new feature\n\nImplemented feature X with support for Y.\nBreaking change: API signature changed.\n```'
-        );
+      );
 
       const result = await agent.generate('test prompt', '/test/workdir');
 

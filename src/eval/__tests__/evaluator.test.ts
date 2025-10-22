@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 /**
  * Unit tests for Evaluator module
  *
@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 /* eslint-disable jest/unbound-method */
 
-
 import { EvaluationError } from '../../errors';
 import type { ChatGPTAgent } from '../chatgpt-agent';
 import { Evaluator } from '../evaluator';
@@ -15,12 +14,15 @@ import type { EvalMetrics } from '../schemas';
 
 // Mock ChatGPT agent
 mock.module('../chatgpt-agent', () => ({
+  // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   ChatGPTAgent: mock(() => ({
+    evaluate: mock(() =>
+      Promise.resolve({
+        feedback: '',
+        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+      })
+    ),
     name: 'chatgpt',
-    evaluate: mock(() => Promise.resolve({
-      metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-      feedback: '',
-    })),
   })),
 }));
 

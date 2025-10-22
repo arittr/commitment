@@ -31,5 +31,5 @@
     "types": ["bun-types"]
   },
   "exclude": ["node_modules", "dist"],
-  "include": ["src/**/*", "*.config.ts"]
+  "include": ["src/**/*", "*.config.ts", "build.ts"]
 }
