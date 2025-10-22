@@ -3,10 +3,10 @@ import { program } from 'commander';
 import { execa } from 'execa';
 import { ZodError } from 'zod';
 
-import { initCommand } from './cli/commands/init';
-import { formatValidationError, validateCliOptions } from './cli/schemas';
-import { CommitMessageGenerator } from './generator';
-import { parseGitStatus } from './utils/git-schemas';
+import { initCommand } from './cli/commands/init.ts';
+import { formatValidationError, validateCliOptions } from './cli/schemas.ts';
+import { CommitMessageGenerator } from './generator.ts';
+import { parseGitStatus } from './utils/git-schemas.ts';
 
 /**
  * Get git status and check for staged changes
@@ -31,14 +31,14 @@ async function getGitStatus(cwd: string): Promise<{
     } catch (error) {
       if (error instanceof Error && error.message.includes('Malformed git status line')) {
         throw new Error(
-          `Invalid git status output: ${error.message}\n${chalk.gray('This may indicate a git version incompatibility or corrupted output.')}`,
+          `Invalid git status output: ${error.message}\n${chalk.gray('This may indicate a git version incompatibility or corrupted output.')}`
         );
       }
       throw error;
     }
   } catch (error) {
     throw new Error(
-      `Failed to get git status: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to get git status: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -51,7 +51,7 @@ async function createCommit(message: string, cwd: string): Promise<void> {
     await execa('git', ['commit', '-m', message], { cwd });
   } catch (error) {
     throw new Error(
-      `Failed to create commit: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create commit: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -106,9 +106,9 @@ async function generateCommitCommand(rawOptions: {
 
     // Create task from git status
     const task = {
-      title: 'Code changes',
       description: 'Analyze git diff to generate appropriate commit message',
       produces: gitStatus.stagedFiles,
+      title: 'Code changes',
     };
 
     // Show generation status
@@ -121,8 +121,8 @@ async function generateCommitCommand(rawOptions: {
     }
 
     const generator = new CommitMessageGenerator({
-      enableAI: options.ai,
       agent: agentName,
+      enableAI: options.ai,
       logger: {
         warn: (warningMessage: string) => {
           console.error(chalk.yellow(`⚠️  ${warningMessage}`));
@@ -131,8 +131,8 @@ async function generateCommitCommand(rawOptions: {
     });
 
     const message = await generator.generateCommitMessage(task, {
-      workdir: options.cwd,
       files: gitStatus.stagedFiles,
+      workdir: options.cwd,
     });
 
     if (options.messageOnly !== true) {
@@ -185,10 +185,10 @@ async function main(): Promise<void> {
     .action(
       async (options: { cwd: string; hookManager?: 'husky' | 'simple-git-hooks' | 'plain' }) => {
         await initCommand({
-          hookManager: options.hookManager,
           cwd: options.cwd,
+          hookManager: options.hookManager,
         });
-      },
+      }
     );
 
   // Default command - generate commit message
@@ -198,7 +198,7 @@ async function main(): Promise<void> {
         'Available agents:\n' +
         '  claude    - Claude CLI (default)\n' +
         '  codex     - OpenAI Codex CLI\n\n' +
-        'Example: commitment --agent claude --dry-run',
+        'Example: commitment --agent claude --dry-run'
     )
     .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
     .option('--no-ai', 'Disable AI generation, use rule-based only')
@@ -214,7 +214,7 @@ async function main(): Promise<void> {
         messageOnly?: boolean;
       }) => {
         await generateCommitCommand(options);
-      },
+      }
     );
 
   await program.parseAsync();

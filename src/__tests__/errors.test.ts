@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AgentError, GeneratorError, isAgentError, isGeneratorError } from '../errors.js';
+import { AgentError, GeneratorError, isAgentError, isGeneratorError } from '../errors.ts';
 
 describe('AgentError', () => {
   describe('constructor', () => {
@@ -101,7 +101,7 @@ describe('AgentError', () => {
       const error = AgentError.malformedResponse(
         'Claude CLI',
         'Here is your message...',
-        'Expected conventional commit format',
+        'Expected conventional commit format'
       );
 
       expect(error.message).toContain('malformed response');
@@ -143,10 +143,10 @@ describe('GeneratorError', () => {
 
     it('should include context in error', () => {
       const error = new GeneratorError('Test error', {
-        context: { workdir: '/tmp', files: ['src/file.ts'] },
+        context: { files: ['src/file.ts'], workdir: '/tmp' },
       });
 
-      expect(error.context).toEqual({ workdir: '/tmp', files: ['src/file.ts'] });
+      expect(error.context).toEqual({ files: ['src/file.ts'], workdir: '/tmp' });
     });
 
     it('should include suggestedAction in error', () => {

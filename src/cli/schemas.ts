@@ -95,7 +95,7 @@ export function validateCliOptions(options: unknown): CliOptions {
  * ```
  */
 export function safeValidateCliOptions(
-  options: unknown,
+  options: unknown
 ): { data: CliOptions; success: true } | { error: z.ZodError; success: false } {
   return cliOptionsSchema.safeParse(options);
 }

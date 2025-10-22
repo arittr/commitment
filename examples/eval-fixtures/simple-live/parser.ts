@@ -18,7 +18,7 @@ export function parseInput(input: string): ParsedResult {
     throw new Error('Input cannot be empty');
   }
   return {
-    value: trimmed,
     length: trimmed.length,
+    value: trimmed,
   };
 }
