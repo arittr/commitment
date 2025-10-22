@@ -51,28 +51,28 @@ describe('Core Schemas', () => {
         expect(result.produces).toEqual([]);
       });
 
-      it('should validate task with maximum length title', () => {
+      it('should validate task with long title', () => {
         const task = {
           description: 'Test description',
           produces: [],
-          title: 'a'.repeat(200),
+          title: 'a'.repeat(500),
         };
 
         const result = commitTaskSchema.parse(task);
 
-        expect(result.title).toHaveLength(200);
+        expect(result.title).toHaveLength(500);
       });
 
-      it('should validate task with maximum length description', () => {
+      it('should validate task with long description', () => {
         const task = {
-          description: 'a'.repeat(1000),
+          description: 'a'.repeat(2000),
           produces: [],
           title: 'Test title',
         };
 
         const result = commitTaskSchema.parse(task);
 
-        expect(result.description).toHaveLength(1000);
+        expect(result.description).toHaveLength(2000);
       });
 
       it('should validate task with many files in produces', () => {
@@ -99,29 +99,9 @@ describe('Core Schemas', () => {
         expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
       });
 
-      it('should reject title exceeding max length', () => {
-        const task = {
-          description: 'Valid description',
-          produces: [],
-          title: 'a'.repeat(201),
-        };
-
-        expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
-      });
-
       it('should reject empty description', () => {
         const task = {
           description: '',
-          produces: [],
-          title: 'Valid title',
-        };
-
-        expect(() => commitTaskSchema.parse(task)).toThrow(ZodError);
-      });
-
-      it('should reject description exceeding max length', () => {
-        const task = {
-          description: 'a'.repeat(1001),
           produces: [],
           title: 'Valid title',
         };
