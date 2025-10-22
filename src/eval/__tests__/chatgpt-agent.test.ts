@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 /**
  * Unit tests for ChatGPTAgent
  *
@@ -5,29 +6,29 @@
  * Covers success cases, error cases, and edge cases.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 
 import { EvaluationError } from '../../errors';
 import { ChatGPTAgent } from '../chatgpt-agent';
 
 // Mock the OpenAI Agents SDK
-vi.mock('@openai/agents', () => ({
+mock.module('@openai/agents', () => ({
   // biome-ignore lint/style/useNamingConvention: Agent and run are from external library
-  Agent: vi.fn(),
-  run: vi.fn(),
+  Agent: mock(),
+  run: mock(),
 }));
 
 describe('ChatGPTAgent', () => {
   let agent: ChatGPTAgent;
-  let mockRun: ReturnType<typeof vi.fn>;
+  let mockRun: ReturnType<typeof mock>;
 
   beforeEach(async () => {
     // Reset mocks before each test
-    vi.clearAllMocks();
+    mock.restore();
 
     // Get the mocked run function
     const { run } = await import('@openai/agents');
-    mockRun = vi.mocked(run);
+    mockRun = run;
 
     agent = new ChatGPTAgent();
   });
@@ -408,7 +409,7 @@ Weaknesses:
         expect(Agent).toHaveBeenCalled();
 
         // Verify configuration
-        const config = vi.mocked(Agent).mock.calls[0]?.[0];
+        const config = Agent.mock.calls[0]?.[0];
         expect(config).toBeDefined();
         expect(config?.name).toBe('commit-evaluator');
         expect(config?.model).toBe('gpt-4');
@@ -437,7 +438,7 @@ Weaknesses:
         await agent.evaluate(commitMessage, gitDiff, gitStatus);
 
         const { Agent } = await import('@openai/agents');
-        const config = vi.mocked(Agent).mock.calls[0]?.[0];
+        const config = Agent.mock.calls[0]?.[0];
         expect(config).toBeDefined();
         expect(config?.tools).toBeDefined();
         expect(config?.tools?.length).toBeGreaterThan(0);
