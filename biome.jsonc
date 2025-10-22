@@ -49,10 +49,7 @@
     "enabled": true,
     "rules": {
       "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "error",
-          "options": { "maxAllowedComplexity": 15 }
-        },
+        "noExcessiveCognitiveComplexity": "error",
         "noForEach": "error",
         "noUselessStringConcat": "error",
         "noUselessUndefinedInitialization": "error",
