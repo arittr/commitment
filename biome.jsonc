@@ -11,7 +11,16 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!dist", "!build", "!.git", "!coverage", "!.worktrees"]
+    "includes": [
+      "**",
+      ".vscode/**",
+      "!node_modules",
+      "!dist",
+      "!build",
+      "!.git",
+      "!coverage",
+      "!.worktrees"
+    ]
   },
   "formatter": {
     "attributePosition": "auto",
