@@ -1,0 +1,191 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on",
+        "useSortedKeys": "on",
+      },
+    },
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "ignore": ["node_modules", "dist", "coverage", ".git", ".worktrees", "examples/**/*.sh"],
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+  },
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "bracketSpacing": true,
+      "quoteProperties": "asNeeded",
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5",
+    },
+  },
+  "json": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+    },
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": false,
+    },
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": { "maxAllowedComplexity": 15 },
+        },
+        "noForEach": "error",
+        "noUselessStringConcat": "error",
+        "noUselessUndefinedInitialization": "error",
+        "recommended": true,
+        "useDateNow": "error",
+      },
+      "correctness": {
+        "noNodejsModules": "off",
+        "noUndeclaredDependencies": "off",
+        "noUnusedImports": "error",
+        "noUnusedPrivateClassMembers": "error",
+        "noUnusedVariables": {
+          "level": "error",
+          "options": {
+            "ignorePattern": "^_",
+          },
+        },
+        "recommended": true,
+        "useImportExtensions": {
+          "level": "error",
+          "options": {
+            "suggestedExtensions": {
+              "ts": { "module": "js", "component": "js" },
+            },
+          },
+        },
+      },
+      "nursery": {
+        "noSecrets": {
+          "level": "warn",
+          "options": {
+            "entropyThreshold": 60,
+          },
+        },
+        "useExhaustiveSwitchCases": "error",
+      },
+      "security": {
+        "recommended": true,
+      },
+      "style": {
+        "noDefaultExport": "error",
+        "noInferrableTypes": "off",
+        "noNonNullAssertion": "error",
+        "noParameterProperties": "off",
+        "recommended": true,
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "filenameCases": ["kebab-case"],
+            "requireAscii": true,
+            "strictCase": true,
+          },
+        },
+        "useImportType": "error",
+        "useNamingConvention": {
+          "level": "error",
+          "options": {
+            "conventions": [
+              {
+                "formats": ["camelCase", "PascalCase"],
+                "selector": { "kind": "function" },
+              },
+              {
+                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"],
+                "selector": { "kind": "variable" },
+              },
+              {
+                "formats": ["PascalCase"],
+                "selector": { "kind": "typeLike" },
+              },
+              {
+                "match": "^_",
+                "formats": ["camelCase"],
+                "selector": { "kind": "classMember", "modifiers": ["private"] },
+              },
+            ],
+            "strictCase": true,
+          },
+        },
+      },
+      "suspicious": {
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": [],
+          },
+        },
+        "noExplicitAny": "error",
+        "noSkippedTests": "error",
+        "recommended": true,
+      },
+    },
+  },
+  "overrides": [
+    {
+      "includes": ["*.config.ts", "*.config.js", "*.config.mjs", "eslint.config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off",
+          },
+        },
+      },
+    },
+    {
+      "includes": ["src/cli.ts", "src/cli/**/*.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+          },
+        },
+      },
+    },
+    {
+      "includes": ["src/**/__tests__/**", "src/**/__mocks__/**", "**/*.test.ts", "**/*.spec.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off",
+          },
+          "nursery": {
+            "noSecrets": "off",
+          },
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off",
+          },
+        },
+      },
+    },
+  ],
+  "vcs": {
+    "clientKind": "git",
+    "enabled": true,
+    "useIgnoreFile": true,
+  },
+}

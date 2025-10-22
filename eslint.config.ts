@@ -24,6 +24,7 @@ const config: Record<string, unknown>[] = [
       'build/**',
       'coverage/**',
       '.conductor/**',
+      '.worktrees/**',
       'examples/eval-fixtures/**/*-live/**',
     ],
   },
