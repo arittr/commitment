@@ -56,10 +56,13 @@ export type Agent = {
 };
 
 /**
- * Supported AI agent names
+ * Supported AI agent names for commit message generation
  *
  * This defines the valid agent identifiers that can be used in configuration.
  * Each agent name corresponds to a concrete Agent implementation.
+ *
+ * Note: ChatGPTAgent is not included here as it's evaluation-only (not for generation).
+ * ChatGPTAgent is exported separately for use by the evaluation system.
  */
 const SUPPORTED_AGENTS = ['claude', 'codex'] as const;
 

@@ -13,6 +13,7 @@
  * @module agents
  */
 
+export { ChatGPTAgent } from './chatgpt.js';
 export { ClaudeAgent } from './claude.js';
 export { CodexAgent } from './codex.js';
 export type { Agent, AgentConfig, AgentName } from './types.js';
