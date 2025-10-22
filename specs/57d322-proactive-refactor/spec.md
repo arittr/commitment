@@ -127,7 +127,7 @@ checkAvailability() → executeCommand() → cleanResponse() → validateRespons
 
 **No new packages required** - refactor uses existing dependencies:
 - Zod (validation): https://zod.dev
-- Vitest (testing): https://vitest.dev
+- bun:test (testing): https://bun.sh/docs/cli/test
 - execa (CLI execution): https://github.com/sindresorhus/execa
 
 ### Integration Points
@@ -172,9 +172,9 @@ interface Agent {
 - [ ] All existing tests pass without modification (backward compatible)
 - [ ] New utility tests added with 100% coverage
 - [ ] Adding new agent takes ~20-40 LOC (test with example)
-- [ ] `pnpm test` passes
-- [ ] `pnpm run lint` passes
-- [ ] `pnpm run type-check` passes
+- [ ] `bun test` passes
+- [ ] `bun run lint` passes
+- [ ] `bun run type-check` passes
 
 ## Testing Strategy
 
@@ -232,4 +232,4 @@ None - design validated through brainstorming phases 1-3.
 - Tech Stack: @docs/constitutions/current/tech-stack.md
 - Testing: @docs/constitutions/current/testing.md
 - Zod documentation: https://zod.dev
-- Vitest documentation: https://vitest.dev
+- bun:test documentation: https://bun.sh/docs/cli/test

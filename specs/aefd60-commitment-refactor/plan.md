@@ -80,8 +80,8 @@ Create the new `src/agents/` directory structure with a simplified Agent interfa
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/types.test.ts
+bun run lint
+bun test src/agents/__tests__/types.test.ts
 ```
 
 ---
@@ -137,8 +137,8 @@ Implement Claude agent as a standalone class (~50-100 LOC) without base classes.
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/claude.test.ts
+bun run lint
+bun test src/agents/__tests__/claude.test.ts
 ```
 
 ---
@@ -189,8 +189,8 @@ Implement Codex agent as a standalone class (~50-100 LOC) without base classes. 
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/codex.test.ts
+bun run lint
+bun test src/agents/__tests__/codex.test.ts
 ```
 
 ---
@@ -250,9 +250,9 @@ Simplify `CommitMessageGenerator` by removing auto-detection and provider chain/
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/__tests__/generator.test.ts
-pnpm test src/types/__tests__/schemas.test.ts
+bun run lint
+bun test src/__tests__/generator.test.ts
+bun test src/types/__tests__/schemas.test.ts
 ```
 
 ---
@@ -312,9 +312,9 @@ Replace 5+ provider error types with 2 consolidated error classes: `AgentError` 
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/__tests__/errors.test.ts
-pnpm test src/__tests__/integration/error-messages.test.ts
+bun run lint
+bun test src/__tests__/errors.test.ts
+bun test src/__tests__/integration/error-messages.test.ts
 ```
 
 ---
@@ -375,9 +375,9 @@ Simplify CLI to ≤5 flags, remove auto-detection/fallback flags, merge list-pro
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/cli/__tests__/schemas.test.ts
-pnpm test src/__tests__/integration/validation.test.ts
+bun run lint
+bun test src/cli/__tests__/schemas.test.ts
+bun test src/__tests__/integration/validation.test.ts
 ```
 
 ---
@@ -445,9 +445,9 @@ Reduce public API exports from ~30 to ≤10 items. Remove all chopstack referenc
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test
-pnpm run build
+bun run lint
+bun test
+bun run build
 # Verify LOC
 find src -name '*.ts' -not -path '*/node_modules/*' -not -path '*/__tests__/*' | xargs wc -l
 ```

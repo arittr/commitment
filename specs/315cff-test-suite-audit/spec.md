@@ -128,8 +128,8 @@ The constitution states:
 - [ ] All CLI helpers tested
 
 **AC3: Test Suite Quality**
-- [ ] Run `pnpm test` → all tests pass
-- [ ] Run `pnpm test --coverage` → coverage ≥ current levels for business logic
+- [ ] Run `bun test` → all tests pass
+- [ ] Run `bun test --coverage` → coverage ≥ current levels for business logic
 - [ ] No tests verify "Zod works correctly"
 
 **AC4: Documentation**

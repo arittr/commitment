@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import { AgentError, GeneratorError, isAgentError, isGeneratorError } from '../errors';
 
 describe('AgentError', () => {

@@ -18,6 +18,7 @@
  * See: @docs/constitutions/current/schema-rules.md
  */
 
+import { describe, expect, it } from 'bun:test';
 import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas';
 import { analyzeChanges, categorizeFiles, parseGitStatus } from '../git-schemas';
 
@@ -114,7 +115,7 @@ describe('parseGitStatus', () => {
 
     try {
       parseGitStatus(output);
-      expect.fail('Should have thrown error');
+      throw new Error('Should have thrown error');
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       const errorMessage = (error as Error).message;
