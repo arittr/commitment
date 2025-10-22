@@ -1,6 +1,6 @@
 {
-  "name": "simple",
+  "complexity": "simple",
   "description": "Single-file bug fix (null safety)",
   "expectedType": "fix",
-  "complexity": "simple"
+  "name": "simple"
 }

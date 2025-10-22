@@ -34,7 +34,7 @@ export function hasContent(value: string | null | undefined): value is string {
 export function isNonEmptyArray<T>(value: T[]): value is [T, ...T[]];
 export function isNonEmptyArray<T>(value: readonly T[]): value is readonly [T, ...T[]];
 export function isNonEmptyArray<T>(
-  value: T[] | readonly T[],
+  value: T[] | readonly T[]
 ): value is [T, ...T[]] | readonly [T, ...T[]] {
   return Array.isArray(value) && value.length > 0;
 }
@@ -168,7 +168,7 @@ export function isFilePath(value: unknown): value is string {
  */
 export function hasProperty<K extends PropertyKey>(
   value: unknown,
-  property: K,
+  property: K
 ): value is { [P in K]: unknown } & object {
   return isObject(value) && property in value;
 }

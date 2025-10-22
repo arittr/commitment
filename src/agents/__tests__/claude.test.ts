@@ -1,7 +1,7 @@
 import { execa } from 'execa';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ClaudeAgent } from '../claude.js';
+import { ClaudeAgent } from '../claude.ts';
 
 // Mock execa before importing ClaudeAgent
 vi.mock('execa', () => ({
@@ -41,9 +41,9 @@ describe('ClaudeAgent', () => {
         'claude',
         ['--print'],
         expect.objectContaining({
-          input: prompt,
           cwd: workdir,
-        }),
+          input: prompt,
+        })
       );
     });
 
@@ -66,7 +66,7 @@ describe('ClaudeAgent', () => {
       });
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
-        /Claude CLI is not installed or not found in PATH/,
+        /Claude CLI is not installed or not found in PATH/
       );
     });
 
@@ -90,8 +90,8 @@ describe('ClaudeAgent', () => {
     it('should throw error when CLI execution fails', async () => {
       mockExeca.mockRejectedValue({
         code: 1,
-        stderr: 'API key not configured',
         message: 'Command failed',
+        stderr: 'API key not configured',
       });
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/Claude CLI execution failed/);
@@ -100,8 +100,8 @@ describe('ClaudeAgent', () => {
     it('should include error details in execution failure', async () => {
       mockExeca.mockRejectedValue({
         code: 1,
-        stderr: 'API key not configured',
         message: 'Command failed',
+        stderr: 'API key not configured',
       });
 
       await expect(agent.generate('prompt', '/tmp')).rejects.toThrow(/API key not configured/);
@@ -194,7 +194,7 @@ describe('ClaudeAgent', () => {
         ['--print'],
         expect.objectContaining({
           timeout: 120_000,
-        }),
+        })
       );
     });
 
@@ -216,7 +216,7 @@ feat: add constitution v2 and improve documentation
         `feat: add constitution v2 and improve documentation
 
 - Add comprehensive v2 constitution
-- Update CLAUDE.md with v2 references`,
+- Update CLAUDE.md with v2 references`
       );
     });
 

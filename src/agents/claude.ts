@@ -1,8 +1,8 @@
 import { execa } from 'execa';
 
-import { AgentError } from '../errors.js';
+import { AgentError } from '../errors.ts';
 
-import type { Agent } from './types.js';
+import type { Agent } from './types.ts';
 
 /**
  * Claude CLI agent for AI-powered commit message generation
@@ -71,8 +71,8 @@ export class ClaudeAgent implements Agent {
     try {
       // Execute Claude CLI with prompt via stdin
       const { stdout } = await execa('claude', ['--print'], {
-        input: prompt,
         cwd: workdir,
+        input: prompt,
         timeout: 120_000, // 2 minutes
       });
 
@@ -84,7 +84,7 @@ export class ClaudeAgent implements Agent {
         throw AgentError.executionFailed(
           this.name,
           0,
-          'Empty response - API key may not be configured',
+          'Empty response - API key may not be configured'
         );
       }
 
@@ -114,7 +114,7 @@ export class ClaudeAgent implements Agent {
           this.name,
           code,
           details,
-          error instanceof Error ? error : undefined,
+          error instanceof Error ? error : undefined
         );
       }
 
@@ -192,7 +192,7 @@ export class ClaudeAgent implements Agent {
    */
   private _isCLINotFoundError(error: unknown): boolean {
     return Boolean(
-      error !== null && typeof error === 'object' && 'code' in error && error.code === 'ENOENT',
+      error !== null && typeof error === 'object' && 'code' in error && error.code === 'ENOENT'
     );
   }
 }

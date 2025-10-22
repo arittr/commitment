@@ -51,19 +51,9 @@ import { z } from 'zod';
  */
 export const evalFixtureSchema = z.object({
   /**
-   * Unique name for this fixture
+   * Human-readable description of what this fixture tests
    */
-  name: z.string().min(1, 'Fixture name must not be empty'),
-
-  /**
-   * Git status output (from git status --porcelain)
-   */
-  gitStatus: z.string().min(1, 'Git status must not be empty'),
-
-  /**
-   * Git diff output (from git diff or git diff --cached)
-   */
-  gitDiff: z.string().min(1, 'Git diff must not be empty'),
+  description: z.string().min(1, 'Description must not be empty'),
 
   /**
    * Expected commit type for this changeset
@@ -72,9 +62,18 @@ export const evalFixtureSchema = z.object({
   expectedType: z.enum(['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf']),
 
   /**
-   * Human-readable description of what this fixture tests
+   * Git diff output (from git diff or git diff --cached)
    */
-  description: z.string().min(1, 'Description must not be empty'),
+  gitDiff: z.string().min(1, 'Git diff must not be empty'),
+
+  /**
+   * Git status output (from git status --porcelain)
+   */
+  gitStatus: z.string().min(1, 'Git status must not be empty'),
+  /**
+   * Unique name for this fixture
+   */
+  name: z.string().min(1, 'Fixture name must not be empty'),
 });
 
 /**
@@ -111,16 +110,16 @@ export function validateEvalFixture(fixture: unknown): EvalFixture {
  */
 export const evalMetricsSchema = z.object({
   /**
-   * How well the commit message follows Conventional Commits spec (0-10)
-   * - 10: Perfect format (type: description, proper body)
-   * - 5: Correct type but poor structure
-   * - 0: No conventional format
+   * How accurately the message describes the actual changes (0-10)
+   * - 10: Perfectly matches git diff
+   * - 5: Partially accurate
+   * - 0: Inaccurate or misleading
    */
-  conventionalCompliance: z
+  accuracy: z
     .number()
     .min(0, 'Score must be at least 0')
     .max(10, 'Score must not exceed 10')
-    .describe('Conventional Commits compliance score (0-10)'),
+    .describe('Accuracy of description score (0-10)'),
 
   /**
    * How clear and understandable the message is (0-10)
@@ -133,18 +132,17 @@ export const evalMetricsSchema = z.object({
     .min(0, 'Score must be at least 0')
     .max(10, 'Score must not exceed 10')
     .describe('Clarity and readability score (0-10)'),
-
   /**
-   * How accurately the message describes the actual changes (0-10)
-   * - 10: Perfectly matches git diff
-   * - 5: Partially accurate
-   * - 0: Inaccurate or misleading
+   * How well the commit message follows Conventional Commits spec (0-10)
+   * - 10: Perfect format (type: description, proper body)
+   * - 5: Correct type but poor structure
+   * - 0: No conventional format
    */
-  accuracy: z
+  conventionalCompliance: z
     .number()
     .min(0, 'Score must be at least 0')
     .max(10, 'Score must not exceed 10')
-    .describe('Accuracy of description score (0-10)'),
+    .describe('Conventional Commits compliance score (0-10)'),
 
   /**
    * Appropriate level of detail (0-10)
@@ -201,16 +199,6 @@ export function validateEvalMetrics(metrics: unknown): EvalMetrics {
  */
 export const evalResultSchema = z.object({
   /**
-   * Name of the fixture that was evaluated
-   */
-  fixture: z.string().min(1, 'Fixture name must not be empty'),
-
-  /**
-   * ISO timestamp when evaluation was performed
-   */
-  timestamp: z.string().datetime({ message: 'Must be valid ISO 8601 datetime' }),
-
-  /**
    * Which agent generated the commit message
    */
   agent: z.enum(['claude', 'codex']),
@@ -221,15 +209,19 @@ export const evalResultSchema = z.object({
   commitMessage: z.string().min(1, 'Commit message must not be empty'),
 
   /**
-   * Structured evaluation metrics (4 dimensions, 0-10 scale)
-   */
-  metrics: evalMetricsSchema,
-
-  /**
    * Textual feedback from the evaluator
    * Explains the scores and provides actionable suggestions
    */
   feedback: z.string().min(1, 'Feedback must not be empty'),
+  /**
+   * Name of the fixture that was evaluated
+   */
+  fixture: z.string().min(1, 'Fixture name must not be empty'),
+
+  /**
+   * Structured evaluation metrics (4 dimensions, 0-10 scale)
+   */
+  metrics: evalMetricsSchema,
 
   /**
    * Overall score (average of all metrics)
@@ -240,6 +232,11 @@ export const evalResultSchema = z.object({
     .min(0, 'Overall score must be at least 0')
     .max(10, 'Overall score must not exceed 10')
     .describe('Average of all metrics (0-10)'),
+
+  /**
+   * ISO timestamp when evaluation was performed
+   */
+  timestamp: z.string().datetime({ message: 'Must be valid ISO 8601 datetime' }),
 });
 
 /**
@@ -277,11 +274,6 @@ export function validateEvalResult(result: unknown): EvalResult {
  */
 export const evalComparisonSchema = z.object({
   /**
-   * Name of the fixture being compared
-   */
-  fixture: z.string().min(1, 'Fixture name must not be empty'),
-
-  /**
    * Claude agent's evaluation result
    */
   claudeResult: evalResultSchema,
@@ -290,14 +282,10 @@ export const evalComparisonSchema = z.object({
    * Codex agent's evaluation result
    */
   codexResult: evalResultSchema,
-
   /**
-   * Winner of the comparison
-   * - 'claude': Claude scored higher (difference > 0.5)
-   * - 'codex': Codex scored higher (difference > 0.5)
-   * - 'tie': Score difference <= 0.5
+   * Name of the fixture being compared
    */
-  winner: z.enum(['claude', 'codex', 'tie']),
+  fixture: z.string().min(1, 'Fixture name must not be empty'),
 
   /**
    * Score difference (claudeScore - codexScore)
@@ -306,6 +294,14 @@ export const evalComparisonSchema = z.object({
    * Near zero: Tie
    */
   scoreDiff: z.number().describe('Claude score minus Codex score'),
+
+  /**
+   * Winner of the comparison
+   * - 'claude': Claude scored higher (difference > 0.5)
+   * - 'codex': Codex scored higher (difference > 0.5)
+   * - 'tie': Score difference <= 0.5
+   */
+  winner: z.enum(['claude', 'codex', 'tie']),
 });
 
 /**

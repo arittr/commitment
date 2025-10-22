@@ -50,7 +50,7 @@ export const gitStatusLineSchema = z
     },
     {
       message: 'Invalid git status line format. Expected: "XY filename" where XY is status code',
-    },
+    }
   )
   .transform((line) => {
     const statusCode = line.slice(0, 2);
@@ -65,10 +65,10 @@ export const gitStatusLineSchema = z
     const unstagedStatus = statusCode[1] ?? ' ';
 
     return {
-      statusCode,
       filename,
       isStaged,
       stagedStatus,
+      statusCode,
       unstagedStatus,
     };
   });
@@ -141,19 +141,14 @@ export const gitStatusSchema = z.object({
  */
 export const fileCategoriesSchema = z.object({
   /**
-   * Test files (includes 'test', 'spec')
+   * API/service files ('api', 'service', 'adapter')
    */
-  tests: z.array(z.string()).default([]),
+  apis: z.array(z.string()).default([]),
 
   /**
    * Component files (.tsx, .jsx, or 'component')
    */
   components: z.array(z.string()).default([]),
-
-  /**
-   * Type definition files ('types', .d.ts)
-   */
-  types: z.array(z.string()).default([]),
 
   /**
    * Configuration files ('config', .json, .yaml, .toml)
@@ -164,11 +159,15 @@ export const fileCategoriesSchema = z.object({
    * Documentation files (.md, README)
    */
   docs: z.array(z.string()).default([]),
+  /**
+   * Test files (includes 'test', 'spec')
+   */
+  tests: z.array(z.string()).default([]),
 
   /**
-   * API/service files ('api', 'service', 'adapter')
+   * Type definition files ('types', .d.ts)
    */
-  apis: z.array(z.string()).default([]),
+  types: z.array(z.string()).default([]),
 });
 
 /**
@@ -196,14 +195,14 @@ export const changeStatsSchema = z.object({
   added: z.number().int().nonnegative().default(0),
 
   /**
-   * Number of modified files (status code 'M')
-   */
-  modified: z.number().int().nonnegative().default(0),
-
-  /**
    * Number of deleted files (status code 'D')
    */
   deleted: z.number().int().nonnegative().default(0),
+
+  /**
+   * Number of modified files (status code 'M')
+   */
+  modified: z.number().int().nonnegative().default(0),
 
   /**
    * Number of renamed files (status code 'R')
@@ -303,7 +302,7 @@ export function validateFileCategories(categories: unknown): FileCategories {
  * ```
  */
 export function safeValidateGitStatusLine(
-  line: unknown,
+  line: unknown
 ): { data: GitStatusLine; success: true } | { error: z.ZodError; success: false } {
   return gitStatusLineSchema.safeParse(line);
 }
@@ -326,7 +325,7 @@ export function safeValidateGitStatusLine(
  * ```
  */
 export function safeValidateGitStatus(
-  status: unknown,
+  status: unknown
 ): { data: GitStatus; success: true } | { error: z.ZodError; success: false } {
   return gitStatusSchema.safeParse(status);
 }
@@ -349,7 +348,7 @@ export function safeValidateGitStatus(
  * ```
  */
 export function safeValidateFileCategories(
-  categories: unknown,
+  categories: unknown
 ): { data: FileCategories; success: true } | { error: z.ZodError; success: false } {
   return fileCategoriesSchema.safeParse(categories);
 }
@@ -402,7 +401,7 @@ export function parseGitStatus(rawOutput: string): GitStatus {
     } catch (error) {
       // Provide better error context for malformed lines
       throw new Error(
-        `Malformed git status line: "${line}". ${error instanceof Error ? error.message : String(error)}`,
+        `Malformed git status line: "${line}". ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -457,7 +456,7 @@ export function validateChangeStats(stats: unknown): ChangeStats {
  * ```
  */
 export function safeValidateChangeStats(
-  stats: unknown,
+  stats: unknown
 ): { data: ChangeStats; success: true } | { error: z.ZodError; success: false } {
   return changeStatsSchema.safeParse(stats);
 }
@@ -494,11 +493,11 @@ export function safeValidateChangeStats(
  */
 export function categorizeFiles(files: string[]): FileCategories {
   const categories: FileCategories = {
-    components: [],
     apis: [],
-    tests: [],
+    components: [],
     configs: [],
     docs: [],
+    tests: [],
     types: [],
   };
 
@@ -549,8 +548,8 @@ export function categorizeFiles(files: string[]): FileCategories {
 export function analyzeChanges(statusLines: string[]): ChangeStats {
   const stats: ChangeStats = {
     added: statusLines.filter((line) => line.startsWith('A ')).length,
-    modified: statusLines.filter((line) => line.startsWith('M ')).length,
     deleted: statusLines.filter((line) => line.startsWith('D ')).length,
+    modified: statusLines.filter((line) => line.startsWith('M ')).length,
     renamed: statusLines.filter((line) => line.startsWith('R ')).length,
   };
 

@@ -1,23 +1,23 @@
 {
-  "name": "commitment-lint-staged-example",
-  "version": "1.0.0",
   "description": "Example lint-staged configuration for commitment",
-  "scripts": {
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "*": [
-      "commitment --message-only"
-    ]
+  "devDependencies": {
+    "commitment": "^0.1.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
   },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
     }
   },
-  "devDependencies": {
-    "commitment": "^0.1.0",
-    "husky": "^9.0.0",
-    "lint-staged": "^15.0.0"
-  }
+  "lint-staged": {
+    "*": [
+      "commitment --message-only"
+    ]
+  },
+  "name": "commitment-lint-staged-example",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "version": "1.0.0"
 }
