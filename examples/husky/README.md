@@ -2,25 +2,50 @@
 
 This example shows how to integrate `commitment` with Husky for automatic commit message generation.
 
-## Setup
+## Quick Setup (Recommended)
 
-### 1. Install Husky
+Use the `commitment init` command for automatic setup:
 
 ```bash
-npm install -D husky
+# Install commitment and husky
+npm install -D commitment husky
+# or: yarn add -D commitment husky
+# or: bun add -D commitment husky
+
+# Initialize husky
+npx husky init
+
+# Set up commitment hooks (uses Claude by default)
+npx commitment init --hook-manager husky
+
+# Or specify a different agent
+npx commitment init --hook-manager husky --agent codex
+```
+
+## Manual Setup
+
+### 1. Install Dependencies
+
+```bash
+# Using npm
+npm install -D commitment husky
+
+# Using yarn
+yarn add -D commitment husky
+
+# Using bun
+bun add -D commitment husky
+```
+
+### 2. Initialize Husky
+
+```bash
 npx husky init
 ```
 
-### 2. Add the prepare-commit-msg hook
+### 3. Add the prepare-commit-msg hook
 
-Copy the `prepare-commit-msg` file to `.husky/`:
-
-```bash
-cp examples/husky/prepare-commit-msg .husky/
-chmod +x .husky/prepare-commit-msg
-```
-
-Or create it manually:
+**For Claude (default):**
 
 ```bash
 cat > .husky/prepare-commit-msg << 'EOF'
@@ -28,6 +53,20 @@ cat > .husky/prepare-commit-msg << 'EOF'
 # Generate commit message with AI
 if [ -z "$2" ]; then
   exec < /dev/tty && npx commitment --message-only > "$1"
+fi
+EOF
+
+chmod +x .husky/prepare-commit-msg
+```
+
+**For Codex:**
+
+```bash
+cat > .husky/prepare-commit-msg << 'EOF'
+#!/bin/sh
+# Generate commit message with AI (using Codex)
+if [ -z "$2" ]; then
+  exec < /dev/tty && npx commitment --agent codex --message-only > "$1"
 fi
 EOF
 

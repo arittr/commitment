@@ -9,15 +9,46 @@ This example shows how to use `commitment` with [simple-git-hooks](https://githu
 - Fast and lightweight
 - No additional scripts or directories
 
-## Setup
+## Quick Setup (Recommended)
 
-1. Install dependencies:
+Use the `commitment init` command for automatic setup:
 
 ```bash
+# Install commitment and simple-git-hooks
 npm install -D commitment simple-git-hooks
+# or: yarn add -D commitment simple-git-hooks
+# or: bun add -D commitment simple-git-hooks
+
+# Set up hooks (uses Claude by default)
+npx commitment init --hook-manager simple-git-hooks
+
+# Or specify a different agent
+npx commitment init --hook-manager simple-git-hooks --agent codex
+
+# Activate the hooks
+npm run prepare
+# or: yarn prepare
+# or: bun run prepare
 ```
 
-2. Add configuration to your `package.json`:
+## Manual Setup
+
+### 1. Install dependencies:
+
+```bash
+# Using npm
+npm install -D commitment simple-git-hooks
+
+# Using yarn
+yarn add -D commitment simple-git-hooks
+
+# Using bun
+bun add -D commitment simple-git-hooks
+```
+
+### 2. Add configuration to your `package.json`:
+
+**For Claude (default):**
 
 ```json
 {
@@ -30,10 +61,25 @@ npm install -D commitment simple-git-hooks
 }
 ```
 
-3. Initialize hooks:
+**For Codex:**
+
+```json
+{
+  "scripts": {
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --agent codex --message-only > $1 || exit 0"
+  }
+}
+```
+
+### 3. Initialize hooks:
 
 ```bash
 npm run prepare
+# or: yarn prepare
+# or: bun run prepare
 ```
 
 ## Usage

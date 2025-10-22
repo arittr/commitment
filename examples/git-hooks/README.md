@@ -2,18 +2,41 @@
 
 This example shows how to integrate `commitment` with native Git hooks (without using Husky).
 
-## Setup
+## Quick Setup (Recommended)
 
-### 1. Create the Hook
-
-Copy the hook to your repository:
+Use the `commitment init` command for automatic setup:
 
 ```bash
-cp examples/git-hooks/prepare-commit-msg .git/hooks/
-chmod +x .git/hooks/prepare-commit-msg
+# Install commitment
+npm install -D commitment
+# or: yarn add -D commitment
+# or: bun add -D commitment
+
+# Set up git hooks (uses Claude by default)
+npx commitment init --hook-manager plain
+
+# Or specify a different agent
+npx commitment init --hook-manager plain --agent codex
 ```
 
-Or create it manually:
+## Manual Setup
+
+### 1. Install commitment
+
+```bash
+# Using npm
+npm install -D commitment
+
+# Using yarn
+yarn add -D commitment
+
+# Using bun
+bun add -D commitment
+```
+
+### 2. Create the Hook
+
+**For Claude (default):**
 
 ```bash
 cat > .git/hooks/prepare-commit-msg << 'EOF'
@@ -21,6 +44,20 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 # Only run for regular commits
 if [ -z "$2" ]; then
   npx commitment --message-only > "$1"
+fi
+EOF
+
+chmod +x .git/hooks/prepare-commit-msg
+```
+
+**For Codex:**
+
+```bash
+cat > .git/hooks/prepare-commit-msg << 'EOF'
+#!/bin/sh
+# Only run for regular commits (using Codex)
+if [ -z "$2" ]; then
+  npx commitment --agent codex --message-only > "$1"
 fi
 EOF
 
