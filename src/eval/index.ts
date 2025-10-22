@@ -25,7 +25,7 @@
  */
 
 // Export all schemas and types
-export * from './schemas.ts';
+export * from './schemas';
 
 // Export core evaluation components (will be implemented in later tasks)
 // These are placeholder exports for now - actual implementations come in Task 3

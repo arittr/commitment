@@ -23,9 +23,9 @@
  * ```
  */
 
-import { Agent } from '@openai/agents';
-import { EvalError } from '../errors.ts';
-import type { EvalMetrics } from '../eval/schemas.ts';
+import { Agent, run, type Tool } from '@openai/agents';
+import { EvalError } from '../errors';
+import type { EvalMetrics } from '../eval/schemas';
 
 /**
  * ChatGPT agent for commit message quality evaluation
@@ -139,16 +139,14 @@ Provide structured scores and actionable feedback.`,
             type: 'object',
           },
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any[],
+      ] as Tool[],
     });
 
     // 3. Call agent with commit message and changeset context
     try {
-      // @ts-expect-error - OpenAI Agents SDK types are incomplete
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      const result: unknown = await agent.run({
-        message: `Evaluate this commit message:
+      const result: unknown = await run(
+        agent,
+        `Evaluate this commit message:
 
 Commit Message:
 ${commitMessage}
@@ -159,8 +157,8 @@ ${gitStatus}
 Git Diff:
 ${gitDiff}
 
-Use the score_commit tool to provide structured evaluation.`,
-      });
+Use the score_commit tool to provide structured evaluation.`
+      );
 
       // 4. Parse structured response from tool call
       // Type guard for result structure

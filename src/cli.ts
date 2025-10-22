@@ -3,10 +3,10 @@ import { program } from 'commander';
 import { execa } from 'execa';
 import { ZodError } from 'zod';
 
-import { initCommand } from './cli/commands/init.ts';
-import { formatValidationError, validateCliOptions } from './cli/schemas.ts';
-import { CommitMessageGenerator } from './generator.ts';
-import { parseGitStatus } from './utils/git-schemas.ts';
+import { initCommand } from './cli/commands/init';
+import { formatValidationError, validateCliOptions } from './cli/schemas';
+import { CommitMessageGenerator } from './generator';
+import { parseGitStatus } from './utils/git-schemas';
 
 /**
  * Get git status and check for staged changes

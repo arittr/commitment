@@ -32,10 +32,8 @@ import { join } from 'node:path';
 import { EvalError } from '../errors.js';
 import { CommitMessageGenerator } from '../generator.js';
 import { hasContent } from '../utils/guards.js';
-
-import type { EvalComparison, EvalFixture } from './schemas.js';
-
 import { Evaluator } from './evaluator.js';
+import type { EvalComparison, EvalFixture } from './schemas.js';
 
 /**
  * EvalRunner class that loads fixtures and runs evaluation pipeline
@@ -92,7 +90,7 @@ export class EvalRunner {
     const fixturePath = join(
       process.cwd(),
       'examples/eval-fixtures',
-      mode === 'live' ? `${name}-live` : name,
+      mode === 'live' ? `${name}-live` : name
     );
 
     try {
@@ -215,7 +213,7 @@ export class EvalRunner {
       fixture.gitStatus,
       fixture.gitDiff,
       fixture.name,
-      'claude',
+      'claude'
     );
 
     // 4. Evaluate Codex's message
@@ -224,7 +222,7 @@ export class EvalRunner {
       fixture.gitStatus,
       fixture.gitDiff,
       fixture.name,
-      'codex',
+      'codex'
     );
 
     // 5. Compare results and determine winner
