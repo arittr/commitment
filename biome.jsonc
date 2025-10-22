@@ -4,16 +4,19 @@
     "actions": {
       "source": {
         "organizeImports": "on",
+        "useSortedAttributes": "on",
         "useSortedKeys": "on"
       }
     }
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!node_modules", "!dist", "!build", "!.git", "!coverage", "!.worktrees"]
   },
   "formatter": {
+    "attributePosition": "auto",
     "enabled": true,
-    "formatWithErrors": false,
+    "formatWithErrors": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
@@ -164,7 +167,8 @@
           },
           "suspicious": {
             "noConsole": "off",
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "noSkippedTests": "off"
           }
         }
       }

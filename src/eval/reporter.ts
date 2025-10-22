@@ -35,7 +35,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 
-import type { EvalComparison } from './schemas.js';
+import type { EvalComparison } from './schemas';
 
 /**
  * EvalReporter class for formatting and storing evaluation results
