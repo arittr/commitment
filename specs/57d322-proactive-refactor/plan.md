@@ -87,8 +87,8 @@ Create shared utility functions for agent implementations. Extract common logic 
 - [ ] All three utility functions implemented as pure functions (no state, no side effects)
 - [ ] 100% test coverage for agent-utils with comprehensive edge cases
 - [ ] JSDoc documentation with examples for each function
-- [ ] `pnpm test src/agents/__tests__/agent-utils.test.ts` passes
-- [ ] `pnpm run type-check` passes
+- [ ] `bun test src/agents/__tests__/agent-utils.test.ts` passes
+- [ ] `bun run type-check` passes
 
 **Mandatory Patterns**:
 
@@ -105,9 +105,9 @@ Create shared utility functions for agent implementations. Extract common logic 
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/agent-utils.test.ts
-pnpm run type-check
+bun run lint
+bun test src/agents/__tests__/agent-utils.test.ts
+bun run type-check
 ```
 
 ---
@@ -160,7 +160,7 @@ Extract display and execution helper functions from `src/cli.ts` into a separate
 - [ ] `src/cli.ts` reduced from 265 LOC → ~150 LOC
 - [ ] 100% test coverage for all helper functions
 - [ ] CLI behavior unchanged (backward compatible)
-- [ ] `pnpm test src/cli/__tests__/` passes
+- [ ] `bun test src/cli/__tests__/` passes
 
 **Mandatory Patterns**:
 
@@ -183,9 +183,9 @@ CLI helpers should:
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/cli/__tests__/
-pnpm run type-check
+bun run lint
+bun test src/cli/__tests__/
+bun run type-check
 ```
 
 ---
@@ -250,7 +250,7 @@ Create abstract `BaseAgent` class that implements the `Agent` interface with a t
 - [ ] Standard flow enforced: checkAvailability → executeCommand → cleanResponse → validateResponse
 - [ ] Default implementations use agent-utils functions
 - [ ] 100% test coverage with TestAgent mock
-- [ ] `pnpm test src/agents/__tests__/base-agent.test.ts` passes
+- [ ] `bun test src/agents/__tests__/base-agent.test.ts` passes
 
 **Mandatory Patterns**:
 
@@ -273,9 +273,9 @@ BaseAgent must:
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/base-agent.test.ts
-pnpm run type-check
+bun run lint
+bun test src/agents/__tests__/base-agent.test.ts
+bun run type-check
 ```
 
 ---
@@ -340,7 +340,7 @@ Refactor ClaudeAgent to extend BaseAgent, reducing from 219 LOC to ~40 LOC. Impl
 - [ ] ClaudeAgent reduced from 219 LOC → ~40 LOC
 - [ ] Only executeCommand() implemented (no generate() override)
 - [ ] All existing Claude tests pass without modification to test behavior
-- [ ] `pnpm test src/agents/__tests__/claude.test.ts` passes
+- [ ] `bun test src/agents/__tests__/claude.test.ts` passes
 
 **Mandatory Patterns**:
 
@@ -364,10 +364,10 @@ Before completing, verify:
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/claude.test.ts
-pnpm test  # All tests should still pass
-pnpm run type-check
+bun run lint
+bun test src/agents/__tests__/claude.test.ts
+bun test  # All tests should still pass
+bun run type-check
 ```
 
 ---
@@ -476,22 +476,22 @@ Pattern consistency:
 Test all three agents work end-to-end:
 
 ```bash
-pnpm test src/agents/__tests__/
+bun test src/agents/__tests__/
 ```
 
 Verify integration tests still pass:
 
 ```bash
-pnpm test src/__tests__/integration/
+bun test src/__tests__/integration/
 ```
 
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test src/agents/__tests__/
-pnpm test  # All tests
-pnpm run type-check
+bun run lint
+bun test src/agents/__tests__/
+bun test  # All tests
+bun run type-check
 ```
 
 ---
@@ -561,7 +561,7 @@ Remove arbitrary schema constraints, add meaningful validation, and clean dead c
 - [ ] `FileCategorization` type alias removed (use `FileCategories` directly)
 - [ ] All stale v1 comments removed from codebase
 - [ ] Schema tests updated and passing
-- [ ] `pnpm test` passes (all tests)
+- [ ] `bun test` passes (all tests)
 
 **Mandatory Patterns**:
 
@@ -592,17 +592,17 @@ grep -r "agentNameSchema" src/
 Run full test suite:
 
 ```bash
-pnpm test
-pnpm run type-check
-pnpm run lint
+bun test
+bun run type-check
+bun run lint
 ```
 
 **Quality Gates**:
 
 ```bash
-pnpm run lint
-pnpm test
-pnpm run type-check
+bun run lint
+bun test
+bun run type-check
 ```
 
 ---
@@ -614,9 +614,9 @@ After all tasks complete, verify the entire refactor:
 **Code Quality**:
 
 ```bash
-pnpm run lint
-pnpm run type-check
-pnpm test
+bun run lint
+bun run type-check
+bun test
 ```
 
 **Architecture Validation**:
@@ -642,7 +642,7 @@ pnpm test
 **Test Coverage**:
 
 ```bash
-pnpm test --coverage
+bun test --coverage
 ```
 
 Verify:

@@ -70,7 +70,7 @@ Need a benchmark suite that generates messages from controlled fixtures, evaluat
 
 **NFR1: Live AI Testing**
 - Always use real API calls (no mocked AI responses)
-- Separate from main test suite (`pnpm test:eval` not `pnpm test`)
+- Separate from main test suite (`bun test:eval` not `bun test`)
 - Skipped in regular CI if API keys unavailable
 
 **NFR2: API Key Requirements**
@@ -145,7 +145,7 @@ Need a benchmark suite that generates messages from controlled fixtures, evaluat
 
 **Existing dependencies:**
 - `zod` - Schema validation (already approved)
-- `vitest` - Testing framework (already approved)
+- `bun:test` - Testing framework (already approved)
 - `execa` - Git command execution (already approved)
 
 ### Integration Points
@@ -245,13 +245,13 @@ Per @docs/constitutions/current/schema-rules.md, all types defined schema-first:
 - [ ] Results stored as timestamped JSON + markdown
 - [ ] Comparison report shows winner and score differences
 - [ ] Test skips gracefully if API keys/CLIs missing
-- [ ] `pnpm test:eval` runs full evaluation suite
+- [ ] `bun test:eval` runs full evaluation suite
 - [ ] Unit tests cover eval modules with mocked APIs
 - [ ] Integration test uses live AI calls
 
 **Verification:**
-- [ ] All unit tests pass (`pnpm test`)
-- [ ] Eval tests pass with valid API keys (`pnpm test:eval`)
+- [ ] All unit tests pass (`bun test`)
+- [ ] Eval tests pass with valid API keys (`bun test:eval`)
 - [ ] Results stored in `.eval-results/` directory
 - [ ] Markdown reports are human-readable
 - [ ] Can detect quality regression by comparing with baseline
