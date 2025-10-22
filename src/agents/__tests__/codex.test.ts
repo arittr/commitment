@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CodexAgent } from '../codex.ts';
+import { CodexAgent } from '../codex';
 
 // Mock execa module
 vi.mock('execa', () => ({

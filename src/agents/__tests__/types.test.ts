@@ -7,7 +7,7 @@ import {
   agentConfigSchema,
   safeValidateAgentConfig,
   validateAgentConfig,
-} from '../types.ts';
+} from '../types';
 
 describe('Agent interface', () => {
   it('should define Agent interface with name property', () => {
