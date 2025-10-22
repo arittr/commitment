@@ -1,4 +1,4 @@
 #!/bin/sh
 # Run linting and build to ensure code quality and dist is up to date
-pnpm run lint
-pnpm run build
+bun run lint
+bun run build

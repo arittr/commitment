@@ -15,16 +15,13 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.7",
     "@types/node": "^24.3.0",
-    "@vitest/coverage-v8": "3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "bun-types": "latest",
     "husky": "^9.1.7",
-    "jiti": "^2.6.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
   },
   "exports": {
     ".": {
@@ -51,20 +48,19 @@
   "license": "ISC",
   "main": "./dist/index.js",
   "name": "@arittr/commitment",
-  "packageManager": "pnpm@10.8.0",
+  "packageManager": "bun@1.1.0",
   "scripts": {
-    "build": "tsup",
-    "check-types": "tsc --noEmit",
+    "build": "bun run build.ts",
+    "check-types": "bun tsc --noEmit",
     "clean": "rm -rf dist",
-    "dev": "tsup --watch",
-    "lint": "pnpm check-types && biome check --write",
-    "prepare": "pnpm run build && husky",
-    "prepublishOnly": "pnpm run clean && pnpm run build",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:eval": "vitest run src/__tests__/integration/eval-live.test.ts",
-    "test:ui": "vitest --ui",
-    "test:watch": "vitest"
+    "dev": "bun --watch build.ts",
+    "lint": "bun check-types && biome check --write",
+    "prepare": "bun run build && husky",
+    "prepublishOnly": "bun run clean && bun run build",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:eval": "bun test src/__tests__/integration/eval-live.test.ts",
+    "test:watch": "bun test --watch"
   },
   "type": "module",
   "types": "./dist/index.d.ts",
