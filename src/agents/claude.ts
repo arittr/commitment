@@ -1,4 +1,4 @@
-import { execa } from 'execa';
+import { exec } from '../utils/shell.js';
 
 import { BaseAgent } from './base-agent';
 
@@ -33,13 +33,13 @@ export class ClaudeAgent extends BaseAgent {
    * @throws {Error} If CLI execution fails
    */
   protected async executeCommand(prompt: string, workdir: string): Promise<string> {
-    const { stdout } = await execa('claude', ['--print'], {
+    const result = await exec('claude', ['--print'], {
       cwd: workdir,
       input: prompt,
       timeout: 120_000, // 2 minutes
     });
 
-    return stdout;
+    return result.stdout;
   }
 
   /**
