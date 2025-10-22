@@ -67,7 +67,7 @@ describe('Eval System Integration (Live AI)', () => {
     expect(fixture.gitDiff).toBeDefined();
   });
 
-  it('should throw EvalError.fixtureNotFound for missing fixture', () => {
+  it('should throw EvaluationError.fixtureNotFound for missing fixture', () => {
     expect(() => runner.loadFixture('nonexistent')).toThrow('Fixture "nonexistent" not found');
   });
 
