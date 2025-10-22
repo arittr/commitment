@@ -5,41 +5,53 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 import { execa } from 'execa';
 
+import type { AgentName } from '../../agents/types';
+
 type HookManager = 'husky' | 'simple-git-hooks' | 'plain';
 
 type InitOptions = {
   cwd: string;
   hookManager?: HookManager;
+  agent?: AgentName;
 };
 
 /**
- * Hook content templates
+ * Generate hook content with optional agent parameter
  */
-const HOOK_TEMPLATES = {
-  husky: `#!/bin/sh
+function generateHookContent(
+  hookType: 'husky' | 'plain' | 'simpleGitHooks',
+  agent?: AgentName
+): string {
+  const agentFlag = agent ? ` --agent ${agent}` : '';
+
+  const templates = {
+    husky: `#!/bin/sh
 # Husky prepare-commit-msg hook for commitment
 # This hook generates commit messages using AI before you edit them
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
+  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1"
 fi
 `,
-  plain: `#!/bin/sh
+    plain: `#!/bin/sh
 # Git prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment${agentFlag} --message-only > "$1"
 fi
 `,
-  simpleGitHooks: `#!/bin/sh
+    simpleGitHooks: `#!/bin/sh
 # simple-git-hooks prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment${agentFlag} --message-only > "$1"
 fi
 `,
-} as const;
+  };
+
+  return templates[hookType];
+}
 
 /**
  * Detect which hook manager is being used in the project
@@ -93,7 +105,7 @@ async function detectHookManager(cwd: string): Promise<HookManager | null> {
 /**
  * Install husky hook
  */
-async function installHuskyHook(cwd: string): Promise<void> {
+async function installHuskyHook(cwd: string, agent?: AgentName): Promise<void> {
   const huskyDir = path.join(cwd, '.husky');
   const hookPath = path.join(huskyDir, 'prepare-commit-msg');
 
@@ -107,7 +119,7 @@ async function installHuskyHook(cwd: string): Promise<void> {
   }
 
   // Write hook file
-  await fs.writeFile(hookPath, HOOK_TEMPLATES.husky, 'utf8');
+  await fs.writeFile(hookPath, generateHookContent('husky', agent), 'utf8');
 
   // Make executable (Unix-like systems)
   if (process.platform !== 'win32') {
@@ -121,7 +133,7 @@ async function installHuskyHook(cwd: string): Promise<void> {
 /**
  * Install simple-git-hooks configuration
  */
-async function installSimpleGitHooks(cwd: string): Promise<void> {
+async function installSimpleGitHooks(cwd: string, agent?: AgentName): Promise<void> {
   const packageJsonPath = path.join(cwd, 'package.json');
 
   try {
@@ -136,8 +148,9 @@ async function installSimpleGitHooks(cwd: string): Promise<void> {
     if (packageJson.simpleGitHooks === undefined) {
       packageJson.simpleGitHooks = {};
     }
+    const agentFlag = agent ? ` --agent ${agent}` : '';
     packageJson.simpleGitHooks['prepare-commit-msg'] =
-      '[ -z "$2" ] && npx commitment --message-only > $1 || exit 0';
+      `[ -z "$2" ] && npx commitment${agentFlag} --message-only > $1 || exit 0`;
 
     // Add prepare script if not present
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -166,7 +179,7 @@ async function installSimpleGitHooks(cwd: string): Promise<void> {
 /**
  * Install plain git hook
  */
-async function installPlainGitHook(cwd: string): Promise<void> {
+async function installPlainGitHook(cwd: string, agent?: AgentName): Promise<void> {
   // Find .git directory
   let gitDir = path.join(cwd, '.git');
 
@@ -198,7 +211,7 @@ async function installPlainGitHook(cwd: string): Promise<void> {
   }
 
   // Write hook file
-  await fs.writeFile(hookPath, HOOK_TEMPLATES.plain, 'utf8');
+  await fs.writeFile(hookPath, generateHookContent('plain', agent), 'utf8');
 
   // Make executable (Unix-like systems)
   if (process.platform !== 'win32') {
@@ -248,15 +261,15 @@ export async function initCommand(options: InitOptions): Promise<void> {
     // Install appropriate hook
     switch (hookManager) {
       case 'husky': {
-        await installHuskyHook(cwd);
+        await installHuskyHook(cwd, options.agent);
         break;
       }
       case 'simple-git-hooks': {
-        await installSimpleGitHooks(cwd);
+        await installSimpleGitHooks(cwd, options.agent);
         break;
       }
       case 'plain': {
-        await installPlainGitHook(cwd);
+        await installPlainGitHook(cwd, options.agent);
         break;
       }
     }
