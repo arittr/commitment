@@ -18,7 +18,14 @@ const config: Record<string, unknown>[] = [
 
   // Global ignores
   {
-    ignores: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**', '.conductor/**'],
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      'coverage/**',
+      '.conductor/**',
+      'examples/eval-fixtures/**/*-live/**',
+    ],
   },
 
   // TypeScript configuration
