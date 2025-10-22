@@ -1,0 +1,13 @@
+diff --git a/src/utils/parser.ts b/src/utils/parser.ts
+index 1a2b3c4..5d6e7f8 100644
+--- a/src/utils/parser.ts
++++ b/src/utils/parser.ts
+@@ -10,7 +10,7 @@ export interface ParsedResult {
+  * @throws {Error} If input is empty
+  */
+ export function parseInput(input: string): ParsedResult {
+-  const trimmed = input.trim();
++  const trimmed = input?.trim() ?? '';
+   if (!trimmed) {
+     throw new Error('Input cannot be empty');
+   }
