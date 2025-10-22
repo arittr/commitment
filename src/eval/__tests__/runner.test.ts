@@ -7,13 +7,11 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { Evaluator } from '../evaluator.js';
-import type { EvalFixture, EvalMetrics, EvalResult } from '../schemas.js';
-
 import { EvalError } from '../../errors.js';
 import { CommitMessageGenerator } from '../../generator.js';
+import type { Evaluator } from '../evaluator.js';
 import { EvalRunner } from '../runner.js';
+import type { EvalFixture, EvalMetrics, EvalResult } from '../schemas.js';
 
 // Mock dependencies
 vi.mock('../evaluator.js');
@@ -22,8 +20,8 @@ vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
   return {
     ...actual,
-    readFileSync: vi.fn(),
     readdirSync: vi.fn(),
+    readFileSync: vi.fn(),
   };
 });
 
@@ -129,7 +127,7 @@ describe('EvalRunner', () => {
       // Assert - should NOT include '-live' suffix
       expect(readFileCalls.some((path) => path.includes('simple-live'))).toBe(false);
       expect(readFileCalls.some((path) => path.includes('examples/eval-fixtures/simple'))).toBe(
-        true,
+        true
       );
     });
 
@@ -275,14 +273,14 @@ describe('EvalRunner', () => {
         fixture.gitStatus,
         fixture.gitDiff,
         fixture.name,
-        'claude',
+        'claude'
       );
       expect(evaluateSpy).toHaveBeenCalledWith(
         codexMessage,
         fixture.gitStatus,
         fixture.gitDiff,
         fixture.name,
-        'codex',
+        'codex'
       );
     });
 
@@ -470,7 +468,7 @@ describe('EvalRunner', () => {
       // Act & Assert
       await expect(runner.runFixture(fixture)).rejects.toThrow(EvalError);
       await expect(runner.runFixture(fixture)).rejects.toThrow(
-        'Agent "claude" failed to generate commit message',
+        'Agent "claude" failed to generate commit message'
       );
     });
 
@@ -496,7 +494,7 @@ describe('EvalRunner', () => {
       // Act & Assert
       await expect(runner.runFixture(fixture)).rejects.toThrow(EvalError);
       await expect(runner.runFixture(fixture)).rejects.toThrow(
-        'Agent "codex" failed to generate commit message',
+        'Agent "codex" failed to generate commit message'
       );
     });
 

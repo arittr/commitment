@@ -9,17 +9,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatGPTAgent } from '../../agents/chatgpt.js';
-import type { EvalMetrics } from '../schemas.js';
-
 import { EvalError } from '../../errors.js';
 import { Evaluator } from '../evaluator.js';
+import type { EvalMetrics } from '../schemas.js';
 
 // Mock ChatGPT agent
 vi.mock('../../agents/chatgpt.js');
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
-  let mockChatGPTAgent: ChatGPTAgent;
+  let mockChatGptAgent: ChatGPTAgent;
 
   beforeEach(() => {
     // Reset mocks
@@ -30,7 +29,7 @@ describe('Evaluator', () => {
 
     // Get mocked ChatGPT agent instance
 
-    mockChatGPTAgent = (evaluator as unknown as { agent: ChatGPTAgent }).agent;
+    mockChatGptAgent = (evaluator as unknown as { agent: ChatGPTAgent }).agent;
   });
 
   describe('evaluate', () => {
@@ -52,7 +51,7 @@ describe('Evaluator', () => {
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
       // Mock ChatGPT agent response
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: mockFeedback,
         metrics: mockMetrics,
       });
@@ -61,7 +60,7 @@ describe('Evaluator', () => {
       await evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName);
 
       // Assert
-      expect(mockChatGPTAgent.evaluate).toHaveBeenCalledWith(commitMessage, gitDiff, gitStatus);
+      expect(mockChatGptAgent.evaluate).toHaveBeenCalledWith(commitMessage, gitDiff, gitStatus);
     });
 
     it('should return complete EvalResult with all fields', async () => {
@@ -81,7 +80,7 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: mockFeedback,
         metrics: mockMetrics,
       });
@@ -92,7 +91,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - check all required fields
@@ -123,7 +122,7 @@ describe('Evaluator', () => {
         detailLevel: 7,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Good',
         metrics: mockMetrics,
       });
@@ -134,7 +133,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - overall score should be (10 + 8 + 9 + 7) / 4 = 8.5
@@ -156,7 +155,7 @@ describe('Evaluator', () => {
         detailLevel: 10,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Perfect commit message',
         metrics: mockMetrics,
       });
@@ -167,7 +166,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert
@@ -189,7 +188,7 @@ describe('Evaluator', () => {
         detailLevel: 0,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Poor commit message',
         metrics: mockMetrics,
       });
@@ -200,7 +199,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert
@@ -217,15 +216,15 @@ describe('Evaluator', () => {
 
       const mockError = EvalError.apiKeyMissing('OpenAI');
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockRejectedValue(mockError);
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName),
+        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
       ).rejects.toThrow(EvalError);
 
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName),
+        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
       ).rejects.toThrow('OpenAI API key is not configured');
     });
 
@@ -239,15 +238,15 @@ describe('Evaluator', () => {
 
       const mockError = EvalError.evaluationFailed('API rate limit exceeded');
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockRejectedValue(mockError);
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName),
+        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
       ).rejects.toThrow(EvalError);
 
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName),
+        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
       ).rejects.toThrow('API rate limit exceeded');
     });
 
@@ -266,7 +265,7 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Well structured',
         metrics: mockMetrics,
       });
@@ -277,7 +276,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert
@@ -300,7 +299,7 @@ describe('Evaluator', () => {
         detailLevel: 9,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Test feedback',
         metrics: mockMetrics,
       });
@@ -311,7 +310,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - verify all individual metrics are present
@@ -336,7 +335,7 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      vi.spyOn(mockChatGPTAgent, 'evaluate').mockResolvedValue({
+      vi.spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
         feedback: 'Good',
         metrics: mockMetrics,
       });
@@ -347,7 +346,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - (8.5 + 7.5 + 9.0 + 8.0) / 4 = 8.25

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas.ts';
+import type { ChangeStats, FileCategories, GitStatus, GitStatusLine } from '../git-schemas';
 import {
   analyzeChanges,
   categorizeFiles,
@@ -17,7 +17,7 @@ import {
   validateFileCategories,
   validateGitStatus,
   validateGitStatusLine,
-} from '../git-schemas.ts';
+} from '../git-schemas';
 
 describe('Git Schemas', () => {
   describe('gitStatusLineSchema', () => {

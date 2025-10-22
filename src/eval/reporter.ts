@@ -162,7 +162,7 @@ export class EvalReporter {
         `## Fixture: ${comparison.fixture}`,
         '',
         '### Claude',
-        `**Message**: ${comparison.claudeResult.commitMessage}`,
+        `**Message**: ${comparison.claudeResult.commitMessage}`
       );
       // eslint-disable-next-line unicorn/no-array-push-push
       lines.push(
@@ -175,7 +175,7 @@ export class EvalReporter {
         `**Feedback**: ${comparison.claudeResult.feedback}`,
         '',
         '### Codex',
-        `**Message**: ${comparison.codexResult.commitMessage}`,
+        `**Message**: ${comparison.codexResult.commitMessage}`
       );
       // eslint-disable-next-line unicorn/no-array-push-push
       lines.push(
@@ -188,14 +188,14 @@ export class EvalReporter {
         `**Feedback**: ${comparison.codexResult.feedback}`,
         '',
         '### Comparison',
-        `**Winner**: ${comparison.winner}`,
+        `**Winner**: ${comparison.winner}`
       );
       // eslint-disable-next-line unicorn/no-array-push-push
       lines.push(
         `**Score Difference**: ${comparison.scoreDiff > 0 ? '+' : ''}${comparison.scoreDiff.toFixed(2)}`,
         '',
         '---',
-        '',
+        ''
       );
     }
 

@@ -1,16 +1,15 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.7/schema.json",
   "assist": {
     "actions": {
       "source": {
         "organizeImports": "on",
-        "useSortedKeys": "on",
-      },
-    },
+        "useSortedKeys": "on"
+      }
+    }
   },
   "files": {
-    "ignoreUnknown": true,
-    "ignore": ["node_modules", "dist", "coverage", ".git", ".worktrees", "examples/**/*.sh"],
+    "ignoreUnknown": true
   },
   "formatter": {
     "enabled": true,
@@ -18,7 +17,7 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
-    "lineWidth": 100,
+    "lineWidth": 100
   },
   "javascript": {
     "formatter": {
@@ -28,20 +27,20 @@
       "quoteProperties": "asNeeded",
       "quoteStyle": "single",
       "semicolons": "always",
-      "trailingCommas": "es5",
-    },
+      "trailingCommas": "es5"
+    }
   },
   "json": {
     "formatter": {
       "enabled": true,
       "indentStyle": "space",
       "indentWidth": 2,
-      "lineWidth": 100,
+      "lineWidth": 100
     },
     "parser": {
       "allowComments": true,
-      "allowTrailingCommas": false,
-    },
+      "allowTrailingCommas": false
+    }
   },
   "linter": {
     "enabled": true,
@@ -49,46 +48,34 @@
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "error",
-          "options": { "maxAllowedComplexity": 15 },
+          "options": { "maxAllowedComplexity": 15 }
         },
         "noForEach": "error",
         "noUselessStringConcat": "error",
         "noUselessUndefinedInitialization": "error",
         "recommended": true,
-        "useDateNow": "error",
+        "useDateNow": "error"
       },
       "correctness": {
         "noNodejsModules": "off",
         "noUndeclaredDependencies": "off",
         "noUnusedImports": "error",
         "noUnusedPrivateClassMembers": "error",
-        "noUnusedVariables": {
-          "level": "error",
-          "options": {
-            "ignorePattern": "^_",
-          },
-        },
+        "noUnusedVariables": "error",
         "recommended": true,
-        "useImportExtensions": {
-          "level": "error",
-          "options": {
-            "suggestedExtensions": {
-              "ts": { "module": "js", "component": "js" },
-            },
-          },
-        },
+        "useImportExtensions": "off"
       },
       "nursery": {
         "noSecrets": {
           "level": "warn",
           "options": {
-            "entropyThreshold": 60,
-          },
+            "entropyThreshold": 60
+          }
         },
-        "useExhaustiveSwitchCases": "error",
+        "useExhaustiveSwitchCases": "error"
       },
       "security": {
-        "recommended": true,
+        "recommended": true
       },
       "style": {
         "noDefaultExport": "error",
@@ -101,8 +88,8 @@
           "options": {
             "filenameCases": ["kebab-case"],
             "requireAscii": true,
-            "strictCase": true,
-          },
+            "strictCase": false
+          }
         },
         "useImportType": "error",
         "useNamingConvention": {
@@ -111,38 +98,38 @@
             "conventions": [
               {
                 "formats": ["camelCase", "PascalCase"],
-                "selector": { "kind": "function" },
+                "selector": { "kind": "function" }
               },
               {
                 "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"],
-                "selector": { "kind": "variable" },
+                "selector": { "kind": "variable" }
               },
               {
                 "formats": ["PascalCase"],
-                "selector": { "kind": "typeLike" },
+                "selector": { "kind": "typeLike" }
               },
               {
-                "match": "^_",
                 "formats": ["camelCase"],
-                "selector": { "kind": "classMember", "modifiers": ["private"] },
-              },
+                "match": "_",
+                "selector": { "kind": "classMember", "modifiers": ["private"] }
+              }
             ],
-            "strictCase": true,
-          },
-        },
+            "strictCase": false
+          }
+        }
       },
       "suspicious": {
         "noConsole": {
           "level": "error",
           "options": {
-            "allow": [],
-          },
+            "allow": []
+          }
         },
         "noExplicitAny": "error",
         "noSkippedTests": "error",
-        "recommended": true,
-      },
-    },
+        "recommended": true
+      }
+    }
   },
   "overrides": [
     {
@@ -150,42 +137,42 @@
       "linter": {
         "rules": {
           "style": {
-            "noDefaultExport": "off",
-          },
-        },
-      },
+            "noDefaultExport": "off"
+          }
+        }
+      }
     },
     {
       "includes": ["src/cli.ts", "src/cli/**/*.ts"],
       "linter": {
         "rules": {
           "suspicious": {
-            "noConsole": "off",
-          },
-        },
-      },
+            "noConsole": "off"
+          }
+        }
+      }
     },
     {
       "includes": ["src/**/__tests__/**", "src/**/__mocks__/**", "**/*.test.ts", "**/*.spec.ts"],
       "linter": {
         "rules": {
           "complexity": {
-            "noExcessiveCognitiveComplexity": "off",
+            "noExcessiveCognitiveComplexity": "off"
           },
           "nursery": {
-            "noSecrets": "off",
+            "noSecrets": "off"
           },
           "suspicious": {
             "noConsole": "off",
-            "noExplicitAny": "off",
-          },
-        },
-      },
-    },
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    }
   ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,
-    "useIgnoreFile": true,
-  },
+    "useIgnoreFile": true
+  }
 }

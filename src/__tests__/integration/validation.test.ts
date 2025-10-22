@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
-import { validateCliOptions } from '../../cli/schemas.ts';
-import { CommitMessageGenerator } from '../../generator.ts';
+import { validateCliOptions } from '../../cli/schemas';
+import { CommitMessageGenerator } from '../../generator';
 
 /**
  * Integration Tests for Validation Across System Boundaries
