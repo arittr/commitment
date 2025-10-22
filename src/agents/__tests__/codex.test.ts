@@ -1,19 +1,40 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
-import { CodexAgent } from '../codex';
+// Mock the shell module BEFORE importing CodexAgent
+const mockExec = mock(() => Promise.resolve({ exitCode: 0, stderr: '', stdout: '' }));
 
-// Mock execa module
-mock.module('execa', () => ({
-  execa: mock(),
+mock.module('../../utils/shell.js', () => ({
+  exec: mockExec,
 }));
+
+import { CodexAgent } from '../codex';
 
 describe('CodexAgent', () => {
   let agent: CodexAgent;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     agent = new CodexAgent();
-    mock.restore();
+    mockExec.mockClear();
   });
+
+  /**
+   * Helper to mock successful which + codex command
+   */
+  const mockSuccessfulGeneration = (output: string): void => {
+    mockExec
+      .mockResolvedValueOnce({
+        // First call: which Codex CLI
+        exitCode: 0,
+        stderr: '',
+        stdout: '/usr/bin/codex',
+      })
+      .mockResolvedValueOnce({
+        // Second call: codex command
+        exitCode: 0,
+        stderr: '',
+        stdout: output,
+      });
+  };
 
   describe('name', () => {
     it('should return correct agent name', () => {
@@ -23,30 +44,9 @@ describe('CodexAgent', () => {
 
   describe('generate', () => {
     it('should generate commit message from prompt', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          // First call: checkAvailability (which codex)
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          // Second call: executeCommand (codex exec)
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: 'feat: add dark mode toggle\n\nImplement theme switching functionality',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration(
+        'feat: add dark mode toggle\n\nImplement theme switching functionality'
+      );
 
       const prompt = 'Generate commit message for adding dark mode';
       const workdir = '/test/repo';
@@ -54,8 +54,8 @@ describe('CodexAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      // Check that codex was called (second call)
-      expect(mockExeca).toHaveBeenNthCalledWith(
+      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['Codex CLI'], { cwd: workdir });
+      expect(mockExec).toHaveBeenNthCalledWith(
         2,
         'codex',
         [
@@ -66,34 +66,12 @@ describe('CodexAgent', () => {
         ],
         expect.objectContaining({
           cwd: workdir,
-          timeout: 120_000,
         })
       );
     });
 
     it('should clean AI artifacts from response', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '```\nfeat: add feature\n\nImplement new feature\n```',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration('```\nfeat: add feature\n\nImplement new feature\n```');
 
       const message = await agent.generate('test prompt', '/test/repo');
 
@@ -102,28 +80,9 @@ describe('CodexAgent', () => {
     });
 
     it('should clean AI prefix artifacts from response', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: 'Here is the commit message:\nfeat: add feature\n\nImplement new feature',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration(
+        'Here is the commit message:\nfeat: add feature\n\nImplement new feature'
+      );
 
       const message = await agent.generate('test prompt', '/test/repo');
 
@@ -132,42 +91,17 @@ describe('CodexAgent', () => {
     });
 
     it('should throw error when CLI is not found', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
       // Mock ENOENT error for which command
-      const error = new Error('Command not found') as any;
-      error.code = 'ENOENT';
-      mockExeca.mockRejectedValue(error);
+      const error = new Error('Command "which" not found');
+      mockExec.mockRejectedValue(error);
 
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
-        /CLI command "Codex CLI" not found/
+        /Command "which" not found/
       );
     });
 
     it('should throw error when response is empty', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration('');
 
       // Empty response fails validation in BaseAgent
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
@@ -176,28 +110,7 @@ describe('CodexAgent', () => {
     });
 
     it('should throw error when response is only whitespace', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '   \n\n   ',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration('   \n\n   ');
 
       // Whitespace-only response fails validation in BaseAgent
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
@@ -206,28 +119,7 @@ describe('CodexAgent', () => {
     });
 
     it('should throw error when response is malformed', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: 'This is not a conventional commit message at all',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration('This is not a conventional commit message at all');
 
       // Malformed response fails validation in BaseAgent
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
@@ -236,9 +128,6 @@ describe('CodexAgent', () => {
     });
 
     it('should accept valid conventional commit types', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
       const validTypes = [
         'feat: add feature',
         'fix: resolve bug',
@@ -251,26 +140,7 @@ describe('CodexAgent', () => {
       ];
 
       for (const commitMessage of validTypes) {
-        mock.restore();
-        mockExeca
-          .mockResolvedValueOnce({
-            command: 'which',
-            exitCode: 0,
-            failed: false,
-            killed: false,
-            stderr: '',
-            stdout: '/usr/bin/codex',
-            timedOut: false,
-          } as any)
-          .mockResolvedValueOnce({
-            command: 'codex',
-            exitCode: 0,
-            failed: false,
-            killed: false,
-            stderr: '',
-            stdout: commitMessage,
-            timedOut: false,
-          } as any);
+        mockSuccessfulGeneration(commitMessage);
 
         const message = await agent.generate('test prompt', '/test/repo');
         expect(message).toBe(commitMessage);
@@ -278,155 +148,52 @@ describe('CodexAgent', () => {
     });
 
     it('should accept commit messages with scope', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: 'feat(auth): add OAuth support',
-          timedOut: false,
-        } as any);
+      mockSuccessfulGeneration('feat(auth): add OAuth support');
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat(auth): add OAuth support');
     });
 
     it('should clean COMMIT_MESSAGE markers from response', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: `<<<COMMIT_MESSAGE_START>>>
+      mockSuccessfulGeneration(`<<<COMMIT_MESSAGE_START>>>
 feat: add feature
 
 - Implement new functionality
-<<<COMMIT_MESSAGE_END>>>`,
-          timedOut: false,
-        } as any);
+<<<COMMIT_MESSAGE_END>>>`);
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
 
     it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: `
+      mockSuccessfulGeneration(`
 <<<COMMIT_MESSAGE_START>>>
 
 feat: add feature
 
 - Implement new functionality
 <<<COMMIT_MESSAGE_END>>>
-`,
-          timedOut: false,
-        } as any);
+`);
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
 
     it('should clean Codex activity logs from response', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: `[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)
+      mockSuccessfulGeneration(`[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)
 --------
 workdir: /Users/user/project
 
 feat: add feature
 
-- Implement new functionality`,
-          timedOut: false,
-        } as any);
+- Implement new functionality`);
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
 
     it('should clean Codex configuration metadata from response', async () => {
-      const { execa } = await import('execa');
-      const mockExeca = execa as ReturnType<typeof mock>;
-
-      mockExeca
-        .mockResolvedValueOnce({
-          command: 'which',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: '/usr/bin/codex',
-          timedOut: false,
-        } as any)
-        .mockResolvedValueOnce({
-          command: 'codex',
-          exitCode: 0,
-          failed: false,
-          killed: false,
-          stderr: '',
-          stdout: `model: gpt-5-codex
+      mockSuccessfulGeneration(`model: gpt-5-codex
 provider: openai
 approval: never
 sandbox: read-only
@@ -434,9 +201,7 @@ reasoning effort: none
 
 feat: add feature
 
-- Implement new functionality`,
-          timedOut: false,
-        } as any);
+- Implement new functionality`);
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
