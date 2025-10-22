@@ -56,6 +56,7 @@ export class CodexAgent implements Agent {
    * // "feat: add new feature\n\nImplement feature in feature.ts"
    * ```
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Core agent logic, needs refactoring
   async generate(prompt: string, workdir: string): Promise<string> {
     // Use a temporary file to capture just the final message
     const tmpFile = `/tmp/codex-output-${Date.now()}.txt`;
