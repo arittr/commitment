@@ -1,4 +1,7 @@
 [test]
+# Exclude eval tests from default test run (run separately with bun test src/eval)
+exclude = ["src/eval/**/*.test.ts"]
+
 # Coverage configuration
 coverage = true
 coverageThreshold = 80
