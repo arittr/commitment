@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import { ZodError } from 'zod';
 
 import { validateCliOptions } from '../../cli/schemas';
@@ -140,7 +141,7 @@ describe('Validation Integration Tests', () => {
 
       try {
         await generator.generateCommitMessage(invalidTask as any, options);
-        expect.fail('Should have thrown error');
+        throw new Error('Should have thrown error');
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -388,7 +389,7 @@ describe('Validation Integration Tests', () => {
 
       try {
         await generator.generateCommitMessage(invalidTask as any, { workdir: process.cwd() });
-        expect.fail('Should have thrown');
+        throw new Error('Should have thrown');
       } catch (error) {
         if (error instanceof Error) {
           expect(error.message).toContain('description');
@@ -403,7 +404,7 @@ describe('Validation Integration Tests', () => {
 
       try {
         validateCliOptions(invalidOptions);
-        expect.fail('Should have thrown');
+        throw new Error('Should have thrown');
       } catch (error) {
         if (error instanceof ZodError) {
           const issue = error.issues[0];
@@ -424,7 +425,7 @@ describe('Validation Integration Tests', () => {
 
       try {
         validateCliOptions(invalidOptions as any);
-        expect.fail('Should have thrown');
+        throw new Error('Should have thrown');
       } catch (error) {
         if (error instanceof ZodError) {
           expect(error.issues.length).toBeGreaterThan(1);
