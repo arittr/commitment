@@ -7,8 +7,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EvalError } from '../../errors.ts';
-import { ChatGPTAgent } from '../chatgpt.ts';
+import { EvalError } from '../../errors';
+import { ChatGPTAgent } from '../chatgpt';
 
 // Mock the OpenAI Agents SDK
 vi.mock('@openai/agents', () => {

@@ -7,10 +7,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { EvalComparison, EvalMetrics } from '../schemas.js';
-
 import { EvalReporter } from '../reporter.js';
+import type { EvalComparison, EvalMetrics } from '../schemas.js';
 
 // Mock node:fs
 vi.mock('node:fs', async () => {

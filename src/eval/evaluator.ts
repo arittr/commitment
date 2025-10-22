@@ -89,7 +89,7 @@ export class Evaluator {
     gitStatus: string,
     gitDiff: string,
     fixtureName: string,
-    agentName: 'claude' | 'codex',
+    agentName: 'claude' | 'codex'
   ): Promise<EvalResult> {
     // 1. Call ChatGPT agent for structured evaluation
     const { metrics, feedback } = await this.agent.evaluate(commitMessage, gitDiff, gitStatus);

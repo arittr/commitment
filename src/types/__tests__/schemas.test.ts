@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas.ts';
+import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas';
 import {
   commitMessageGeneratorConfigSchema,
   commitMessageOptionsSchema,
@@ -11,7 +11,7 @@ import {
   validateCommitOptions,
   validateCommitTask,
   validateGeneratorConfig,
-} from '../schemas.ts';
+} from '../schemas';
 
 describe('Core Schemas', () => {
   describe('commitTaskSchema', () => {

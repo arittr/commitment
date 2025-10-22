@@ -13,8 +13,8 @@
  * @module agents
  */
 
-export { ChatGPTAgent } from './chatgpt.ts';
-export { ClaudeAgent } from './claude.ts';
-export { CodexAgent } from './codex.ts';
-export type { Agent, AgentConfig, AgentName } from './types.ts';
-export { agentConfigSchema, safeValidateAgentConfig, validateAgentConfig } from './types.ts';
+export { ChatGPTAgent } from './chatgpt';
+export { ClaudeAgent } from './claude';
+export { CodexAgent } from './codex';
+export type { Agent, AgentConfig, AgentName } from './types';
+export { agentConfigSchema, safeValidateAgentConfig, validateAgentConfig } from './types';
