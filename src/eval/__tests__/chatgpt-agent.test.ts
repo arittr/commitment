@@ -1,12 +1,10 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 /**
  * Unit tests for ChatGPTAgent
  *
  * Tests the ChatGPT evaluation agent with mocked OpenAI SDK responses.
  * Covers success cases, error cases, and edge cases.
  */
-
-
 
 import { EvaluationError } from '../../errors';
 import { ChatGPTAgent } from '../chatgpt-agent';

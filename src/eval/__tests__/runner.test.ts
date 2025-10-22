@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 /**
  * Unit tests for EvalRunner module
  *
@@ -7,9 +7,8 @@ import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
-
 import { EvaluationError } from '../../errors.js';
-import { CommitMessageGenerator } from '../../generator.js';
+import type { CommitMessageGenerator } from '../../generator.js';
 import type { Evaluator } from '../evaluator.js';
 import { EvalRunner } from '../runner.js';
 import type { EvalFixture, EvalMetrics, EvalResult } from '../schemas.js';
@@ -22,6 +21,7 @@ const mockGenerator = mock();
 // Mock dependencies
 mock.module('../evaluator.js', () => ({}));
 mock.module('../../generator.js', () => ({
+  // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   CommitMessageGenerator: mockGenerator,
 }));
 mock.module('node:fs', async () => {
