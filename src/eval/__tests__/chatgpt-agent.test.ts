@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EvaluationError } from '../../errors';
-import { ChatGPTAgent } from '../chatgpt';
+import { ChatGPTAgent } from '../chatgpt-agent';
 
 // Mock the OpenAI Agents SDK
 vi.mock('@openai/agents', () => ({
@@ -19,22 +19,15 @@ vi.mock('@openai/agents', () => ({
 
 describe('ChatGPTAgent', () => {
   let agent: ChatGPTAgent;
-  let mockAgent: {
-    run: ReturnType<typeof vi.fn>;
-  };
+  let mockRun: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     // Reset mocks before each test
     vi.clearAllMocks();
 
-    // Create mock agent instance
-    mockAgent = {
-      run: vi.fn(),
-    };
-
-    // Mock the Agent constructor to return our mock instance
-    const { Agent } = await import('@openai/agents');
-    vi.mocked(Agent).mockImplementation(() => mockAgent as unknown as InstanceType<typeof Agent>);
+    // Get the mocked run function
+    const { run } = await import('@openai/agents');
+    mockRun = vi.mocked(run);
 
     agent = new ChatGPTAgent();
   });
@@ -65,7 +58,7 @@ describe('ChatGPTAgent', () => {
 
       it('should evaluate commit message and return metrics + feedback', async () => {
         // Mock successful evaluation
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -96,7 +89,7 @@ describe('ChatGPTAgent', () => {
       });
 
       it('should call OpenAI agent with correct context', async () => {
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -112,20 +105,21 @@ describe('ChatGPTAgent', () => {
 
         await agent.evaluate(commitMessage, gitDiff, gitStatus);
 
-        // Verify agent.run was called
-        expect(mockAgent.run).toHaveBeenCalledTimes(1);
+        // Verify run was called
+        expect(mockRun).toHaveBeenCalledTimes(1);
 
         // Verify the message contains all context
-        const callArgs = mockAgent.run.mock.calls[0]?.[0];
-        expect(callArgs).toBeDefined();
-        expect(callArgs?.message).toContain(commitMessage);
-        expect(callArgs?.message).toContain(gitDiff);
-        expect(callArgs?.message).toContain(gitStatus);
-        expect(callArgs?.message).toContain('score_commit');
+        // run() is called with (agent, message), so message is the second argument
+        const message = mockRun.mock.calls[0]?.[1];
+        expect(message).toBeDefined();
+        expect(message).toContain(commitMessage);
+        expect(message).toContain(gitDiff);
+        expect(message).toContain(gitStatus);
+        expect(message).toContain('score_commit');
       });
 
       it('should handle perfect scores (all 10s)', async () => {
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -148,7 +142,7 @@ describe('ChatGPTAgent', () => {
       });
 
       it('should handle low scores (all 0s)', async () => {
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -172,7 +166,7 @@ describe('ChatGPTAgent', () => {
       });
 
       it('should handle decimal scores', async () => {
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -218,7 +212,7 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock API error
-        mockAgent.run.mockRejectedValue(new Error('API rate limit exceeded'));
+        mockRun.mockRejectedValue(new Error('API rate limit exceeded'));
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           EvaluationError
@@ -237,7 +231,7 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock response with no tool calls
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [],
         });
 
@@ -254,7 +248,7 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock response with undefined toolCalls
-        mockAgent.run.mockResolvedValue({});
+        mockRun.mockResolvedValue({});
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           EvaluationError
@@ -265,7 +259,7 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock network error
-        mockAgent.run.mockRejectedValue(new Error('Network error: ECONNREFUSED'));
+        mockRun.mockRejectedValue(new Error('Network error: ECONNREFUSED'));
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           /Network error/
@@ -276,7 +270,7 @@ describe('ChatGPTAgent', () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
         // Mock non-Error object
-        mockAgent.run.mockRejectedValue('Unknown error');
+        mockRun.mockRejectedValue('Unknown error');
 
         await expect(agent.evaluate(commitMessage, gitDiff, gitStatus)).rejects.toThrow(
           EvaluationError
@@ -296,7 +290,7 @@ describe('ChatGPTAgent', () => {
       it('should handle very long commit messages', async () => {
         const longMessage = `fix: ${'very long description '.repeat(100)}`;
 
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -317,7 +311,7 @@ describe('ChatGPTAgent', () => {
       });
 
       it('should handle empty git diff', async () => {
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -345,7 +339,7 @@ Weaknesses:
 - Could add more context in body
 - Missing references to related issues`;
 
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -369,7 +363,7 @@ Weaknesses:
       it('should handle special characters in feedback', async () => {
         const feedbackWithSpecialChars = 'Good! But needs improvement: `type` → `fix` (not `feat`)';
 
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -393,7 +387,7 @@ Weaknesses:
       it('should initialize Agent with correct configuration', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {
@@ -426,7 +420,7 @@ Weaknesses:
       it('should define tool with all required parameters', async () => {
         process.env.OPENAI_API_KEY = 'test-key';
 
-        mockAgent.run.mockResolvedValue({
+        mockRun.mockResolvedValue({
           toolCalls: [
             {
               arguments: {

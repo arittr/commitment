@@ -23,7 +23,7 @@
  * ```
  */
 
-import { ChatGPTAgent } from '../agents/chatgpt';
+import { ChatGPTAgent } from './chatgpt-agent';
 
 import type { EvalResult } from './schemas';
 

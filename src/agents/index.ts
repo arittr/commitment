@@ -14,7 +14,6 @@
  */
 
 export { BaseAgent } from './base-agent.js';
-export { ChatGPTAgent } from './chatgpt';
 export { ClaudeAgent } from './claude';
 export { CodexAgent } from './codex';
 export type { Agent, AgentConfig, AgentName } from './types';

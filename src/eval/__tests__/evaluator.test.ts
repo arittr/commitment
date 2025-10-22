@@ -7,14 +7,13 @@
 /* eslint-disable jest/unbound-method */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { ChatGPTAgent } from '../../agents/chatgpt.js';
-import { EvaluationError } from '../../errors.js';
-import { Evaluator } from '../evaluator.js';
-import type { EvalMetrics } from '../schemas.js';
+import { EvaluationError } from '../../errors';
+import type { ChatGPTAgent } from '../chatgpt-agent';
+import { Evaluator } from '../evaluator';
+import type { EvalMetrics } from '../schemas';
 
 // Mock ChatGPT agent
-vi.mock('../../agents/chatgpt.js');
+vi.mock('../chatgpt-agent');
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;

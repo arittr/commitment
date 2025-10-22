@@ -24,11 +24,10 @@
  * ```
  */
 
+// Export core evaluation components
+export { ChatGPTAgent } from './chatgpt-agent';
+export { Evaluator } from './evaluator';
+export { EvalReporter } from './reporter';
+export { EvalRunner } from './runner';
 // Export all schemas and types
 export * from './schemas';
-
-// Export core evaluation components (will be implemented in later tasks)
-// These are placeholder exports for now - actual implementations come in Task 3
-// export { Evaluator } from './evaluator';
-// export { EvalRunner } from './runner';
-// export { EvalReporter } from './reporter';
