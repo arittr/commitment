@@ -14,15 +14,22 @@ import type { Evaluator } from '../evaluator.js';
 import { EvalRunner } from '../runner.js';
 import type { EvalFixture, EvalMetrics, EvalResult } from '../schemas.js';
 
+// Create mock functions
+const mockReaddirSync = mock();
+const mockReadFileSync = mock();
+const mockGenerator = mock();
+
 // Mock dependencies
-mock.module('../evaluator.js');
-mock.module('../../generator.js');
+mock.module('../evaluator.js', () => ({}));
+mock.module('../../generator.js', () => ({
+  CommitMessageGenerator: mockGenerator,
+}));
 mock.module('node:fs', async () => {
   const actual = await import('node:fs');
   return {
     ...actual,
-    readdirSync: mock(),
-    readFileSync: mock(),
+    readdirSync: mockReaddirSync,
+    readFileSync: mockReadFileSync,
   };
 });
 
@@ -37,10 +44,8 @@ describe('EvalRunner', () => {
   describe('loadFixture', () => {
     it('should load mocked fixture with all required fields', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
-
       // Mock metadata.json
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({
             description: 'Single-file bug fix',
@@ -70,8 +75,7 @@ describe('EvalRunner', () => {
 
     it('should throw EvaluationError.fixtureNotFound for missing fixture', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
-      readFileSync.mockImplementation(() => {
+      mockReadFileSync.mockImplementation(() => {
         throw new Error('ENOENT: no such file');
       });
 
@@ -82,8 +86,7 @@ describe('EvalRunner', () => {
 
     it('should throw EvaluationError.fixtureNotFound for missing metadata.json', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           throw new Error('File not found');
         }
@@ -96,8 +99,7 @@ describe('EvalRunner', () => {
 
     it('should throw EvaluationError.fixtureNotFound for missing mock files', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -111,10 +113,9 @@ describe('EvalRunner', () => {
 
     it('should use correct paths for mocked mode', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
       const readFileCalls: string[] = [];
 
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         readFileCalls.push(path.toString());
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'simple' });
@@ -134,9 +135,8 @@ describe('EvalRunner', () => {
 
     it('should support different fixture types', async () => {
       // Arrange
-      const { readFileSync } = await import('node:fs');
 
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({
             description: 'Multi-file feature',
@@ -182,7 +182,7 @@ describe('EvalRunner', () => {
       const claudeGenerateSpy = mock().mockResolvedValue(claudeMessage);
       const codexGenerateSpy = mock().mockResolvedValue(codexMessage);
 
-      CommitMessageGenerator.mockImplementation((config?: any) => {
+      mockGenerator.mockImplementation((config?: any) => {
         const generator = {
           generateCommitMessage: config?.agent === 'codex' ? codexGenerateSpy : claudeGenerateSpy,
         } as unknown as CommitMessageGenerator;
@@ -228,7 +228,7 @@ describe('EvalRunner', () => {
       const claudeMessage = 'fix: claude message';
       const codexMessage = 'fix: codex message';
 
-      CommitMessageGenerator.mockImplementation((config?: any) => {
+      mockGenerator.mockImplementation((config?: any) => {
         const message = config?.agent === 'codex' ? codexMessage : claudeMessage;
         return {
           generateCommitMessage: mock().mockResolvedValue(message),
@@ -295,7 +295,7 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -350,7 +350,7 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -405,7 +405,7 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -460,7 +460,7 @@ describe('EvalRunner', () => {
         name: 'test',
       };
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue(null), // Null = no message generated
         } as unknown as CommitMessageGenerator;
@@ -485,7 +485,7 @@ describe('EvalRunner', () => {
 
       // Claude succeeds, Codex fails
 
-      CommitMessageGenerator.mockImplementation((config?: any) => {
+      mockGenerator.mockImplementation((config?: any) => {
         const message = config?.agent === 'codex' ? null : 'fix: claude message';
         return {
           generateCommitMessage: mock().mockResolvedValue(message),
@@ -509,7 +509,7 @@ describe('EvalRunner', () => {
         name: 'test-fixture',
       };
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -561,13 +561,12 @@ describe('EvalRunner', () => {
   describe('runAll', () => {
     it('should discover and load fixtures in mocked mode', async () => {
       // Arrange
-      const { readdirSync, readFileSync } = await import('node:fs');
 
       // Mock directory listing
-      readdirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
+      mockReaddirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
 
       // Mock file reads
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -575,7 +574,7 @@ describe('EvalRunner', () => {
       });
 
       // Mock generator and evaluator
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -608,13 +607,12 @@ describe('EvalRunner', () => {
 
     it('should discover and load fixtures in live mode', async () => {
       // Arrange
-      const { readdirSync, readFileSync } = await import('node:fs');
 
       // Mock directory listing
-      readdirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
+      mockReaddirSync.mockReturnValue(['simple', 'complex', 'simple-live'] as never[]);
 
       // Mock file reads
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
@@ -622,7 +620,7 @@ describe('EvalRunner', () => {
       });
 
       // Mock generator and evaluator
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
@@ -655,18 +653,17 @@ describe('EvalRunner', () => {
 
     it('should return array of comparisons', async () => {
       // Arrange
-      const { readdirSync, readFileSync } = await import('node:fs');
 
-      readdirSync.mockReturnValue(['simple', 'complex'] as never[]);
+      mockReaddirSync.mockReturnValue(['simple', 'complex'] as never[]);
 
-      readFileSync.mockImplementation((path) => {
+      mockReadFileSync.mockImplementation((path) => {
         if (path.toString().endsWith('metadata.json')) {
           return JSON.stringify({ description: 'Test', expectedType: 'fix', name: 'test' });
         }
         return 'mock data';
       });
 
-      CommitMessageGenerator.mockImplementation(() => {
+      mockGenerator.mockImplementation(() => {
         return {
           generateCommitMessage: mock().mockResolvedValue('fix: message'),
         } as unknown as CommitMessageGenerator;
