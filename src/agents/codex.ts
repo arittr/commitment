@@ -1,8 +1,8 @@
 import { execa } from 'execa';
 
-import { AgentError } from '../errors.js';
+import { AgentError } from '../errors.ts';
 
-import type { Agent } from './types.js';
+import type { Agent } from './types.ts';
 
 /**
  * Codex CLI agent for commit message generation
@@ -92,7 +92,7 @@ export class CodexAgent implements Agent {
         throw AgentError.executionFailed(
           this.name,
           0,
-          'Empty response - CLI may not be properly configured',
+          'Empty response - CLI may not be properly configured'
         );
       }
 
@@ -137,7 +137,7 @@ export class CodexAgent implements Agent {
           this.name,
           code,
           details,
-          error instanceof Error ? error : undefined,
+          error instanceof Error ? error : undefined
         );
       }
 

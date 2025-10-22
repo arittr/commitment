@@ -24,10 +24,11 @@
  * ```
  */
 
-// Export core evaluation components
-export { Evaluator } from './evaluator.js';
-
-export { EvalReporter } from './reporter.js';
-export { EvalRunner } from './runner.js';
 // Export all schemas and types
-export * from './schemas.js';
+export * from './schemas.ts';
+
+// Export core evaluation components (will be implemented in later tasks)
+// These are placeholder exports for now - actual implementations come in Task 3
+// export { Evaluator } from './evaluator.js';
+// export { EvalRunner } from './runner.js';
+// export { EvalReporter } from './reporter.js';

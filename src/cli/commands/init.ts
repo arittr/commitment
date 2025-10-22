@@ -25,16 +25,16 @@ if [ -z "$2" ]; then
   exec < /dev/tty && npx commitment --message-only > "$1"
 fi
 `,
-  simpleGitHooks: `#!/bin/sh
-# simple-git-hooks prepare-commit-msg hook for commitment
-# Only run for regular commits (not merge, squash, or when message specified)
+  plain: `#!/bin/sh
+# Git prepare-commit-msg hook for commitment
+# Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
   npx commitment --message-only > "$1"
 fi
 `,
-  plain: `#!/bin/sh
-# Git prepare-commit-msg hook for commitment
-# Only run for regular commits (not merge, squash, etc.)
+  simpleGitHooks: `#!/bin/sh
+# simple-git-hooks prepare-commit-msg hook for commitment
+# Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
   npx commitment --message-only > "$1"
 fi
@@ -102,7 +102,7 @@ async function installHuskyHook(cwd: string): Promise<void> {
     await fs.mkdir(huskyDir, { recursive: true });
   } catch (error) {
     throw new Error(
-      `Failed to create .husky directory: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create .husky directory: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
@@ -158,7 +158,7 @@ async function installSimpleGitHooks(cwd: string): Promise<void> {
     console.log(chalk.cyan('   npm run prepare'));
   } catch (error) {
     throw new Error(
-      `Failed to configure simple-git-hooks: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to configure simple-git-hooks: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -193,7 +193,7 @@ async function installPlainGitHook(cwd: string): Promise<void> {
     await fs.mkdir(hooksDir, { recursive: true });
   } catch (error) {
     throw new Error(
-      `Failed to create hooks directory: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create hooks directory: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
@@ -273,7 +273,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   } catch (error) {
     console.error(
       chalk.red('❌ Failed to initialize hooks:'),
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     );
     process.exit(1);
   }

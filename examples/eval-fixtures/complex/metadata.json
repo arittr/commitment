@@ -1,6 +1,6 @@
 {
-  "name": "complex",
+  "complexity": "complex",
   "description": "Multi-file feature (export functionality)",
   "expectedType": "feat",
-  "complexity": "complex"
+  "name": "complex"
 }
