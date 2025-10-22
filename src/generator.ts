@@ -1,15 +1,15 @@
 import { execa } from 'execa';
-import { ClaudeAgent } from './agents/claude.ts';
-import { CodexAgent } from './agents/codex.ts';
-import type { Agent } from './agents/types.ts';
-import { AgentError, GeneratorError } from './errors.ts';
+import { ClaudeAgent } from './agents/claude';
+import { CodexAgent } from './agents/codex';
+import type { Agent } from './agents/types';
+import { AgentError, GeneratorError } from './errors';
 import {
   safeValidateCommitOptions,
   safeValidateCommitTask,
   safeValidateGeneratorConfig,
-} from './types/schemas.ts';
-import { categorizeFiles } from './utils/git-schemas.ts';
-import { hasContent, isDefined, isString } from './utils/guards.ts';
+} from './types/schemas';
+import { categorizeFiles } from './utils/git-schemas';
+import { hasContent, isDefined, isString } from './utils/guards';
 
 /**
  * Minimal task interface for commit message generation

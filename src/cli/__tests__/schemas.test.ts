@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError, z } from 'zod';
-import type { CliOptions } from '../schemas.ts';
+import type { CliOptions } from '../schemas';
 import {
   cliOptionsSchema,
   formatValidationError,
   safeValidateCliOptions,
   validateCliOptions,
-} from '../schemas.ts';
+} from '../schemas';
 
 describe('CLI Schemas', () => {
   describe('cliOptionsSchema', () => {
