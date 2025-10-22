@@ -30,7 +30,7 @@ describe('CodexAgent', () => {
         stdout: 'feat: add dark mode toggle\n\nImplement theme switching functionality',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -43,10 +43,14 @@ describe('CodexAgent', () => {
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
       expect(mockExeca).toHaveBeenCalledWith(
-        'codex-sh',
-        ['--print'],
+        'codex',
+        [
+          'exec',
+          '--output-last-message',
+          expect.stringMatching(/\/tmp\/codex-output-\d+\.txt/),
+          prompt,
+        ],
         expect.objectContaining({
-          input: prompt,
           cwd: workdir,
           timeout: 120_000,
         }),
@@ -61,7 +65,7 @@ describe('CodexAgent', () => {
         stdout: '```\nfeat: add feature\n\nImplement new feature\n```',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -81,7 +85,7 @@ describe('CodexAgent', () => {
         stdout: 'Here is the commit message:\nfeat: add feature\n\nImplement new feature',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -97,7 +101,7 @@ describe('CodexAgent', () => {
       const { execa } = await import('execa');
       const mockExeca = execa as ReturnType<typeof vi.fn>;
 
-      mockExeca.mockRejectedValue(new Error('Command not found: codex-sh'));
+      mockExeca.mockRejectedValue(new Error('Command not found: codex'));
 
       await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(/Unexpected error/);
 
@@ -118,7 +122,7 @@ describe('CodexAgent', () => {
         stdout: '',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -135,7 +139,7 @@ describe('CodexAgent', () => {
         stdout: '   \n\n   ',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -152,7 +156,7 @@ describe('CodexAgent', () => {
         stdout: 'This is not a conventional commit message at all',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -187,7 +191,7 @@ describe('CodexAgent', () => {
           stdout: commitMessage,
           stderr: '',
           exitCode: 0,
-          command: 'codex-sh',
+          command: 'codex',
           failed: false,
           killed: false,
           timedOut: false,
@@ -206,7 +210,7 @@ describe('CodexAgent', () => {
         stdout: 'feat(auth): add OAuth support',
         stderr: '',
         exitCode: 0,
-        command: 'codex-sh',
+        command: 'codex',
         failed: false,
         killed: false,
         timedOut: false,
@@ -214,6 +218,103 @@ describe('CodexAgent', () => {
 
       const message = await agent.generate('test prompt', '/test/repo');
       expect(message).toBe('feat(auth): add OAuth support');
+    });
+
+    it('should clean COMMIT_MESSAGE markers from response', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = execa as ReturnType<typeof vi.fn>;
+
+      mockExeca.mockResolvedValue({
+        stdout: `<<<COMMIT_MESSAGE_START>>>
+feat: add feature
+
+- Implement new functionality
+<<<COMMIT_MESSAGE_END>>>`,
+        stderr: '',
+        exitCode: 0,
+        command: 'codex',
+        failed: false,
+        killed: false,
+        timedOut: false,
+      } as any);
+
+      const message = await agent.generate('test prompt', '/test/repo');
+      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+    });
+
+    it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = execa as ReturnType<typeof vi.fn>;
+
+      mockExeca.mockResolvedValue({
+        stdout: `
+<<<COMMIT_MESSAGE_START>>>
+
+feat: add feature
+
+- Implement new functionality
+<<<COMMIT_MESSAGE_END>>>
+`,
+        stderr: '',
+        exitCode: 0,
+        command: 'codex',
+        failed: false,
+        killed: false,
+        timedOut: false,
+      } as any);
+
+      const message = await agent.generate('test prompt', '/test/repo');
+      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+    });
+
+    it('should clean Codex activity logs from response', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = execa as ReturnType<typeof vi.fn>;
+
+      mockExeca.mockResolvedValue({
+        stdout: `[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)
+--------
+workdir: /Users/user/project
+
+feat: add feature
+
+- Implement new functionality`,
+        stderr: '',
+        exitCode: 0,
+        command: 'codex',
+        failed: false,
+        killed: false,
+        timedOut: false,
+      } as any);
+
+      const message = await agent.generate('test prompt', '/test/repo');
+      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+    });
+
+    it('should clean Codex configuration metadata from response', async () => {
+      const { execa } = await import('execa');
+      const mockExeca = execa as ReturnType<typeof vi.fn>;
+
+      mockExeca.mockResolvedValue({
+        stdout: `model: gpt-5-codex
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+
+feat: add feature
+
+- Implement new functionality`,
+        stderr: '',
+        exitCode: 0,
+        command: 'codex',
+        failed: false,
+        killed: false,
+        timedOut: false,
+      } as any);
+
+      const message = await agent.generate('test prompt', '/test/repo');
+      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
   });
 });

@@ -7,7 +7,7 @@ import type { Agent } from './types.js';
 /**
  * Codex CLI agent for commit message generation
  *
- * This agent uses the codex-sh CLI to generate conventional commit messages.
+ * This agent uses the codex CLI to generate conventional commit messages.
  * It handles CLI execution, response parsing, and provides actionable error
  * messages when the CLI is unavailable or returns invalid output.
  *
@@ -36,7 +36,7 @@ export class CodexAgent implements Agent {
   /**
    * Generate a commit message using Codex CLI
    *
-   * Executes codex-sh with the provided prompt and parses the response.
+   * Executes codex with the provided prompt and parses the response.
    * Cleans AI artifacts like code fences and validates the output format.
    *
    * @param prompt - The prompt to send to Codex (includes git diff, context, etc.)
@@ -57,16 +57,35 @@ export class CodexAgent implements Agent {
    * ```
    */
   async generate(prompt: string, workdir: string): Promise<string> {
+    // Use a temporary file to capture just the final message
+    const tmpFile = `/tmp/codex-output-${Date.now()}.txt`;
+
     try {
-      // Execute Codex CLI with prompt
-      const { stdout } = await execa('codex-sh', ['--print'], {
-        input: prompt,
+      // Execute Codex CLI in non-interactive mode using 'exec' subcommand
+      // Use --output-last-message to write just the final response to a file
+      const result = await execa('codex', ['exec', '--output-last-message', tmpFile, prompt], {
         cwd: workdir,
         timeout: 120_000, // 2 minutes
       });
 
+      // Try to read from temp file first (actual Codex execution)
+      // Fall back to stdout for testing/mocking
+      let output: string;
+      try {
+        const { readFileSync, unlinkSync, existsSync } = await import('node:fs');
+        if (existsSync(tmpFile)) {
+          output = readFileSync(tmpFile, 'utf8');
+          unlinkSync(tmpFile);
+        } else {
+          output = result.stdout;
+        }
+      } catch {
+        // If file operations fail, use stdout (for mocked tests)
+        output = result.stdout;
+      }
+
       // Clean AI artifacts (code fences, extra whitespace)
-      const cleaned = this._cleanResponse(stdout);
+      const cleaned = this._cleanResponse(output);
 
       // Validate response format
       if (cleaned.length === 0 || cleaned.trim().length === 0) {
@@ -84,6 +103,16 @@ export class CodexAgent implements Agent {
 
       return cleaned;
     } catch (error) {
+      // Clean up temp file on error (best effort)
+      try {
+        const { unlinkSync, existsSync } = await import('node:fs');
+        if (existsSync(tmpFile)) {
+          unlinkSync(tmpFile);
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+
       // Re-throw AgentError as-is (already properly formatted)
       if (error instanceof AgentError) {
         throw error;
@@ -96,7 +125,7 @@ export class CodexAgent implements Agent {
         'code' in error &&
         error.code === 'ENOENT'
       ) {
-        throw AgentError.cliNotFound('codex-sh', this.name);
+        throw AgentError.cliNotFound('codex', this.name);
       }
 
       // Handle execution errors
@@ -125,6 +154,8 @@ export class CodexAgent implements Agent {
    * Clean AI artifacts from response
    *
    * Removes:
+   * - Codex activity logs (timestamps, workdir info, etc.)
+   * - Commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
    * - Code fences (```...```)
    * - Extra leading/trailing whitespace
    * - Common AI prefixes/suffixes
@@ -135,6 +166,30 @@ export class CodexAgent implements Agent {
   private _cleanResponse(response: string): string {
     let cleaned = response;
 
+    // Remove Codex activity logs (lines starting with timestamps, workdir, etc.)
+    // Example: "[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)"
+    cleaned = cleaned.replaceAll(/^\[[\d:TZ-]+].*$/gm, '');
+    cleaned = cleaned.replaceAll(/^-{3,}$/gm, ''); // Remove separator lines
+    cleaned = cleaned.replaceAll(/^OpenAI Codex.*$/gm, '');
+
+    // Remove specific Codex metadata fields (must be before conventional commit type matching)
+    const metadataFields = [
+      'workdir',
+      'model',
+      'provider',
+      'approval',
+      'sandbox',
+      'reasoning effort',
+      'reasoning summaries',
+    ];
+    for (const field of metadataFields) {
+      cleaned = cleaned.replaceAll(new RegExp(`^${field}:.*$`, 'gmi'), '');
+    }
+
+    // Remove commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
+    cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
+    cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
+
     // Remove code fences
     cleaned = cleaned.replaceAll(/^```[a-z]*\n?/gm, '');
     cleaned = cleaned.replaceAll(/\n?```$/gm, '');
@@ -143,8 +198,9 @@ export class CodexAgent implements Agent {
     cleaned = cleaned.replace(/^(here is|here's) (the|a) commit message:?\s*/i, '');
     cleaned = cleaned.replace(/^commit message:?\s*/i, '');
 
-    // Trim whitespace
+    // Trim whitespace and remove extra blank lines
     cleaned = cleaned.trim();
+    cleaned = cleaned.replaceAll(/\n{3,}/g, '\n\n'); // Max 2 consecutive newlines
 
     return cleaned;
   }

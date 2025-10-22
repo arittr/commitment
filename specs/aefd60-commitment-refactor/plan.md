@@ -156,13 +156,13 @@ pnpm test src/agents/__tests__/claude.test.ts
 
 **Description**:
 
-Implement Codex agent as a standalone class (~50-100 LOC) without base classes. Directly implements the Agent interface with CLI execution logic inlined. Checks `codex-sh` command availability, executes with prompt, parses conventional commit format. All logic self-contained - no shared utilities or base class inheritance.
+Implement Codex agent as a standalone class (~50-100 LOC) without base classes. Directly implements the Agent interface with CLI execution logic inlined. Checks `codex` command availability, executes with prompt, parses conventional commit format. All logic self-contained - no shared utilities or base class inheritance.
 
 **Implementation Steps**:
 
 1. Create `src/agents/codex.ts` implementing Agent interface
-2. Inline CLI availability check using `which codex-sh`
-3. Inline CLI execution using `execa('codex-sh', [...])`
+2. Inline CLI availability check using `which codex`
+3. Inline CLI execution using `execa('codex', [...])`
 4. Inline response parsing (clean AI artifacts, extract commit message)
 5. Add actionable error messages (what failed, why, how to fix)
 6. Keep implementation under 100 LOC
