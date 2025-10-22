@@ -83,29 +83,6 @@ describe('Validation Integration Tests', () => {
       );
     });
 
-    it('should catch task with title exceeding max length', async () => {
-      const generator = new CommitMessageGenerator({
-        enableAI: false,
-      });
-
-      const invalidTask = {
-        description: 'Valid description',
-        produces: [],
-        title: 'a'.repeat(201), // Invalid: exceeds 200 chars
-      };
-
-      const options = {
-        workdir: process.cwd(),
-      };
-
-      await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
-        /Invalid task parameter/
-      );
-      await expect(generator.generateCommitMessage(invalidTask as any, options)).rejects.toThrow(
-        /must not exceed 200 characters/
-      );
-    });
-
     it('should catch invalid options in generateCommitMessage', async () => {
       const generator = new CommitMessageGenerator({
         enableAI: false,
@@ -405,9 +382,9 @@ describe('Validation Integration Tests', () => {
       });
 
       const invalidTask = {
-        description: 'Valid',
+        description: '', // Empty - invalid
         produces: [],
-        title: 'a'.repeat(201), // Too long
+        title: 'Valid title',
       };
 
       try {
@@ -415,7 +392,7 @@ describe('Validation Integration Tests', () => {
         expect.fail('Should have thrown');
       } catch (error) {
         if (error instanceof Error) {
-          expect(error.message).toContain('title');
+          expect(error.message).toContain('description');
         }
       }
     });

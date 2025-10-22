@@ -219,11 +219,6 @@ export type FileCategories = z.infer<typeof fileCategoriesSchema>;
 export type ChangeStats = z.infer<typeof changeStatsSchema>;
 
 /**
- * Type alias for file categorization (commonly used name)
- */
-export type FileCategorization = FileCategories;
-
-/**
  * Validates a git status line string
  *
  * @param line - Git status line from git status --porcelain
