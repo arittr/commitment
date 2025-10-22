@@ -101,19 +101,23 @@ export class CommitMessageGenerator {
     // Use validated config (now fully type-safe)
     const validatedConfig = validationResult.data;
 
+    // Instantiate agent directly based on config (defaults to Claude)
+    const agentName = validatedConfig.agent ?? 'claude';
+    this.agent = agentName === 'codex' ? new CodexAgent() : new ClaudeAgent();
+
+    // Generate default signature based on the agent being used
+    const defaultSignature =
+      agentName === 'codex'
+        ? '🤖 Generated with Codex via commitment'
+        : '🤖 Generated with Claude via commitment';
+
     this.config = {
-      signature:
-        validatedConfig.signature ??
-        '🤖 Generated with Claude via commitment\n\nCo-Authored-By: Claude <noreply@anthropic.com>',
+      signature: validatedConfig.signature ?? defaultSignature,
       enableAI: validatedConfig.enableAI ?? true,
       logger: isDefined(validatedConfig.logger)
         ? { warn: validatedConfig.logger.warn as (message: string) => void }
         : { warn: () => {} },
     };
-
-    // Instantiate agent directly based on config (defaults to Claude)
-    const agentName = validatedConfig.agent ?? 'claude';
-    this.agent = agentName === 'codex' ? new CodexAgent() : new ClaudeAgent();
   }
 
   /**
