@@ -1150,9 +1150,9 @@ The `prepublishOnly` script automatically cleans and builds before publishing.
 
 ## Development Notes
 
-- Package manager is Bun (for development) - end users can still use npm/yarn/pnpm
+- Package manager is Bun (development and runtime)
 - Build targets Node.js 18+ with ESM-only output
-- Uses Bun's built-in bundler for fast builds with dual entry points (CLI + library)
+- Uses Bun's built-in bundler for fast builds (CLI-only package)
 - Test runner is bun:test (Jest-compatible API)
 - CLI file has relaxed linter rules (allows `console.log` and `process.exit`)
 - Config files have relaxed rules (no default export restriction)

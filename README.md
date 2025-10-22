@@ -25,13 +25,10 @@ We all know we should write better commit messages. But we don't.
 # Using npm
 npm install -D commitment
 
-# Using pnpm
-pnpm add -D commitment
-
 # Using yarn
 yarn add -D commitment
 
-# Using bun (for development)
+# Using bun
 bun add -D commitment
 ```
 
@@ -42,7 +39,7 @@ bun add -D commitment
 - Optional: [Claude CLI](https://claude.ai/code) or [Codex CLI](https://developers.openai.com/codex) for AI generation
 
 **For Contributors:**
-- Bun 1.1.0+ (faster development experience with built-in testing and bundling)
+- Bun 1.1.0+ (required for development - package manager, bundler, and test runner)
 
 ## Quick Start
 
@@ -226,44 +223,6 @@ Make it executable:
 
 ```bash
 chmod +x .git/hooks/prepare-commit-msg
-```
-
-## Programmatic API
-
-Use `commitment` in your Node.js scripts:
-
-```typescript
-import { CommitMessageGenerator } from 'commitment';
-
-const generator = new CommitMessageGenerator({
-  agent: 'claude',
-  enableAI: true,
-});
-
-const task = {
-  title: 'Add user authentication',
-  description: 'Implement JWT-based authentication',
-  produces: ['src/auth.ts', 'src/middleware/auth.ts'],
-};
-
-const message = await generator.generateCommitMessage(task, {
-  workdir: process.cwd(),
-  files: ['src/auth.ts', 'src/middleware/auth.ts'],
-});
-
-console.log(message);
-```
-
-### Configuration Options
-
-```typescript
-type CommitMessageGeneratorConfig = {
-  /** AI agent to use: 'claude' or 'codex' (default: 'claude') */
-  agent?: string;
-
-  /** Enable/disable AI generation (default: true) */
-  enableAI?: boolean;
-};
 ```
 
 ## How It Works
