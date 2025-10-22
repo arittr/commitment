@@ -491,6 +491,7 @@ export function safeValidateChangeStats(
  * // }
  * ```
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: File categorization logic, needs refactoring
 export function categorizeFiles(files: string[]): FileCategories {
   const categories: FileCategories = {
     apis: [],
