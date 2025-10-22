@@ -19,19 +19,45 @@ const mockReadFileSync = mock();
 const mockGenerator = mock();
 
 // Mock dependencies
-mock.module('../evaluator.js', () => ({}));
+mock.module('../chatgpt-agent.js', () => ({
+  // biome-ignore lint/style/useNamingConvention: Class name in mock module export
+  ChatGPTAgent: class {
+    async evaluate() {
+      return {
+        feedback: '',
+        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+      };
+    }
+  },
+}));
+
+mock.module('../evaluator.js', () => {
+  class MockEvaluator {
+    async evaluate() {
+      return {
+        agent: 'claude' as const,
+        commitMessage: '',
+        feedback: '',
+        fixture: '',
+        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+        overallScore: 0,
+        timestamp: '',
+      };
+    }
+  }
+  return {
+    // biome-ignore lint/style/useNamingConvention: Class name in mock module export
+    Evaluator: MockEvaluator,
+  };
+});
 mock.module('../../generator.js', () => ({
   // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   CommitMessageGenerator: mockGenerator,
 }));
-mock.module('node:fs', async () => {
-  const actual = await import('node:fs');
-  return {
-    ...actual,
-    readdirSync: mockReaddirSync,
-    readFileSync: mockReadFileSync,
-  };
-});
+mock.module('node:fs', () => ({
+  readdirSync: mockReaddirSync,
+  readFileSync: mockReadFileSync,
+}));
 
 describe('EvalRunner', () => {
   let runner: EvalRunner;
