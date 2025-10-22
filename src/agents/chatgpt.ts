@@ -24,10 +24,8 @@
  */
 
 import { Agent } from '@openai/agents';
-
-import type { EvalMetrics } from '../eval/schemas.js';
-
-import { EvalError } from '../errors.js';
+import { EvalError } from '../errors.ts';
+import type { EvalMetrics } from '../eval/schemas.ts';
 
 /**
  * ChatGPT agent for commit message quality evaluation
@@ -63,7 +61,7 @@ export class ChatGPTAgent {
   async evaluate(
     commitMessage: string,
     gitDiff: string,
-    gitStatus: string,
+    gitStatus: string
   ): Promise<{ feedback: string; metrics: EvalMetrics }> {
     // 1. Check API key
     const apiKey = process.env.OPENAI_API_KEY;
@@ -74,8 +72,6 @@ export class ChatGPTAgent {
     // 2. Initialize OpenAI Agents SDK
 
     const agent = new Agent({
-      name: 'commit-evaluator',
-      model: 'gpt-4',
       instructions: `You are an expert at evaluating commit messages according to the Conventional Commits specification.
 
 Evaluate commit messages on these 4 dimensions (0-10 scale):
@@ -101,44 +97,46 @@ Evaluate commit messages on these 4 dimensions (0-10 scale):
    - 0: Missing critical details or overwhelming
 
 Provide structured scores and actionable feedback.`,
+      model: 'gpt-4',
+      name: 'commit-evaluator',
       tools: [
         {
-          name: 'score_commit',
           description: 'Score a commit message on multiple dimensions and provide feedback',
+          name: 'score_commit',
           parameters: {
             additionalProperties: false,
-            type: 'object',
             properties: {
-              conventionalCompliance: {
-                type: 'number',
-                minimum: 0,
+              accuracy: {
+                description: 'Accuracy of description score (0-10)',
                 maximum: 10,
-                description: 'Conventional Commits compliance score (0-10)',
+                minimum: 0,
+                type: 'number',
               },
               clarity: {
-                type: 'number',
-                minimum: 0,
-                maximum: 10,
                 description: 'Clarity and readability score (0-10)',
-              },
-              accuracy: {
-                type: 'number',
-                minimum: 0,
                 maximum: 10,
-                description: 'Accuracy of description score (0-10)',
+                minimum: 0,
+                type: 'number',
+              },
+              conventionalCompliance: {
+                description: 'Conventional Commits compliance score (0-10)',
+                maximum: 10,
+                minimum: 0,
+                type: 'number',
               },
               detailLevel: {
-                type: 'number',
-                minimum: 0,
-                maximum: 10,
                 description: 'Appropriate detail level score (0-10)',
+                maximum: 10,
+                minimum: 0,
+                type: 'number',
               },
               feedback: {
-                type: 'string',
                 description: 'Actionable feedback explaining the scores',
+                type: 'string',
               },
             },
             required: ['conventionalCompliance', 'clarity', 'accuracy', 'detailLevel', 'feedback'],
+            type: 'object',
           },
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

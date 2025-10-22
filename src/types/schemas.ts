@@ -19,14 +19,6 @@ import { z } from 'zod';
  */
 export const commitTaskSchema = z.object({
   /**
-   * Short, descriptive title of the task
-   */
-  title: z
-    .string()
-    .min(1, 'Task title must not be empty')
-    .max(200, 'Task title must not exceed 200 characters'),
-
-  /**
    * Detailed description of what the task accomplishes
    */
   description: z
@@ -38,6 +30,13 @@ export const commitTaskSchema = z.object({
    * List of files or outputs produced by this task
    */
   produces: z.array(z.string()).min(0, 'Produces array must be defined').default([]),
+  /**
+   * Short, descriptive title of the task
+   */
+  title: z
+    .string()
+    .min(1, 'Task title must not be empty')
+    .max(200, 'Task title must not exceed 200 characters'),
 });
 
 /**
@@ -58,11 +57,6 @@ export const commitTaskSchema = z.object({
  */
 export const commitMessageOptionsSchema = z.object({
   /**
-   * Working directory for git operations (required)
-   */
-  workdir: z.string().min(1, 'Working directory must not be empty'),
-
-  /**
    * Specific files involved in the change (optional)
    */
   files: z.array(z.string()).optional(),
@@ -71,6 +65,10 @@ export const commitMessageOptionsSchema = z.object({
    * Task execution output or additional context (optional)
    */
   output: z.string().optional(),
+  /**
+   * Working directory for git operations (required)
+   */
+  workdir: z.string().min(1, 'Working directory must not be empty'),
 });
 
 /**
@@ -228,7 +226,7 @@ export function validateGeneratorConfig(config: unknown): CommitMessageGenerator
  * ```
  */
 export function safeValidateCommitTask(
-  task: unknown,
+  task: unknown
 ): { data: CommitTask; success: true } | { error: z.ZodError; success: false } {
   return commitTaskSchema.safeParse(task);
 }
@@ -251,7 +249,7 @@ export function safeValidateCommitTask(
  * ```
  */
 export function safeValidateCommitOptions(
-  options: unknown,
+  options: unknown
 ): { data: CommitMessageOptions; success: true } | { error: z.ZodError; success: false } {
   return commitMessageOptionsSchema.safeParse(options);
 }
@@ -274,7 +272,7 @@ export function safeValidateCommitOptions(
  * ```
  */
 export function safeValidateGeneratorConfig(
-  config: unknown,
+  config: unknown
 ): { data: CommitMessageGeneratorConfig; success: true } | { error: z.ZodError; success: false } {
   return commitMessageGeneratorConfigSchema.safeParse(config);
 }

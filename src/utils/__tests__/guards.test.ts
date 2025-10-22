@@ -11,7 +11,7 @@ import {
   isNumber,
   isObject,
   isString,
-} from '../guards';
+} from '../guards.ts';
 
 describe('Type Guards', () => {
   describe('hasContent', () => {
@@ -335,7 +335,7 @@ describe('Type Guards', () => {
     });
 
     it('should narrow type correctly', () => {
-      const data: unknown = { name: 'test', age: 30 };
+      const data: unknown = { age: 30, name: 'test' };
       if (hasProperty(data, 'name')) {
         // TypeScript should allow accessing the property
         const value: unknown = data.name;
@@ -344,7 +344,7 @@ describe('Type Guards', () => {
     });
 
     it('should work with multiple checks', () => {
-      const data: unknown = { name: 'test', age: 30 };
+      const data: unknown = { age: 30, name: 'test' };
       if (hasProperty(data, 'name') && hasProperty(data, 'age')) {
         expect(data.name).toBe('test');
         expect(data.age).toBe(30);

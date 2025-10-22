@@ -160,7 +160,7 @@ export function validateAgentConfig(config: unknown): AgentConfig {
  * ```
  */
 export function safeValidateAgentConfig(
-  config: unknown,
+  config: unknown
 ): { data: AgentConfig; success: true } | { error: z.ZodError; success: false } {
   return agentConfigSchema.safeParse(config);
 }
