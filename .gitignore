@@ -43,3 +43,7 @@ coverage/
 
 # Worktrees
 .worktrees/
+
+# env
+.env*
+!.env.example
