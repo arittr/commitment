@@ -197,5 +197,48 @@ describe('ClaudeAgent', () => {
         }),
       );
     });
+
+    it('should clean COMMIT_MESSAGE markers from response', async () => {
+      // Mock execa to return response with commit message markers
+      mockExeca.mockResolvedValue({
+        stdout: `<<<COMMIT_MESSAGE_START>>>
+feat: add constitution v2 and improve documentation
+
+- Add comprehensive v2 constitution
+- Update CLAUDE.md with v2 references
+<<<COMMIT_MESSAGE_END>>>`,
+      } as never);
+
+      const message = await agent.generate('prompt', '/tmp');
+
+      // Should clean markers and return only the commit message
+      expect(message).toBe(
+        `feat: add constitution v2 and improve documentation
+
+- Add comprehensive v2 constitution
+- Update CLAUDE.md with v2 references`,
+      );
+    });
+
+    it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
+      // Mock execa to return response with markers and extra whitespace
+      mockExeca.mockResolvedValue({
+        stdout: `
+<<<COMMIT_MESSAGE_START>>>
+
+feat: add feature
+
+- Implement new functionality
+<<<COMMIT_MESSAGE_END>>>
+`,
+      } as never);
+
+      const message = await agent.generate('prompt', '/tmp');
+
+      // Should clean markers and trim whitespace
+      expect(message).toBe(`feat: add feature
+
+- Implement new functionality`);
+    });
   });
 });
