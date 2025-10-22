@@ -77,9 +77,9 @@ describe('AgentError', () => {
     });
 
     it('should include installation instructions for Codex', () => {
-      const error = AgentError.cliNotFound('codex-sh', 'Codex CLI');
+      const error = AgentError.cliNotFound('codex', 'Codex CLI');
 
-      expect(error.suggestedAction).toContain('npm install -g codex-sh');
+      expect(error.suggestedAction).toContain('npm install -g codex');
     });
   });
 

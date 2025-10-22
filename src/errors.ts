@@ -117,7 +117,7 @@ export class AgentError extends Error {
    *
    * Includes installation instructions for the specific CLI.
    *
-   * @param command - The CLI command that was not found (e.g., "claude", "codex-sh")
+   * @param command - The CLI command that was not found (e.g., "claude", "codex")
    * @param agentName - Human-readable name of the agent (e.g., "Claude CLI")
    * @returns AgentError with installation instructions
    *
@@ -137,11 +137,11 @@ export class AgentError extends Error {
   brew install claude-cli
 
 Documentation: https://docs.anthropic.com/claude/docs/claude-cli`;
-    } else if (command === 'codex-sh') {
+    } else if (command === 'codex') {
       installInstructions = `To install Codex CLI:
-  npm install -g codex-sh
+  npm install -g codex
 
-For more information: https://github.com/your-org/codex-sh`;
+For more information: https://github.com/your-org/codex`;
     } else {
       installInstructions = `Please install the ${command} CLI and ensure it's in your PATH.`;
     }

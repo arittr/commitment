@@ -144,7 +144,7 @@ interface Agent {
 
 **External tools:**
 - Claude CLI (`claude`) - Primary agent
-- Codex CLI (`codex-sh`) - Secondary agent
+- Codex CLI (`codex`) - Secondary agent
 
 See: https://github.com/anthropics/anthropic-sdk-typescript (Claude)
 See: https://cursor.sh (Codex via Cursor)

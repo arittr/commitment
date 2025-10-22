@@ -259,9 +259,9 @@ const result = match(provider)
 **Purpose:** Secondary AI provider (fallback)
 **Status:** ✅ APPROVED
 
-**Command:** `codex-sh --print <prompt>`
+**Command:** `codex --print <prompt>`
 
-**Detection:** Check for `codex-sh` in PATH
+**Detection:** Check for `codex` in PATH
 
 ### Future Providers
 
