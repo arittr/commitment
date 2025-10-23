@@ -35,6 +35,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -42,6 +43,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
@@ -49,6 +51,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 8, specificity: 9 },
           overallScore: 9.0,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -77,6 +80,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -84,6 +88,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -91,6 +96,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -119,12 +125,14 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 8, specificity: 8 },
           overallScore: 8.75,
+          responseTimeMs: 1200,
           status: 'success',
         },
         {
           attemptNumber: 2,
           failureReason: 'Invalid conventional commit format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -132,6 +140,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 7, specificity: 8 },
           overallScore: 8.0,
+          responseTimeMs: 1100,
           status: 'success',
         },
       ];
@@ -162,12 +171,14 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 7, conventionalFormat: 8, scope: 7, specificity: 7 },
           overallScore: 7.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
           attemptNumber: 2,
           failureReason: 'Failed to remove COT artifacts',
           failureType: 'cleaning',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -175,6 +186,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add better',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1300,
           status: 'success',
         },
       ];
@@ -202,6 +214,7 @@ describe('MetaEvaluator', () => {
           attemptNumber: 1,
           failureReason: 'Agent timeout',
           failureType: 'generation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -209,12 +222,14 @@ describe('MetaEvaluator', () => {
           commitMessage: 'fix: resolve issue',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 7, specificity: 7 },
           overallScore: 7.75,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
           attemptNumber: 3,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -242,12 +257,14 @@ describe('MetaEvaluator', () => {
           attemptNumber: 1,
           failureReason: 'ENOENT',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 2,
           failureReason: 'Timeout',
           failureType: 'generation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -255,6 +272,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'chore: update',
           metrics: { clarity: 6, conventionalFormat: 7, scope: 6, specificity: 6 },
           overallScore: 6.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -282,18 +300,21 @@ describe('MetaEvaluator', () => {
           attemptNumber: 1,
           failureReason: 'CLI not found',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 2,
           failureReason: 'CLI not found',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 3,
           failureReason: 'CLI not found',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -323,18 +344,21 @@ describe('MetaEvaluator', () => {
           attemptNumber: 1,
           failureReason: 'Bad format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 2,
           failureReason: 'Bad format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 3,
           failureReason: 'Bad format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -363,6 +387,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         // Only 2 attempts - invalid!
@@ -371,6 +396,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -386,6 +412,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -393,6 +420,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -400,6 +428,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: add',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -419,12 +448,14 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: first',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 7, specificity: 7 },
           overallScore: 7.75,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
           attemptNumber: 2,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -432,6 +463,7 @@ describe('MetaEvaluator', () => {
           commitMessage: 'feat: third',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 8, specificity: 8 },
           overallScore: 8.75,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
