@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
  * Tests the orchestration of evaluation using dependency injection.
  *
  * NOTE: These tests verify the public API by injecting a mock agent.
- * We use a simple manual mock instead of Bun's mock() due to CI inconsistencies.
+ * We use an object property for the mock to ensure reliable closure behavior in CI.
  */
 
 import { EvaluationError } from '../../errors';
@@ -15,13 +15,20 @@ import type { EvalMetrics } from '../schemas';
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
-  let mockEvaluateImpl: () => Promise<{ feedback: string; metrics: EvalMetrics }>;
+
+  // Use an object property instead of a variable for more reliable closure behavior
+  const mockState = {
+    evaluateImpl: async (): Promise<{ feedback: string; metrics: EvalMetrics }> => ({
+      feedback: 'ERROR: Mock not configured',
+      metrics: { accuracy: -1, clarity: -1, conventionalCompliance: -1, detailLevel: -1 },
+    }),
+  };
 
   beforeEach(() => {
     // Create a simple manual mock
     const mockAgent = {
+      evaluate: async () => mockState.evaluateImpl(),
       name: 'chatgpt',
-      evaluate: async () => mockEvaluateImpl(),
     } as any;
 
     // Inject mock agent via constructor
@@ -47,7 +54,7 @@ describe('Evaluator', () => {
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
       // Configure mock to return specific response
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: mockFeedback,
         metrics: mockMetrics,
       });
@@ -73,7 +80,7 @@ describe('Evaluator', () => {
 
     it('should include valid timestamp in ISO format', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Good',
         metrics: { accuracy: 8, clarity: 8, conventionalCompliance: 8, detailLevel: 8 },
       });
@@ -88,7 +95,7 @@ describe('Evaluator', () => {
 
     it('should calculate overall score correctly as average of 4 metrics', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Good',
         metrics: { accuracy: 9, clarity: 8, conventionalCompliance: 10, detailLevel: 7 },
       });
@@ -102,7 +109,7 @@ describe('Evaluator', () => {
 
     it('should handle perfect scores correctly', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Perfect',
         metrics: { accuracy: 10, clarity: 10, conventionalCompliance: 10, detailLevel: 10 },
       });
@@ -116,7 +123,7 @@ describe('Evaluator', () => {
 
     it('should handle minimum scores correctly', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Poor',
         metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
       });
@@ -131,7 +138,7 @@ describe('Evaluator', () => {
     it('should propagate EvaluationError from agent', async () => {
       // Arrange
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
-      mockEvaluateImpl = async () => {
+      mockState.evaluateImpl = async () => {
         throw mockError;
       };
 
@@ -148,7 +155,7 @@ describe('Evaluator', () => {
     it('should propagate evaluation failed error from agent', async () => {
       // Arrange
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
-      mockEvaluateImpl = async () => {
+      mockState.evaluateImpl = async () => {
         throw mockError;
       };
 
@@ -164,7 +171,7 @@ describe('Evaluator', () => {
 
     it('should work with codex agent name', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Well structured',
         metrics: { accuracy: 8, clarity: 9, conventionalCompliance: 9, detailLevel: 8 },
       });
@@ -179,7 +186,7 @@ describe('Evaluator', () => {
 
     it('should include all metrics in result', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Test feedback',
         metrics: { accuracy: 7, clarity: 6, conventionalCompliance: 8, detailLevel: 9 },
       });
@@ -196,7 +203,7 @@ describe('Evaluator', () => {
 
     it('should handle floating point scores correctly', async () => {
       // Arrange
-      mockEvaluateImpl = async () => ({
+      mockState.evaluateImpl = async () => ({
         feedback: 'Good',
         metrics: { accuracy: 8.5, clarity: 7.5, conventionalCompliance: 9, detailLevel: 8 },
       });
