@@ -10,12 +10,7 @@ import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
  */
 
 // Create a mock evaluate function that can be reconfigured per test
-const mockEvaluateFn = mock((_commitMessage: string, _gitDiff: string, _gitStatus: string) =>
-  Promise.resolve({
-    feedback: '',
-    metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-  })
-);
+const mockEvaluateFn = mock();
 
 // Mock ChatGPT agent module BEFORE importing Evaluator
 mock.module('../chatgpt-agent.js', () => ({
