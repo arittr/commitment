@@ -109,30 +109,32 @@ const loggerSchema = z.object({
  * const validatedConfig = validateGeneratorConfig(config);
  * ```
  */
-export const commitMessageGeneratorConfigSchema = z.object({
-  /**
-   * AI agent to use for commit message generation
-   * Valid options: 'claude' | 'codex'
-   * Defaults to 'claude' if not specified
-   */
-  agent: agentNameSchema.optional(),
+export const commitMessageGeneratorConfigSchema = z
+  .object({
+    /**
+     * AI agent to use for commit message generation
+     * Valid options: 'claude' | 'codex'
+     * Defaults to 'claude' if not specified
+     */
+    agent: agentNameSchema.optional(),
 
-  /**
-   * Enable/disable AI generation (default: true)
-   * When false, falls back to rule-based generation
-   */
-  enableAI: z.boolean().optional(),
+    /**
+     * Enable/disable AI generation (default: true)
+     * When false, falls back to rule-based generation
+     */
+    enableAI: z.boolean().optional(),
 
-  /**
-   * Custom logger function
-   */
-  logger: loggerSchema.optional(),
+    /**
+     * Custom logger function
+     */
+    logger: loggerSchema.optional(),
 
-  /**
-   * Custom signature to append to commits
-   */
-  signature: z.string().optional(),
-});
+    /**
+     * Custom signature to append to commits
+     */
+    signature: z.string().optional(),
+  })
+  .passthrough(); // Allow extra fields like gitProvider (not validated but preserved)
 
 /**
  * TypeScript types inferred from Zod schemas

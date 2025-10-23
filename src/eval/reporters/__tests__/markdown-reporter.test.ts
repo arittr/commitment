@@ -6,7 +6,7 @@ import type { EvalComparison } from '../../core/types.js';
 import { MarkdownReporter } from '../markdown-reporter.js';
 
 describe('MarkdownReporter', () => {
-  const testResultsDir = join(process.cwd(), 'src/eval/results');
+  const testResultsDir = join(process.cwd(), '.eval-results');
   let createdFiles: string[] = [];
 
   beforeEach(() => {

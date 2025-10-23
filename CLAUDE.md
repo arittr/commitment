@@ -80,7 +80,7 @@ bun run eval:live
 - `src/eval/reporter.ts` - Formats and stores results
 - `src/eval/schemas.ts` - Zod schemas for type safety
 - `src/eval/fixtures/` - Test fixtures (simple, complex, etc.)
-- `src/eval/results/` - Generated results (gitignored)
+- `.eval-results/` - Generated results (gitignored)
 
 **Results:**
 - Timestamped JSON files: `simple-2025-10-23T12-34-56.789Z.json`
