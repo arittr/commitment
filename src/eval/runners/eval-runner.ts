@@ -115,8 +115,9 @@ export class EvalRunner {
       winner,
     };
 
-    // Generate markdown report
-    await this.markdownReporter.generateReport(comparison);
+    // Generate markdown report (use same run directory as JSON files)
+    const runDir = this.jsonReporter.getRunDir();
+    await this.markdownReporter.generateReport(comparison, runDir);
 
     return comparison;
   }
