@@ -89,11 +89,11 @@ describe('BaseAgent', () => {
     it('should call extension points in correct order', async () => {
       const agent = new TestAgent();
 
-      // Mock exec for availability check
+      // Mock exec for availability check (needs non-empty stdout to pass)
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('test prompt', '/test/workdir');
@@ -113,7 +113,7 @@ describe('BaseAgent', () => {
   });
 
   describe('checkAvailability', () => {
-    it('should check CLI availability with which command', async () => {
+    it('should check CLI availability with command -v', async () => {
       const agent = new TestAgent();
 
       mockExec.mockResolvedValue({
@@ -124,18 +124,23 @@ describe('BaseAgent', () => {
 
       await expect(agent.testCheckAvailability('claude', '/test')).resolves.toBeUndefined();
 
-      expect(mockExec).toHaveBeenCalledWith('which', ['claude'], { cwd: '/test' });
+      expect(mockExec).toHaveBeenCalledWith('/bin/sh', ['-c', 'command -v claude'], {
+        cwd: '/tmp',
+      });
     });
 
     it('should throw error when CLI not found', async () => {
       const agent = new TestAgent();
 
-      // Mock ENOENT error
-      const error = new Error('Command "which" not found');
-      mockExec.mockRejectedValue(error);
+      // Mock empty stdout (command -v returns empty when not found)
+      mockExec.mockResolvedValue({
+        exitCode: 0,
+        stderr: '',
+        stdout: '',
+      });
 
       await expect(agent.testCheckAvailability('nonexistent', '/test')).rejects.toThrow(
-        'Command "which" not found'
+        'Command "nonexistent" not found'
       );
     });
 
@@ -161,7 +166,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -180,7 +185,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -196,7 +201,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -214,7 +219,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -230,7 +235,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
@@ -245,7 +250,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       for (const type of validTypes) {
@@ -263,7 +268,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -279,7 +284,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       const result = await agent.generate('prompt', '/test');
@@ -294,7 +299,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       // Should succeed with "test" in message
@@ -311,7 +316,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
@@ -329,7 +334,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow('Execution failed');
@@ -343,7 +348,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(
@@ -359,7 +364,7 @@ describe('BaseAgent', () => {
       mockExec.mockResolvedValue({
         exitCode: 0,
         stderr: '',
-        stdout: '',
+        stdout: '/usr/bin/TestAgent',
       });
 
       await expect(agent.generate('prompt', '/test')).rejects.toThrow(

@@ -130,9 +130,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       expect(existsSync(reportPath)).toBe(true);
@@ -151,9 +152,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -173,9 +175,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -189,9 +192,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -211,9 +215,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -227,9 +232,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -249,9 +255,10 @@ describe('MarkdownReporter', () => {
         comparison.codexResult.finalScore = 8.0;
       }
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -328,9 +335,10 @@ describe('MarkdownReporter', () => {
         winner: 'tie',
       };
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -344,9 +352,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -365,9 +374,10 @@ describe('MarkdownReporter', () => {
         winner: 'claude',
       };
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -382,9 +392,10 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
@@ -398,9 +409,11 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison, testResultsDir);
+      // Use a test runDir
+      const runDir = '2025-01-01T00-00-00.000Z';
+      await reporter.generateReport(comparison, runDir);
 
-      const reportPath = join(testResultsDir, 'latest-report.md');
+      const reportPath = join(testResultsDir, runDir, 'report.md');
       createdFiles.push(reportPath);
 
       const content = readFileSync(reportPath, 'utf-8');
