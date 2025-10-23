@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { afterAll, describe, expect, it, mock } from 'bun:test';
 
 // Mock the shell module BEFORE importing BaseAgent
 const mockExec = mock(() => Promise.resolve({ exitCode: 0, stderr: '', stdout: '' }));
@@ -391,5 +391,10 @@ describe('BaseAgent', () => {
         'feat(core): add new feature\n\nImplemented feature X with support for Y.\nBreaking change: API signature changed.'
       );
     });
+  });
+
+  afterAll(() => {
+    // Clean up module mocks after this test suite
+    mock.restore();
   });
 });
