@@ -40,7 +40,7 @@ describe('Validation Integration Tests', () => {
       };
 
       expect(() => validateCliOptions(invalidOptions)).toThrow(ZodError);
-      expect(() => validateCliOptions(invalidOptions)).toThrow(/expected boolean/);
+      expect(() => validateCliOptions(invalidOptions)).toThrow(/Expected boolean/);
     });
 
     it('should catch invalid agent type in CLI options', () => {

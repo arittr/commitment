@@ -232,6 +232,57 @@ console.log(diff);
 
 **Why:** Extracted helpers can be unit tested independently. Inline logic requires integration tests.
 
+**4. Evaluation as Standalone Script (Not Tests)**
+
+**Mandatory:** Evaluation systems that make external API calls MUST be standalone scripts, NOT test files.
+
+```typescript
+✅ V3 Pattern (standalone script):
+// src/eval/run-eval.ts - Standalone entry point
+#!/usr/bin/env bun
+import { EvalRunner } from './runner';
+import { EvalReporter } from './reporter';
+
+const runner = new EvalRunner();
+const reporter = new EvalReporter('./src/eval/results');
+
+// Run evaluation with real API calls
+const comparisons = await runner.runAll('mocked');
+reporter.storeMarkdownReport(comparisons);
+
+// Usage: bun run eval (NOT bun test)
+
+❌ Evaluation as Test:
+// src/eval/__tests__/baseline.eval.test.ts
+describe('Eval System', () => {
+  it('should compare agents', async () => {
+    // ❌ Makes expensive API calls during test run
+    // ❌ Times out after 60s
+    // ❌ Runs in CI unnecessarily
+    const result = await runner.runAll();
+    expect(result).toBeDefined();
+  }, { timeout: 120000 });
+});
+```
+
+**Why:**
+- Evaluations make expensive API calls (costs money)
+- Take 60-120 seconds to run
+- Generate reports and store results (side effects)
+- Should be run on-demand, not in CI
+- Test frameworks are for fast, deterministic tests
+
+**Package.json scripts:**
+```json
+{
+  "scripts": {
+    "eval": "bun run src/eval/run-eval.ts",
+    "eval:fixture": "bun run src/eval/run-eval.ts --fixture",
+    "test": "bun test"  // No evals in regular tests
+  }
+}
+```
+
 ### Patterns Preserved from V2
 
 **1. Direct Instantiation (No Factories)**

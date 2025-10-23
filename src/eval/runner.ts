@@ -26,14 +26,14 @@
  */
 
 import { execSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { EvaluationError } from '../errors';
 import { CommitMessageGenerator } from '../generator';
 import { hasContent } from '../utils/guards';
 import { Evaluator } from './evaluator';
-import type { EvalComparison, EvalFixture } from './schemas';
+import type { EvalComparison, EvalFixture, EvalResult } from './schemas';
 
 /**
  * EvalRunner class that loads fixtures and runs evaluation pipeline
@@ -61,7 +61,7 @@ export class EvalRunner {
   }
 
   /**
-   * Load a fixture by name from examples/eval-fixtures/
+   * Load a fixture by name from src/eval/fixtures/
    *
    * Supports two modes:
    * - 'mocked': Load pre-recorded git output from mock-status.txt and mock-diff.txt (fast)
@@ -89,7 +89,7 @@ export class EvalRunner {
     // Construct fixture path based on mode
     const fixturePath = join(
       process.cwd(),
-      'examples/eval-fixtures',
+      'src/eval/fixtures',
       mode === 'live' ? `${name}-live` : name
     );
 
@@ -140,36 +140,43 @@ export class EvalRunner {
   }
 
   /**
-   * Run evaluation for a single fixture with both agents
+   * Run evaluation for a single fixture with one or both agents
    *
    * Pipeline:
-   * 1. Generate commit message with Claude
-   * 2. Generate commit message with Codex
-   * 3. Evaluate Claude's message with ChatGPT
-   * 4. Evaluate Codex's message with ChatGPT
-   * 5. Compare scores and determine winner (>0.5 threshold)
+   * 1. Generate commit message with specified agent(s)
+   * 2. Evaluate message(s) with ChatGPT
+   * 3. Compare scores and determine winner (if both agents)
    *
    * Note: For evaluation purposes, we use a minimal task that just describes the fixture.
    * The actual changeset comes from the fixture's git diff/status.
    *
    * @param fixture - The fixture to evaluate
+   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
    * @param workdir - Working directory for generators (defaults to process.cwd())
-   * @returns EvalComparison with both results and winner
+   * @returns EvalComparison with result(s) and winner (if both agents)
    * @throws {EvaluationError} If generation or evaluation fails
    *
    * @example
    * ```typescript
    * const runner = new EvalRunner();
    * const fixture = runner.loadFixture('simple', 'mocked');
-   * const comparison = await runner.runFixture(fixture);
    *
+   * // Compare both agents
+   * const comparison = await runner.runFixture(fixture);
    * console.log(comparison.winner); // 'claude' | 'codex' | 'tie'
-   * console.log(comparison.scoreDiff); // 1.25 (positive = Claude wins)
-   * console.log(comparison.claudeResult.overallScore); // 8.75
-   * console.log(comparison.codexResult.overallScore); // 7.50
+   *
+   * // Single agent
+   * const claudeOnly = await runner.runFixture(fixture, 'claude');
+   * console.log(claudeOnly.claudeResult.overallScore); // 8.75
    * ```
    */
-  async runFixture(fixture: EvalFixture, workdir: string = process.cwd()): Promise<EvalComparison> {
+  async runFixture(
+    fixture: EvalFixture,
+    agent?: 'claude' | 'codex',
+    workdir: string = process.cwd()
+  ): Promise<EvalComparison> {
+    console.log(`[Runner] Starting evaluation for fixture: ${fixture.name}`);
+
     // Create a minimal task from the fixture
     const task = {
       description: fixture.description,
@@ -177,59 +184,84 @@ export class EvalRunner {
       title: `Evaluate ${fixture.name}`,
     };
 
-    // 1. Generate commit message with Claude
-    const claudeGenerator = new CommitMessageGenerator({
-      agent: 'claude',
-      enableAI: true,
-    });
+    const runClaude = !agent || agent === 'claude';
+    const runCodex = !agent || agent === 'codex';
 
-    const claudeMessage = await claudeGenerator.generateCommitMessage(task, {
-      workdir,
-    });
+    let claudeResult: EvalResult | undefined;
+    let codexResult: EvalResult | undefined;
 
-    // Type assertion: At runtime, mocked generators may return null
-    if (!hasContent(claudeMessage as string | null)) {
-      throw EvaluationError.generationFailed('claude', 'No message generated');
+    // 1. Generate and evaluate Claude (if needed)
+    if (runClaude) {
+      console.log('[Runner] Creating Claude generator...');
+      const claudeGenerator = new CommitMessageGenerator({
+        agent: 'claude',
+        enableAI: true,
+      });
+
+      console.log('[Runner] Generating Claude message...');
+      const claudeMessage = await claudeGenerator.generateCommitMessage(task, {
+        workdir,
+      });
+      console.log('[Runner] Claude message generated');
+
+      // Type assertion: At runtime, mocked generators may return null
+      if (!hasContent(claudeMessage as string | null)) {
+        throw EvaluationError.generationFailed('claude', 'No message generated');
+      }
+
+      console.log('[Runner] Evaluating Claude message with ChatGPT...');
+      claudeResult = await this.evaluator.evaluate(
+        claudeMessage,
+        fixture.gitStatus,
+        fixture.gitDiff,
+        fixture.name,
+        'claude'
+      );
+      console.log('[Runner] Claude evaluation complete');
     }
 
-    // 2. Generate commit message with Codex
-    const codexGenerator = new CommitMessageGenerator({
-      agent: 'codex',
-      enableAI: true,
-    });
+    // 2. Generate and evaluate Codex (if needed)
+    if (runCodex) {
+      console.log('[Runner] Creating Codex generator...');
+      const codexGenerator = new CommitMessageGenerator({
+        agent: 'codex',
+        enableAI: true,
+      });
 
-    const codexMessage = await codexGenerator.generateCommitMessage(task, {
-      workdir,
-    });
+      console.log('[Runner] Generating Codex message...');
+      const codexMessage = await codexGenerator.generateCommitMessage(task, {
+        workdir,
+      });
+      console.log('[Runner] Codex message generated');
 
-    // Type assertion: At runtime, mocked generators may return null
-    if (!hasContent(codexMessage as string | null)) {
-      throw EvaluationError.generationFailed('codex', 'No message generated');
+      // Type assertion: At runtime, mocked generators may return null
+      if (!hasContent(codexMessage as string | null)) {
+        throw EvaluationError.generationFailed('codex', 'No message generated');
+      }
+
+      console.log('[Runner] Evaluating Codex message with ChatGPT...');
+      codexResult = await this.evaluator.evaluate(
+        codexMessage,
+        fixture.gitStatus,
+        fixture.gitDiff,
+        fixture.name,
+        'codex'
+      );
+      console.log('[Runner] Codex evaluation complete');
     }
 
-    // 3. Evaluate Claude's message
-    const claudeResult = await this.evaluator.evaluate(
-      claudeMessage,
-      fixture.gitStatus,
-      fixture.gitDiff,
-      fixture.name,
-      'claude'
-    );
+    // 3. Compare results and determine winner (if both agents ran)
+    let scoreDiff: number;
+    let winner: 'claude' | 'codex' | 'tie' | undefined;
 
-    // 4. Evaluate Codex's message
-    const codexResult = await this.evaluator.evaluate(
-      codexMessage,
-      fixture.gitStatus,
-      fixture.gitDiff,
-      fixture.name,
-      'codex'
-    );
-
-    // 5. Compare results and determine winner
-    const scoreDiff = claudeResult.overallScore - codexResult.overallScore;
-
-    // Winner threshold: Must have >0.5 point difference
-    const winner = Math.abs(scoreDiff) < 0.5 ? 'tie' : scoreDiff > 0 ? 'claude' : 'codex';
+    if (claudeResult && codexResult) {
+      scoreDiff = claudeResult.overallScore - codexResult.overallScore;
+      // Winner threshold: Must have >0.5 point difference
+      winner = Math.abs(scoreDiff) < 0.5 ? 'tie' : scoreDiff > 0 ? 'claude' : 'codex';
+    } else {
+      scoreDiff = 0;
+      winner = undefined;
+    }
 
     return {
       claudeResult,
@@ -241,12 +273,13 @@ export class EvalRunner {
   }
 
   /**
-   * Run all fixtures in examples/eval-fixtures/
+   * Run all fixtures in src/eval/fixtures/
    *
    * Discovers fixtures by scanning the directory and runs each one.
    * Results are returned in discovery order.
    *
    * @param mode - Loading mode ('mocked' or 'live')
+   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
    * @returns Array of EvalComparison results for all fixtures
    * @throws {EvaluationError} If any generation or evaluation fails
    *
@@ -260,13 +293,26 @@ export class EvalRunner {
    *
    * // Run all live fixtures (comprehensive)
    * const liveResults = await runner.runAll('live');
+   *
+   * // Run only Claude on all fixtures
+   * const claudeResults = await runner.runAll('mocked', 'claude');
    * ```
    */
-  async runAll(mode: 'live' | 'mocked' = 'mocked'): Promise<EvalComparison[]> {
-    const fixturesDir = join(process.cwd(), 'examples/eval-fixtures');
+  async runAll(
+    mode: 'live' | 'mocked' = 'mocked',
+    agent?: 'claude' | 'codex'
+  ): Promise<EvalComparison[]> {
+    const fixturesDir = join(process.cwd(), 'src/eval/fixtures');
 
     // Discover fixtures by scanning directory
     const fixtureNames = readdirSync(fixturesDir).filter((name) => {
+      const fullPath = join(fixturesDir, name);
+
+      // Only include directories
+      if (!statSync(fullPath).isDirectory()) {
+        return false;
+      }
+
       if (mode === 'live') {
         // Live mode: Only include directories ending with '-live'
         return name.endsWith('-live');
@@ -285,7 +331,7 @@ export class EvalRunner {
     // Run all fixtures sequentially (to avoid overloading APIs)
     const results: EvalComparison[] = [];
     for (const fixture of fixtures) {
-      const result = await this.runFixture(fixture);
+      const result = await this.runFixture(fixture, agent);
       results.push(result);
     }
 

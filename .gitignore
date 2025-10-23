@@ -30,7 +30,6 @@ coverage/
 
 # Evaluation results (runtime generated)
 .eval-results/
-.eval-results-test/
 
 # Misc
 *.bak

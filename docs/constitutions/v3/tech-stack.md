@@ -266,19 +266,63 @@ const result = match(provider)
 
 **Detection:** Check for `codex` in PATH
 
+### OpenAI Agents SDK
+
+**Purpose:** Evaluation system - ChatGPT as commit message judge
+**Status:** ✅ APPROVED (eval system only)
+
+**Package:** `@openai/agents`
+
+**Rationale:**
+- Structured output with Zod schemas
+- Built-in agent loop handling
+- Type-safe response parsing
+
+**Usage Pattern:**
+```typescript
+import { Agent, run } from '@openai/agents';
+import { z } from 'zod';
+
+// Define structured output schema
+const evaluationSchema = z.object({
+  score: z.number().min(0).max(10),
+  feedback: z.string(),
+});
+
+// Create agent with outputType
+const agent = new Agent({
+  name: 'Evaluator',
+  instructions: 'Your instructions here...',
+  model: 'gpt-5',  // Always use gpt-5 for OpenAI SDKs
+  outputType: evaluationSchema,
+});
+
+// Run and access structured output
+const result = await run(agent, 'Your prompt here');
+const output = result.finalOutput;  // Typed as z.infer<typeof evaluationSchema>
+```
+
+**Critical Rules:**
+- **Always use `gpt-5`** as the model name (NOT `gpt-4o`, `gpt-4-turbo`, etc.)
+- Use `outputType` with Zod schema for structured output
+- Access data via `result.finalOutput`, NOT `result.toolCalls`
+- Do NOT use `tool()` for structured output - use `outputType` instead
+
+**Scope:** Evaluation system only (`src/eval/`). NOT for core commit generation.
+
 ### Future Providers
 
 **Status:** 🟡 UNDER CONSIDERATION
 
 Potential additions:
-- OpenAI API (direct API call, not CLI)
 - Gemini API
 - Local LLMs (ollama, etc.)
+- Additional OpenAI models (for commit generation, not evaluation)
 
 **Adding new providers:**
-1. Must fit provider abstraction (BaseCLIProvider or BaseAPIProvider)
-2. Must support auto-detection
-3. Must parse conventional commit format
+1. Must follow agent pattern (~40-60 LOC)
+2. Must support availability detection
+3. Must output conventional commit format
 4. Must have tests
 
 ## Workflow Tools
@@ -427,13 +471,16 @@ If commitment grows to multiple packages:
 
 ### API Providers
 
-**Status:** 🟡 UNDER CONSIDERATION
+**Status:** ✅ PARTIALLY ADOPTED
 
-For OpenAI/Anthropic API direct access:
-- Anthropic SDK
-- OpenAI SDK
+Current usage:
+- OpenAI Agents SDK (for evaluation system only)
 
-**Criteria:** Only add if CLI providers insufficient.
+Future consideration:
+- Anthropic SDK (for direct Claude API access)
+- OpenAI SDK (for direct GPT API access, commit generation)
+
+**Criteria:** Add only if specific use case requires API over CLI.
 
 ### Configuration Management
 
