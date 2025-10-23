@@ -13,19 +13,23 @@ import { Evaluator } from '../evaluator';
 import type { EvalMetrics } from '../schemas';
 
 // Create a mock evaluate function that can be reconfigured per test
-const mockEvaluateFn = mock(() =>
-  Promise.resolve({
-    feedback: '',
-    metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-  }),
+const mockEvaluateFn = mock(
+  (_commitMessage: string, _gitDiff: string, _gitStatus: string) =>
+    Promise.resolve({
+      feedback: '',
+      metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+    }),
 );
 
 // Mock ChatGPT agent module
 mock.module('../chatgpt-agent', () => ({
   // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   ChatGPTAgent: class {
-    evaluate = mockEvaluateFn;
     name = 'chatgpt';
+
+    async evaluate(commitMessage: string, gitDiff: string, gitStatus: string) {
+      return mockEvaluateFn(commitMessage, gitDiff, gitStatus);
+    }
   },
 }));
 
@@ -75,7 +79,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - verify the evaluator produces correct output
@@ -96,7 +100,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: test',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - verify timestamp
       expect(result.timestamp).toBeTruthy();
@@ -111,7 +121,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: test',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - overall score should be (9 + 8 + 10 + 7) / 4 = 8.5
       expect(result.overallScore).toBe(8.5);
@@ -125,7 +141,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('feat: perfect', 'A  file.ts', 'diff...', 'test', 'codex');
+      const result = await evaluator.evaluate(
+        'feat: perfect',
+        'A  file.ts',
+        'diff...',
+        'test',
+        'codex'
+      );
 
       // Assert
       expect(result.overallScore).toBe(10);
@@ -152,11 +174,11 @@ describe('Evaluator', () => {
 
       // Act & Assert
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude')
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude')
       ).rejects.toThrow('OpenAI API key is not configured');
     });
 
@@ -167,11 +189,11 @@ describe('Evaluator', () => {
 
       // Act & Assert
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex')
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex')
       ).rejects.toThrow('API rate limit exceeded');
     });
 
@@ -183,7 +205,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('feat: add feature', 'A  file.ts', 'diff...', 'test', 'codex');
+      const result = await evaluator.evaluate(
+        'feat: add feature',
+        'A  file.ts',
+        'diff...',
+        'test',
+        'codex'
+      );
 
       // Assert
       expect(result.agent).toBe('codex');
@@ -198,7 +226,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('test: commit', 'M  test.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'test: commit',
+        'M  test.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - verify all individual metrics are present
       expect(result.metrics.conventionalCompliance).toBe(8);
@@ -215,7 +249,13 @@ describe('Evaluator', () => {
       });
 
       // Act
-      const result = await evaluator.evaluate('fix: update', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: update',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - (8.5 + 7.5 + 9.0 + 8.0) / 4 = 8.25
       expect(result.overallScore).toBeCloseTo(8.25, 2);
