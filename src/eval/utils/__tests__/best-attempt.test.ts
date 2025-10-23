@@ -18,6 +18,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -25,6 +26,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add better feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1200,
           status: 'success',
         },
         {
@@ -32,6 +34,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add good feature',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1100,
           status: 'success',
         },
       ];
@@ -49,6 +52,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 1',
           metrics: { clarity: 8, conventionalFormat: 8, scope: 8, specificity: 8 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -56,6 +60,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 2',
           metrics: { clarity: 8, conventionalFormat: 8, scope: 8, specificity: 8 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -63,6 +68,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 3',
           metrics: { clarity: 8, conventionalFormat: 8, scope: 8, specificity: 8 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -79,6 +85,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -96,6 +103,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8.5, conventionalFormat: 9.5, scope: 8.5, specificity: 7.5 },
           overallScore: 8.5,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -103,6 +111,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add better feature',
           metrics: { clarity: 9.2, conventionalFormat: 9.8, scope: 9.3, specificity: 9.1 },
           overallScore: 9.35,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -121,6 +130,7 @@ describe('getBestAttempt', () => {
           attemptNumber: 1,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -128,12 +138,14 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
           attemptNumber: 3,
           failureReason: 'Failed to clean',
           failureType: 'cleaning',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -151,12 +163,14 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 1',
           metrics: { clarity: 6, conventionalFormat: 7, scope: 6, specificity: 6 },
           overallScore: 6.25,
+          responseTimeMs: 900,
           status: 'success',
         },
         {
           attemptNumber: 2,
           failureReason: 'Timeout',
           failureType: 'generation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -164,6 +178,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 3',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -182,18 +197,21 @@ describe('getBestAttempt', () => {
           attemptNumber: 1,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 2,
           failureReason: 'Failed to clean',
           failureType: 'cleaning',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 3,
           failureReason: 'ENOENT',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -208,6 +226,7 @@ describe('getBestAttempt', () => {
           attemptNumber: 1,
           failureReason: 'Agent failed',
           failureType: 'generation',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -232,6 +251,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'poor message',
           metrics: { clarity: 0, conventionalFormat: 0, scope: 0, specificity: 0 },
           overallScore: 0,
+          responseTimeMs: 800,
           status: 'success',
         },
         {
@@ -239,6 +259,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'good message',
           metrics: { clarity: 5, conventionalFormat: 5, scope: 5, specificity: 5 },
           overallScore: 5.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -256,6 +277,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'perfect message',
           metrics: { clarity: 10, conventionalFormat: 10, scope: 10, specificity: 10 },
           overallScore: 10.0,
+          responseTimeMs: 1300,
           status: 'success',
         },
         {
@@ -263,6 +285,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'good message',
           metrics: { clarity: 9, conventionalFormat: 9, scope: 9, specificity: 9 },
           overallScore: 9.0,
+          responseTimeMs: 1100,
           status: 'success',
         },
       ];
@@ -280,6 +303,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: third',
           metrics: { clarity: 7, conventionalFormat: 7, scope: 7, specificity: 7 },
           overallScore: 7.0,
+          responseTimeMs: 950,
           status: 'success',
         },
         {
@@ -287,6 +311,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: first',
           metrics: { clarity: 9, conventionalFormat: 9, scope: 9, specificity: 9 },
           overallScore: 9.0,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
@@ -294,6 +319,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: second',
           metrics: { clarity: 8, conventionalFormat: 8, scope: 8, specificity: 8 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -313,6 +339,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
       ];
@@ -336,6 +363,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 1',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -343,6 +371,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 2',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -364,6 +393,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 1',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 7 },
           overallScore: 8.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -371,6 +401,7 @@ describe('getBestAttempt', () => {
           commitMessage: 'feat: add feature 2',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];

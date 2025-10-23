@@ -36,7 +36,7 @@ describe('CLIReporter', () => {
 
   describe('reportAttemptSuccess', () => {
     it('should report success with green color and score', () => {
-      reporter.reportAttemptSuccess(1, 8.5);
+      reporter.reportAttemptSuccess(1, 8.5, 1000);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -45,7 +45,7 @@ describe('CLIReporter', () => {
     });
 
     it('should handle perfect score', () => {
-      reporter.reportAttemptSuccess(1, 10.0);
+      reporter.reportAttemptSuccess(1, 10.0, 1200);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -53,7 +53,7 @@ describe('CLIReporter', () => {
     });
 
     it('should handle low score', () => {
-      reporter.reportAttemptSuccess(1, 2.3);
+      reporter.reportAttemptSuccess(1, 2.3, 900);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -63,7 +63,7 @@ describe('CLIReporter', () => {
 
   describe('reportAttemptFailure', () => {
     it('should report cleaning failure with red color', () => {
-      reporter.reportAttemptFailure(1, 'cleaning');
+      reporter.reportAttemptFailure(1, 'cleaning', 100);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -72,7 +72,7 @@ describe('CLIReporter', () => {
     });
 
     it('should report validation failure', () => {
-      reporter.reportAttemptFailure(2, 'validation');
+      reporter.reportAttemptFailure(2, 'validation', 150);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -81,7 +81,7 @@ describe('CLIReporter', () => {
     });
 
     it('should report generation failure', () => {
-      reporter.reportAttemptFailure(3, 'generation');
+      reporter.reportAttemptFailure(3, 'generation', 200);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -90,7 +90,7 @@ describe('CLIReporter', () => {
     });
 
     it('should report api_error failure', () => {
-      reporter.reportAttemptFailure(1, 'api_error');
+      reporter.reportAttemptFailure(1, 'api_error', 50);
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const call = consoleLogSpy.mock.calls[0]?.[0] as string;
@@ -140,15 +140,15 @@ describe('CLIReporter', () => {
     it('should report complete attempt sequence with mixed results', () => {
       // Attempt 1: success
       reporter.reportAttemptStart(1);
-      reporter.reportAttemptSuccess(1, 8.5);
+      reporter.reportAttemptSuccess(1, 8.5, 1000);
 
       // Attempt 2: failure
       reporter.reportAttemptStart(2);
-      reporter.reportAttemptFailure(2, 'validation');
+      reporter.reportAttemptFailure(2, 'validation', 100);
 
       // Attempt 3: success
       reporter.reportAttemptStart(3);
-      reporter.reportAttemptSuccess(3, 7.8);
+      reporter.reportAttemptSuccess(3, 7.8, 1100);
 
       // Summary
       reporter.reportSummary('2/3', 7.2);
@@ -160,13 +160,13 @@ describe('CLIReporter', () => {
 
     it('should report all failures scenario', () => {
       reporter.reportAttemptStart(1);
-      reporter.reportAttemptFailure(1, 'cleaning');
+      reporter.reportAttemptFailure(1, 'cleaning', 100);
 
       reporter.reportAttemptStart(2);
-      reporter.reportAttemptFailure(2, 'generation');
+      reporter.reportAttemptFailure(2, 'generation', 150);
 
       reporter.reportAttemptStart(3);
-      reporter.reportAttemptFailure(3, 'api_error');
+      reporter.reportAttemptFailure(3, 'api_error', 50);
 
       reporter.reportSummary('0/3', 0.0);
 
