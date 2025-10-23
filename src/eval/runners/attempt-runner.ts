@@ -52,10 +52,15 @@ export class AttemptRunner {
    *
    * @param evaluator - Single-attempt evaluator instance
    * @param reporter - CLI reporter for progress updates
+   * @param generatorFactory - Optional factory function to create generators (for testing)
    */
   constructor(
     private readonly evaluator: SingleAttemptEvaluator,
-    private readonly reporter: CLIReporter
+    private readonly reporter: CLIReporter,
+    private readonly generatorFactory?: (
+      agentName: 'claude' | 'codex',
+      fixture: Fixture
+    ) => CommitMessageGenerator
   ) {}
 
   /**
@@ -169,18 +174,10 @@ export class AttemptRunner {
    * @throws {Error} If generation fails
    */
   private async _generateMessage(agentName: string, fixture: Fixture): Promise<string> {
-    // Create mock git provider with fixture data
-    const mockGit = new MockGitProvider({
-      diff: fixture.diff,
-      status: fixture.status,
-    });
-
-    // Create generator with mock git provider
-    const generator = new CommitMessageGenerator({
-      agent: agentName as 'claude' | 'codex',
-      enableAI: true,
-      gitProvider: mockGit,
-    });
+    // Use factory if provided (for testing), otherwise create default generator
+    const generator = this.generatorFactory
+      ? this.generatorFactory(agentName as 'claude' | 'codex', fixture)
+      : this._createDefaultGenerator(agentName as 'claude' | 'codex', fixture);
 
     // Create task from fixture
     const task = {
@@ -196,6 +193,29 @@ export class AttemptRunner {
     const message = await generator.generateCommitMessage(task, { workdir });
 
     return message;
+  }
+
+  /**
+   * Create default generator with mock git provider
+   *
+   * @param agentName - Agent to use
+   * @param fixture - Fixture data
+   * @returns CommitMessageGenerator instance
+   */
+  private _createDefaultGenerator(
+    agentName: 'claude' | 'codex',
+    fixture: Fixture
+  ): CommitMessageGenerator {
+    const mockGit = new MockGitProvider({
+      diff: fixture.diff,
+      status: fixture.status,
+    });
+
+    return new CommitMessageGenerator({
+      agent: agentName,
+      enableAI: true,
+      gitProvider: mockGit,
+    });
   }
 
   /**
