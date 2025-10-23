@@ -23,9 +23,11 @@
  * ```
  */
 
-import { Agent, run, type Tool } from '@openai/agents';
+import { Agent, run } from '@openai/agents';
+import { z } from 'zod';
 import { EvaluationError } from '../errors';
 import type { EvalMetrics } from '../eval/schemas';
+import { evalMetricsSchema } from '../eval/schemas';
 
 /**
  * ChatGPT agent for commit message quality evaluation
@@ -69,8 +71,14 @@ export class ChatGPTAgent {
       throw EvaluationError.apiKeyMissing('OpenAI');
     }
 
-    // 2. Initialize OpenAI Agents SDK
+    // 2. Define Zod schema for structured output (reuse evalMetricsSchema)
+    const evaluationSchema = evalMetricsSchema
+      .extend({
+        feedback: z.string().min(1, 'Feedback must not be empty'),
+      })
+      .strict();
 
+    // 3. Initialize OpenAI Agents SDK with outputType for structured output
     const agent = new Agent({
       instructions: `You are an expert at evaluating commit messages according to the Conventional Commits specification.
 
@@ -96,55 +104,15 @@ Evaluate commit messages on these 4 dimensions (0-10 scale):
    - 5: Too verbose or too terse
    - 0: Missing critical details or overwhelming
 
-Provide structured scores and actionable feedback.`,
-      model: 'gpt-4',
+Return a structured evaluation with scores and actionable feedback.`,
+      model: 'gpt-5',
       name: 'commit-evaluator',
-      tools: [
-        {
-          description: 'Score a commit message on multiple dimensions and provide feedback',
-          name: 'score_commit',
-          parameters: {
-            additionalProperties: false,
-            properties: {
-              accuracy: {
-                description: 'Accuracy of description score (0-10)',
-                maximum: 10,
-                minimum: 0,
-                type: 'number',
-              },
-              clarity: {
-                description: 'Clarity and readability score (0-10)',
-                maximum: 10,
-                minimum: 0,
-                type: 'number',
-              },
-              conventionalCompliance: {
-                description: 'Conventional Commits compliance score (0-10)',
-                maximum: 10,
-                minimum: 0,
-                type: 'number',
-              },
-              detailLevel: {
-                description: 'Appropriate detail level score (0-10)',
-                maximum: 10,
-                minimum: 0,
-                type: 'number',
-              },
-              feedback: {
-                description: 'Actionable feedback explaining the scores',
-                type: 'string',
-              },
-            },
-            required: ['conventionalCompliance', 'clarity', 'accuracy', 'detailLevel', 'feedback'],
-            type: 'object',
-          },
-        },
-      ] as Tool[],
+      outputType: evaluationSchema,
     });
 
-    // 3. Call agent with commit message and changeset context
+    // 4. Call agent with commit message and changeset context
     try {
-      const result: unknown = await run(
+      const result = await run(
         agent,
         `Evaluate this commit message:
 
@@ -155,41 +123,30 @@ Git Status:
 ${gitStatus}
 
 Git Diff:
-${gitDiff}
-
-Use the score_commit tool to provide structured evaluation.`
+${gitDiff}`
       );
 
-      // 4. Parse structured response from tool call
+      // 5. Extract structured output from finalOutput
       // Type guard for result structure
       if (
         typeof result !== 'object' ||
         result === null ||
-        !('toolCalls' in result) ||
-        !Array.isArray((result as { toolCalls?: unknown[] }).toolCalls) ||
-        (result as { toolCalls: unknown[] }).toolCalls.length === 0
+        !('finalOutput' in result) ||
+        typeof result.finalOutput !== 'object' ||
+        result.finalOutput === null
       ) {
-        throw new Error('No tool call in response');
+        throw new Error('Invalid response structure from agent');
       }
 
-      const { toolCalls } = result as { toolCalls: Array<{ arguments?: unknown }> };
-      const firstToolCall = toolCalls[0];
-      if (firstToolCall === undefined) {
-        throw new Error('No tool call found in response');
-      }
-      const toolCallArguments = firstToolCall.arguments;
-
-      if (typeof toolCallArguments !== 'object' || toolCallArguments === null) {
-        throw new Error('Tool call missing arguments');
+      // Validate and parse structured output
+      const parsed = evaluationSchema.safeParse(result.finalOutput);
+      if (!parsed.success) {
+        throw EvaluationError.evaluationFailed(
+          `Invalid structured output: ${parsed.error.message}`
+        );
       }
 
-      const scores = toolCallArguments as {
-        accuracy: number;
-        clarity: number;
-        conventionalCompliance: number;
-        detailLevel: number;
-        feedback: string;
-      };
+      const scores = parsed.data;
 
       return {
         feedback: scores.feedback,

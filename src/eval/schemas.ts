@@ -261,8 +261,11 @@ export function validateEvalResult(result: unknown): EvalResult {
  * Head-to-head comparison of two agents on the same fixture.
  * Determines winner based on score difference threshold (>0.5 points).
  *
+ * Supports both comparison mode (both agents) and single-agent mode (one agent only).
+ *
  * @example
  * ```typescript
+ * // Comparison mode (both agents)
  * const comparison: EvalComparison = {
  *   fixture: 'simple-bugfix',
  *   claudeResult: { ... },  // Claude's evaluation
@@ -270,18 +273,25 @@ export function validateEvalResult(result: unknown): EvalResult {
  *   winner: 'claude',       // Claude scored higher
  *   scoreDiff: 1.25         // Claude scored 1.25 points higher
  * };
+ *
+ * // Single-agent mode (Claude only)
+ * const claudeOnly: EvalComparison = {
+ *   fixture: 'simple-bugfix',
+ *   claudeResult: { ... },  // Claude's evaluation
+ *   scoreDiff: 0            // No comparison
+ * };
  * ```
  */
 export const evalComparisonSchema = z.object({
   /**
-   * Claude agent's evaluation result
+   * Claude agent's evaluation result (optional in single-agent mode)
    */
-  claudeResult: evalResultSchema,
+  claudeResult: evalResultSchema.optional(),
 
   /**
-   * Codex agent's evaluation result
+   * Codex agent's evaluation result (optional in single-agent mode)
    */
-  codexResult: evalResultSchema,
+  codexResult: evalResultSchema.optional(),
   /**
    * Name of the fixture being compared
    */
@@ -292,6 +302,7 @@ export const evalComparisonSchema = z.object({
    * Positive: Claude scored higher
    * Negative: Codex scored higher
    * Near zero: Tie
+   * Zero: Single-agent mode (no comparison)
    */
   scoreDiff: z.number().describe('Claude score minus Codex score'),
 
@@ -300,8 +311,9 @@ export const evalComparisonSchema = z.object({
    * - 'claude': Claude scored higher (difference > 0.5)
    * - 'codex': Codex scored higher (difference > 0.5)
    * - 'tie': Score difference <= 0.5
+   * - undefined: Single-agent mode (no comparison)
    */
-  winner: z.enum(['claude', 'codex', 'tie']),
+  winner: z.enum(['claude', 'codex', 'tie']).optional(),
 });
 
 /**

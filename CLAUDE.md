@@ -57,6 +57,66 @@ bun test --watch
 bun test --coverage
 ```
 
+### Evaluation System
+
+The eval system compares Claude vs Codex commit message quality using ChatGPT as a judge. **This is NOT a test** - it's a standalone evaluation script that makes real API calls.
+
+```bash
+# Run all mocked fixtures
+bun run eval
+
+# Run specific fixture
+bun run eval:fixture simple
+
+# Run with live git changes
+bun run eval:live
+```
+
+**Structure:**
+- `src/eval/run-eval.ts` - Main entry point (standalone script)
+- `src/eval/runner.ts` - Orchestrates fixture → generation → evaluation pipeline
+- `src/eval/evaluator.ts` - Wraps ChatGPT agent, calculates scores
+- `src/eval/chatgpt-agent.ts` - ChatGPT agent using OpenAI Agents SDK
+- `src/eval/reporter.ts` - Formats and stores results
+- `src/eval/schemas.ts` - Zod schemas for type safety
+- `src/eval/fixtures/` - Test fixtures (simple, complex, etc.)
+- `src/eval/results/` - Generated results (gitignored)
+
+**Results:**
+- Timestamped JSON files: `simple-2025-10-23T12-34-56.789Z.json`
+- Symlinks to latest: `latest-simple.json`
+- Markdown reports: `latest-report.md`
+
+**OpenAI Agents SDK Pattern:**
+```typescript
+import { Agent, run } from '@openai/agents';
+import { z } from 'zod';
+
+// Define structured output schema
+const schema = z.object({
+  score: z.number().min(0).max(10),
+  feedback: z.string(),
+});
+
+// Create agent with outputType
+const agent = new Agent({
+  name: 'Evaluator',
+  instructions: 'Evaluate on scale 0-10...',
+  model: 'gpt-5',  // Always use gpt-5 for OpenAI SDKs
+  outputType: schema,
+});
+
+// Run and access structured output
+const result = await run(agent, 'Your prompt here');
+const output = result.finalOutput;  // Typed as z.infer<typeof schema>
+```
+
+**Key principles:**
+- Use `outputType` with Zod schema, NOT tools for structured output
+- Access data via `result.finalOutput`, NOT `result.toolCalls`
+- Always use `gpt-5` as the model name for OpenAI Agents SDK
+- Standalone script, not `bun test` (avoids expensive API calls in test suite)
+
 ## Git Workflow with git-spice
 
 **IMPORTANT**: When working on tickets/issues in this repository, use [git-spice](https://abhinav.github.io/git-spice/) for branch and commit management instead of standard `git commit`.
@@ -1105,6 +1165,21 @@ src/
 │   └── commands/
 │       ├── init.ts             # Hook installation command
 │       └── index.ts            # Command exports
+├── eval/                       # Evaluation system (standalone, not tests)
+│   ├── run-eval.ts             # Main entry point script
+│   ├── runner.ts               # Pipeline orchestration
+│   ├── evaluator.ts            # ChatGPT evaluation wrapper
+│   ├── chatgpt-agent.ts        # OpenAI Agents SDK integration
+│   ├── reporter.ts             # Result formatting and storage
+│   ├── schemas.ts              # Eval-specific Zod schemas
+│   ├── index.ts                # Public exports
+│   ├── fixtures/               # Test fixtures for evaluation
+│   │   ├── simple/             # Simple bug fix fixture
+│   │   │   ├── metadata.json   # Fixture metadata
+│   │   │   ├── mock-status.txt # Mocked git status
+│   │   │   └── mock-diff.txt   # Mocked git diff
+│   │   └── complex/            # Complex feature fixture
+│   └── results/                # Generated results (gitignored)
 ├── types/                      # Core type definitions
 │   └── schemas.ts              # Zod schemas for core types
 └── utils/                      # Shared utilities

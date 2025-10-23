@@ -158,45 +158,51 @@ export class EvalReporter {
     ];
 
     for (const comparison of comparisons) {
-      lines.push(
-        `## Fixture: ${comparison.fixture}`,
-        '',
-        '### Claude',
-        `**Message**: ${comparison.claudeResult.commitMessage}`
-      );
-      // eslint-disable-next-line unicorn/no-array-push-push
-      lines.push(
-        `**Overall Score**: ${comparison.claudeResult.overallScore.toFixed(2)}/10`,
-        '**Metrics**:',
-        `- Conventional Compliance: ${comparison.claudeResult.metrics.conventionalCompliance}/10`,
-        `- Clarity: ${comparison.claudeResult.metrics.clarity}/10`,
-        `- Accuracy: ${comparison.claudeResult.metrics.accuracy}/10`,
-        `- Detail Level: ${comparison.claudeResult.metrics.detailLevel}/10`,
-        `**Feedback**: ${comparison.claudeResult.feedback}`,
-        '',
-        '### Codex',
-        `**Message**: ${comparison.codexResult.commitMessage}`
-      );
-      // eslint-disable-next-line unicorn/no-array-push-push
-      lines.push(
-        `**Overall Score**: ${comparison.codexResult.overallScore.toFixed(2)}/10`,
-        '**Metrics**:',
-        `- Conventional Compliance: ${comparison.codexResult.metrics.conventionalCompliance}/10`,
-        `- Clarity: ${comparison.codexResult.metrics.clarity}/10`,
-        `- Accuracy: ${comparison.codexResult.metrics.accuracy}/10`,
-        `- Detail Level: ${comparison.codexResult.metrics.detailLevel}/10`,
-        `**Feedback**: ${comparison.codexResult.feedback}`,
-        '',
-        '### Comparison',
-        `**Winner**: ${comparison.winner}`
-      );
-      // eslint-disable-next-line unicorn/no-array-push-push
-      lines.push(
-        `**Score Difference**: ${comparison.scoreDiff > 0 ? '+' : ''}${comparison.scoreDiff.toFixed(2)}`,
-        '',
-        '---',
-        ''
-      );
+      lines.push(`## Fixture: ${comparison.fixture}`, '');
+
+      // Render Claude results if present
+      if (comparison.claudeResult) {
+        lines.push('### Claude', `**Message**: ${comparison.claudeResult.commitMessage}`);
+        // eslint-disable-next-line unicorn/no-array-push-push
+        lines.push(
+          `**Overall Score**: ${comparison.claudeResult.overallScore.toFixed(2)}/10`,
+          '**Metrics**:',
+          `- Conventional Compliance: ${comparison.claudeResult.metrics.conventionalCompliance}/10`,
+          `- Clarity: ${comparison.claudeResult.metrics.clarity}/10`,
+          `- Accuracy: ${comparison.claudeResult.metrics.accuracy}/10`,
+          `- Detail Level: ${comparison.claudeResult.metrics.detailLevel}/10`,
+          `**Feedback**: ${comparison.claudeResult.feedback}`,
+          ''
+        );
+      }
+
+      // Render Codex results if present
+      if (comparison.codexResult) {
+        lines.push('### Codex', `**Message**: ${comparison.codexResult.commitMessage}`);
+        // eslint-disable-next-line unicorn/no-array-push-push
+        lines.push(
+          `**Overall Score**: ${comparison.codexResult.overallScore.toFixed(2)}/10`,
+          '**Metrics**:',
+          `- Conventional Compliance: ${comparison.codexResult.metrics.conventionalCompliance}/10`,
+          `- Clarity: ${comparison.codexResult.metrics.clarity}/10`,
+          `- Accuracy: ${comparison.codexResult.metrics.accuracy}/10`,
+          `- Detail Level: ${comparison.codexResult.metrics.detailLevel}/10`,
+          `**Feedback**: ${comparison.codexResult.feedback}`,
+          ''
+        );
+      }
+
+      // Render comparison section only if both results present
+      if (comparison.winner) {
+        lines.push('### Comparison', `**Winner**: ${comparison.winner}`);
+        // eslint-disable-next-line unicorn/no-array-push-push
+        lines.push(
+          `**Score Difference**: ${comparison.scoreDiff > 0 ? '+' : ''}${comparison.scoreDiff.toFixed(2)}`,
+          ''
+        );
+      }
+
+      lines.push('---', '');
     }
 
     return lines.join('\n');
@@ -284,15 +290,25 @@ export class EvalReporter {
     // Load baseline
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as EvalComparison;
 
-    // Calculate differences
-    const claudeDiff = current.claudeResult.overallScore - baseline.claudeResult.overallScore;
-    const codexDiff = current.codexResult.overallScore - baseline.codexResult.overallScore;
+    // Build comparison lines
+    const lines = [`Baseline Comparison (${current.fixture}):`];
 
-    // Format comparison string
-    return (
-      `Baseline Comparison (${current.fixture}):\n` +
-      `  Claude: ${claudeDiff > 0 ? '+' : ''}${claudeDiff.toFixed(2)} (${baseline.claudeResult.overallScore.toFixed(2)} → ${current.claudeResult.overallScore.toFixed(2)})\n` +
-      `  Codex: ${codexDiff > 0 ? '+' : ''}${codexDiff.toFixed(2)} (${baseline.codexResult.overallScore.toFixed(2)} → ${current.codexResult.overallScore.toFixed(2)})`
-    );
+    // Compare Claude results if both present
+    if (current.claudeResult && baseline.claudeResult) {
+      const claudeDiff = current.claudeResult.overallScore - baseline.claudeResult.overallScore;
+      lines.push(
+        `  Claude: ${claudeDiff > 0 ? '+' : ''}${claudeDiff.toFixed(2)} (${baseline.claudeResult.overallScore.toFixed(2)} → ${current.claudeResult.overallScore.toFixed(2)})`
+      );
+    }
+
+    // Compare Codex results if both present
+    if (current.codexResult && baseline.codexResult) {
+      const codexDiff = current.codexResult.overallScore - baseline.codexResult.overallScore;
+      lines.push(
+        `  Codex: ${codexDiff > 0 ? '+' : ''}${codexDiff.toFixed(2)} (${baseline.codexResult.overallScore.toFixed(2)} → ${current.codexResult.overallScore.toFixed(2)})`
+      );
+    }
+
+    return lines.join('\n');
   }
 }

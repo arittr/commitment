@@ -9,7 +9,7 @@
     "commander": "^14.0.1",
     "execa": "^9.6.0",
     "ts-pattern": "^5.8.0",
-    "zod": "^4.1.12"
+    "zod": "3"
   },
   "description": "AI-powered commit message generator with intelligent fallback",
   "devDependencies": {
@@ -47,13 +47,17 @@
     "check-types": "bun tsc --noEmit",
     "clean": "rm -rf dist",
     "dev": "bun --watch build.ts",
+    "eval": "bun run src/eval/run-eval.ts",
+    "eval:claude": "bun run src/eval/run-eval.ts --agent claude",
+    "eval:codex": "bun run src/eval/run-eval.ts --agent codex",
+    "eval:fixture": "bun run src/eval/run-eval.ts --fixture",
+    "eval:live": "bun run src/eval/run-eval.ts --mode live",
     "lint": "bun check-types && biome check --write",
     "lint:check": "biome check",
     "prepare": "bun run build && husky",
     "prepublishOnly": "bun run clean && bun run build",
     "test": "bun run test:unit && bun run test:integration",
     "test:coverage": "bun test --coverage",
-    "test:eval": "bun test .eval.",
     "test:integration": "bun test .integration.",
     "test:integration:watch": "bun test .integration. --watch",
     "test:unit": "bun test .unit.",

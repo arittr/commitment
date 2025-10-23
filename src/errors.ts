@@ -522,7 +522,7 @@ export class EvaluationError extends Error {
    * ```typescript
    * throw new EvaluationError('Fixture not found', {
    *   context: { fixtureName: 'simple' },
-   *   suggestedAction: 'Check that fixture exists in examples/eval-fixtures/'
+   *   suggestedAction: 'Check that fixture exists in src/eval/fixtures/'
    * });
    * ```
    */
@@ -547,7 +547,7 @@ export class EvaluationError extends Error {
    * @example
    * ```typescript
    * throw EvaluationError.fixtureNotFound('simple');
-   * // Error includes examples/eval-fixtures/ path
+   * // Error includes src/eval/fixtures/ path
    * ```
    */
   static fixtureNotFound(name: string): EvaluationError {
@@ -555,18 +555,6 @@ export class EvaluationError extends Error {
       `Fixture "${name}" not found.\n\nThe fixture directory or required files are missing.`,
       {
         context: { fixtureName: name },
-        suggestedAction: `Check that fixture exists:
-  examples/eval-fixtures/${name}/
-  ├── metadata.json          (required)
-  ├── mock-status.txt        (for mocked mode)
-  └── mock-diff.txt          (for mocked mode)
-
-Or for live fixtures:
-  examples/eval-fixtures/${name}-live/
-  ├── .git/                  (real git repository)
-  └── metadata.json          (required)
-
-Verify the fixture name is correct and files exist.`,
       }
     );
   }
@@ -619,14 +607,6 @@ Or skip this agent:
   static evaluationFailed(reason: string): EvaluationError {
     return new EvaluationError(`ChatGPT evaluation failed.\n\nReason: ${reason}`, {
       context: { reason },
-      suggestedAction: `Common issues:
-  - API rate limit exceeded: Wait and retry
-  - Network error: Check internet connection
-  - Invalid response: Check OpenAI service status
-  - Model unavailable: Verify gpt-4 access
-
-Check OpenAI status: https://status.openai.com
-Or set OPENAI_API_KEY environment variable.`,
     });
   }
 
