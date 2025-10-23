@@ -26,9 +26,9 @@ import { BaseAgent } from './base-agent';
  */
 export class CodexAgent extends BaseAgent {
   /**
-   * Human-readable name of the agent
+   * CLI command name for the agent
    */
-  readonly name = 'Codex CLI';
+  readonly name = 'codex';
 
   /**
    * Execute Codex CLI command to generate commit message

@@ -52,7 +52,7 @@ cat > .husky/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with AI
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
+  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
 fi
 EOF
 
@@ -66,7 +66,7 @@ cat > .husky/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with AI (using Codex)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --agent codex --message-only > "$1"
+  exec < /dev/tty && npx commitment --agent codex --message-only > "$1" || exit 1
 fi
 EOF
 

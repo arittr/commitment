@@ -48,6 +48,7 @@
     "clean": "rm -rf dist",
     "dev": "bun --watch build.ts",
     "lint": "bun check-types && biome check --write",
+    "lint:check": "biome check",
     "prepare": "bun run build && husky",
     "prepublishOnly": "bun run clean && bun run build",
     "test": "bun run test:unit && bun run test:integration",

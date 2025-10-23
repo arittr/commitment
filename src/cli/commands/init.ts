@@ -31,21 +31,21 @@ function generateHookContent(
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1"
+  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1" || exit 1
 fi
 `,
     plain: `#!/bin/sh
 # Git prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1"
+  npx commitment${agentFlag} --message-only > "$1" || exit 1
 fi
 `,
     simpleGitHooks: `#!/bin/sh
 # simple-git-hooks prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1"
+  npx commitment${agentFlag} --message-only > "$1" || exit 1
 fi
 `,
   };
@@ -150,7 +150,7 @@ async function installSimpleGitHooks(cwd: string, agent?: AgentName): Promise<vo
     }
     const agentFlag = agent ? ` --agent ${agent}` : '';
     packageJson.simpleGitHooks['prepare-commit-msg'] =
-      `[ -z "$2" ] && npx commitment${agentFlag} --message-only > $1 || exit 0`;
+      `[ -z "$2" ] && npx commitment${agentFlag} --message-only > $1`;
 
     // Add prepare script if not present
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing

@@ -28,7 +28,7 @@ describe('CodexAgent', () => {
   const mockSuccessfulGeneration = (output: string): void => {
     mockExec
       .mockResolvedValueOnce({
-        // First call: which Codex CLI
+        // First call: which codex
         exitCode: 0,
         stderr: '',
         stdout: '/usr/bin/codex',
@@ -43,7 +43,7 @@ describe('CodexAgent', () => {
 
   describe('name', () => {
     it('should return correct agent name', () => {
-      expect(agent.name).toBe('Codex CLI');
+      expect(agent.name).toBe('codex');
     });
   });
 
@@ -59,7 +59,7 @@ describe('CodexAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['Codex CLI'], { cwd: workdir });
+      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['codex'], { cwd: workdir });
       expect(mockExec).toHaveBeenNthCalledWith(
         2,
         'codex',
