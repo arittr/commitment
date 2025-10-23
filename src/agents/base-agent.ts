@@ -126,7 +126,9 @@ export abstract class BaseAgent implements Agent {
 
     // command -v returns empty if not found
     if (!result.stdout.trim()) {
-      throw new Error(`Command "${cliCommand}" not found. Please ensure it is installed and in your PATH.`);
+      throw new Error(
+        `Command "${cliCommand}" not found. Please ensure it is installed and in your PATH.`
+      );
     }
   }
 

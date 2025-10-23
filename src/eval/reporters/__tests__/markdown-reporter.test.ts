@@ -40,6 +40,7 @@ describe('MarkdownReporter', () => {
               specificity: 8,
             },
             overallScore: 8.5,
+            responseTimeMs: 1000,
             status: 'success',
           },
           {
@@ -52,6 +53,7 @@ describe('MarkdownReporter', () => {
               specificity: 9,
             },
             overallScore: 8.5,
+            responseTimeMs: 1100,
             status: 'success',
           },
           {
@@ -64,6 +66,7 @@ describe('MarkdownReporter', () => {
               specificity: 8,
             },
             overallScore: 9.0,
+            responseTimeMs: 1200,
             status: 'success',
           },
         ],
@@ -86,12 +89,14 @@ describe('MarkdownReporter', () => {
               specificity: 7,
             },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success',
           },
           {
             attemptNumber: 2,
             failureReason: 'Invalid conventional commit format',
             failureType: 'validation',
+            responseTimeMs: 100,
             status: 'failure',
           },
           {
@@ -104,6 +109,7 @@ describe('MarkdownReporter', () => {
               specificity: 8,
             },
             overallScore: 7.5,
+            responseTimeMs: 1100,
             status: 'success',
           },
         ],
@@ -124,7 +130,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -145,7 +151,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -167,7 +173,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -183,7 +189,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -205,7 +211,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -221,7 +227,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -243,7 +249,7 @@ describe('MarkdownReporter', () => {
         comparison.codexResult.finalScore = 8.0;
       }
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -262,18 +268,21 @@ describe('MarkdownReporter', () => {
               attemptNumber: 1,
               failureReason: 'Failed to clean artifacts',
               failureType: 'cleaning',
+              responseTimeMs: 100,
               status: 'failure',
             },
             {
               attemptNumber: 2,
               failureReason: 'Invalid format',
               failureType: 'validation',
+              responseTimeMs: 100,
               status: 'failure',
             },
             {
               attemptNumber: 3,
               failureReason: 'Agent timeout',
               failureType: 'generation',
+              responseTimeMs: 100,
               status: 'failure',
             },
           ],
@@ -290,18 +299,21 @@ describe('MarkdownReporter', () => {
               attemptNumber: 1,
               failureReason: 'API error',
               failureType: 'api_error',
+              responseTimeMs: 100,
               status: 'failure',
             },
             {
               attemptNumber: 2,
               failureReason: 'API error',
               failureType: 'api_error',
+              responseTimeMs: 100,
               status: 'failure',
             },
             {
               attemptNumber: 3,
               failureReason: 'API error',
               failureType: 'api_error',
+              responseTimeMs: 100,
               status: 'failure',
             },
           ],
@@ -316,7 +328,7 @@ describe('MarkdownReporter', () => {
         winner: 'tie',
       };
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -332,7 +344,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -353,7 +365,7 @@ describe('MarkdownReporter', () => {
         winner: 'claude',
       };
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -370,7 +382,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -386,7 +398,7 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter(testResultsDir);
       const comparison = createTestComparison();
 
-      await reporter.generateReport(comparison);
+      await reporter.generateReport(comparison, testResultsDir);
 
       const reportPath = join(testResultsDir, 'latest-report.md');
       createdFiles.push(reportPath);
@@ -404,7 +416,9 @@ describe('MarkdownReporter', () => {
       const reporter = new MarkdownReporter('/nonexistent/invalid/path');
       const comparison = createTestComparison();
 
-      await expect(reporter.generateReport(comparison)).rejects.toThrow();
+      await expect(
+        reporter.generateReport(comparison, '/nonexistent/invalid/path')
+      ).rejects.toThrow();
     });
   });
 });
