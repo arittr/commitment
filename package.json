@@ -50,10 +50,13 @@
     "lint": "bun check-types && biome check --write",
     "prepare": "bun run build && husky",
     "prepublishOnly": "bun run clean && bun run build",
-    "test": "bun test",
+    "test": "bun run test:unit && bun run test:integration",
     "test:coverage": "bun test --coverage",
-    "test:eval": "bun test src/eval/__tests__/baseline.eval.ts",
-    "test:watch": "bun test --watch"
+    "test:eval": "bun test .eval.",
+    "test:integration": "bun test .integration.",
+    "test:integration:watch": "bun test .integration. --watch",
+    "test:unit": "bun test .unit.",
+    "test:unit:watch": "bun test .unit. --watch"
   },
   "type": "module",
   "version": "1.0.0"

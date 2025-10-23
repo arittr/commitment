@@ -33,8 +33,8 @@ describe('shell execution adapter (unit tests)', () => {
     it('should be callable with command, args, and options', async () => {
       mockExec.mockResolvedValueOnce({
         exitCode: 0,
-        stdout: 'output',
         stderr: '',
+        stdout: 'output',
       });
 
       const result = await exec('git', ['status'], { cwd: '/test' });
@@ -47,8 +47,8 @@ describe('shell execution adapter (unit tests)', () => {
     it('should support timeout option', async () => {
       mockExec.mockResolvedValueOnce({
         exitCode: 0,
-        stdout: '',
         stderr: '',
+        stdout: '',
       });
 
       await exec('echo', ['test'], { cwd: '/tmp', timeout: 5000 });
@@ -62,8 +62,8 @@ describe('shell execution adapter (unit tests)', () => {
     it('should support stdin input option', async () => {
       mockExec.mockResolvedValueOnce({
         exitCode: 0,
-        stdout: 'echoed',
         stderr: '',
+        stdout: 'echoed',
       });
 
       await exec('cat', [], { cwd: '/tmp', input: 'test data' });
@@ -77,16 +77,16 @@ describe('shell execution adapter (unit tests)', () => {
     it('should return ShellExecResult with stdout, stderr, exitCode', async () => {
       mockExec.mockResolvedValueOnce({
         exitCode: 0,
-        stdout: 'hello world',
         stderr: 'warning',
+        stdout: 'hello world',
       });
 
       const result = await exec('echo', ['hello'], { cwd: '/tmp' });
 
       expect(result).toEqual({
         exitCode: 0,
-        stdout: 'hello world',
         stderr: 'warning',
+        stdout: 'hello world',
       });
     });
 
