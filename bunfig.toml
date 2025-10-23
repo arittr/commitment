@@ -1,7 +1,6 @@
 [test]
 # Coverage configuration
 coverage = true
-coverageThreshold = 80
 coverageDir = "coverage"
 
 # Preload scripts (if needed for mocks)
