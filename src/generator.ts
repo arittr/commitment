@@ -7,9 +7,10 @@ import {
   safeValidateCommitTask,
   safeValidateGeneratorConfig,
 } from './types/schemas';
+import type { GitProvider } from './utils/git-provider';
+import { RealGitProvider } from './utils/git-provider';
 import { categorizeFiles } from './utils/git-schemas';
 import { hasContent, isDefined, isString } from './utils/guards';
-import { exec } from './utils/shell';
 
 /**
  * Minimal task interface for commit message generation
@@ -29,6 +30,8 @@ export type CommitMessageGeneratorConfig = {
   agent?: 'claude' | 'codex';
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
+  /** Custom git provider (default: RealGitProvider) */
+  gitProvider?: GitProvider;
   /** Custom logger function */
   logger?: {
     warn: (message: string) => void;
@@ -72,8 +75,9 @@ export type CommitMessageOptions = {
  * ```
  */
 export class CommitMessageGenerator {
-  private readonly config: Required<Omit<CommitMessageGeneratorConfig, 'agent'>>;
+  private readonly config: Required<Omit<CommitMessageGeneratorConfig, 'agent' | 'gitProvider'>>;
   private readonly agent: Agent;
+  private readonly gitProvider: GitProvider;
 
   constructor(config: CommitMessageGeneratorConfig = {}) {
     // Validate configuration at construction boundary
@@ -116,6 +120,9 @@ export class CommitMessageGenerator {
         : { warn: () => {} },
       signature: validatedConfig.signature ?? defaultSignature,
     };
+
+    // Use provided git provider or default to real git
+    this.gitProvider = validatedConfig.gitProvider ?? new RealGitProvider();
   }
 
   /**
@@ -473,14 +480,14 @@ ${changeAnalysis}`;
     }
 
     try {
-      const result = await exec('git', args, { cwd });
+      const result = await this.gitProvider.exec(args, cwd);
 
       // Validate output is a string
-      if (!isString(result.stdout)) {
+      if (!isString(result)) {
         throw new Error('Git command returned non-string output');
       }
 
-      return result.stdout;
+      return result;
     } catch (error) {
       throw new Error(
         `Git command failed: ${error instanceof Error ? error.message : String(error)}`
