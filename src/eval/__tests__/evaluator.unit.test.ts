@@ -8,20 +8,15 @@ import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
  * We don't test internal implementation details like private agent calls.
  */
 
-import { EvaluationError } from '../../errors';
-import { Evaluator } from '../evaluator';
-import type { EvalMetrics } from '../schemas';
-
 // Create a mock evaluate function that can be reconfigured per test
-const mockEvaluateFn = mock(
-  (_commitMessage: string, _gitDiff: string, _gitStatus: string) =>
-    Promise.resolve({
-      feedback: '',
-      metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-    }),
+const mockEvaluateFn = mock((_commitMessage: string, _gitDiff: string, _gitStatus: string) =>
+  Promise.resolve({
+    feedback: '',
+    metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+  })
 );
 
-// Mock ChatGPT agent module
+// Mock ChatGPT agent module BEFORE importing Evaluator
 mock.module('../chatgpt-agent', () => ({
   // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   ChatGPTAgent: class {
@@ -32,6 +27,11 @@ mock.module('../chatgpt-agent', () => ({
     }
   },
 }));
+
+// Import AFTER mock.module is set up
+import { EvaluationError } from '../../errors';
+import { Evaluator } from '../evaluator';
+import type { EvalMetrics } from '../schemas';
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
