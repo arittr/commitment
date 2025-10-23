@@ -28,6 +28,10 @@
  * ```
  */
 
+import { execSync } from 'node:child_process';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { EvaluationError } from '../core/errors.js';
 import type { AttemptOutcome, EvalComparison, EvalResult } from '../core/types.js';
 import { isSuccessOutcome } from '../core/types.js';
@@ -221,5 +225,166 @@ export class EvalRunner {
 
     // Winner has higher finalScore
     return claudeResult.finalScore > codexResult.finalScore ? 'claude' : 'codex';
+  }
+
+  /**
+   * Load a fixture by name
+   *
+   * Supports two modes:
+   * - mocked: Load pre-recorded git output from fixture files
+   * - live: Execute real git commands in fixture directory
+   *
+   * @param name - Fixture name (e.g., 'simple')
+   * @param mode - Loading mode ('mocked' or 'live')
+   * @returns Loaded fixture with diff and status
+   * @throws {EvaluationError} If fixture not found or loading fails
+   *
+   * @example
+   * ```typescript
+   * const fixture = runner.loadFixture('simple', 'mocked');
+   * console.log(fixture.name); // 'simple'
+   * console.log(fixture.diff); // Git diff content
+   * ```
+   */
+  loadFixture(name: string, mode: 'live' | 'mocked' = 'mocked'): Fixture {
+    // Construct fixture path based on mode
+    const fixturePath = join(
+      process.cwd(),
+      'src/eval/fixtures',
+      mode === 'live' ? `${name}-live` : name
+    );
+
+    try {
+      // Load metadata.json (required for both modes)
+      const metadataPath = join(fixturePath, 'metadata.json');
+      const metadata = JSON.parse(readFileSync(metadataPath, 'utf8')) as {
+        description: string;
+        expectedType: 'chore' | 'docs' | 'feat' | 'fix' | 'perf' | 'refactor' | 'style' | 'test';
+        name: string;
+      };
+
+      if (mode === 'mocked') {
+        // Mocked mode: Read pre-recorded git output from files
+        const status = readFileSync(join(fixturePath, 'mock-status.txt'), 'utf8');
+        const diff = readFileSync(join(fixturePath, 'mock-diff.txt'), 'utf8');
+
+        return {
+          diff,
+          name: metadata.name,
+          status,
+        };
+      }
+      // Live mode: Execute real git commands in fixture directory
+      const status = execSync('git status --porcelain', {
+        cwd: fixturePath,
+        encoding: 'utf8',
+      });
+
+      const diff = execSync('git diff --cached', {
+        cwd: fixturePath,
+        encoding: 'utf8',
+      });
+
+      return {
+        diff,
+        name: metadata.name,
+        status,
+      };
+    } catch {
+      // If any file is missing or git command fails, throw EvaluationError
+      throw EvaluationError.missingFixture(`Fixture not found: ${name}`);
+    }
+  }
+
+  /**
+   * Run evaluation for a single fixture
+   *
+   * Convenience method that wraps run() for single fixture.
+   *
+   * @param fixture - Fixture to evaluate
+   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
+   * @returns Evaluation comparison
+   * @throws {EvaluationError} If evaluation fails
+   *
+   * @example
+   * ```typescript
+   * const fixture = runner.loadFixture('simple', 'mocked');
+   * const comparison = await runner.runFixture(fixture);
+   * console.log(comparison.winner); // 'claude' | 'codex' | 'tie'
+   * ```
+   */
+  async runFixture(fixture: Fixture, agent?: 'claude' | 'codex'): Promise<EvalComparison> {
+    // If agent specified, evaluate only that agent
+    if (agent === 'claude') {
+      const claudeResult = await this._evaluateAgent('claude', fixture);
+      return {
+        claudeResult,
+        codexResult: undefined,
+        fixture: fixture.name,
+        winner: undefined,
+      };
+    }
+
+    if (agent === 'codex') {
+      const codexResult = await this._evaluateAgent('codex', fixture);
+      return {
+        claudeResult: undefined,
+        codexResult,
+        fixture: fixture.name,
+        winner: undefined,
+      };
+    }
+
+    // Both agents
+    return this.run([fixture]);
+  }
+
+  /**
+   * Run evaluation for all fixtures
+   *
+   * Loads all fixtures in the specified mode and evaluates them.
+   *
+   * @param mode - Loading mode ('mocked' or 'live')
+   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
+   * @returns Array of evaluation comparisons
+   * @throws {EvaluationError} If any evaluation fails
+   *
+   * @example
+   * ```typescript
+   * const comparisons = await runner.runAll('mocked');
+   * console.log(comparisons.length); // Number of fixtures
+   * console.log(comparisons[0].winner); // 'claude' | 'codex' | 'tie'
+   * ```
+   */
+  async runAll(
+    mode: 'live' | 'mocked' = 'mocked',
+    agent?: 'claude' | 'codex'
+  ): Promise<EvalComparison[]> {
+    // Load all fixtures
+    const fixturesDir = join(process.cwd(), 'src/eval/fixtures');
+    const allEntries = readdirSync(fixturesDir);
+
+    // Filter for mocked or live fixtures
+    const fixtureNames = allEntries
+      .filter((entry) => {
+        const fullPath = join(fixturesDir, entry);
+        const isDir = statSync(fullPath).isDirectory();
+        if (mode === 'live') {
+          return isDir && entry.endsWith('-live');
+        }
+        // Mocked: exclude -live directories
+        return isDir && !entry.endsWith('-live');
+      })
+      .map((entry) => entry.replace(/-live$/, ''));
+
+    // Run each fixture
+    const comparisons: EvalComparison[] = [];
+    for (const fixtureName of fixtureNames) {
+      const fixture = this.loadFixture(fixtureName, mode);
+      const comparison = await this.runFixture(fixture, agent);
+      comparisons.push(comparison);
+    }
+
+    return comparisons;
   }
 }
