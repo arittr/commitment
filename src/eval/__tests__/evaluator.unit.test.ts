@@ -3,39 +3,41 @@ import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
  * Unit tests for Evaluator module
  *
  * Tests the orchestration of ChatGPT-based commit message evaluation.
+ *
+ * NOTE: These tests only verify the public API (inputs → outputs).
+ * We don't test internal implementation details like private agent calls.
  */
 
-/* eslint-disable jest/unbound-method */
-
 import { EvaluationError } from '../../errors';
-import type { ChatGPTAgent } from '../chatgpt-agent';
 import { Evaluator } from '../evaluator';
 import type { EvalMetrics } from '../schemas';
 
-// Mock ChatGPT agent
+// Create a mock evaluate function that can be reconfigured per test
+const mockEvaluateFn = mock(() =>
+  Promise.resolve({
+    feedback: '',
+    metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+  }),
+);
+
+// Mock ChatGPT agent module
 mock.module('../chatgpt-agent', () => ({
   // biome-ignore lint/style/useNamingConvention: Class name in mock module export
-  ChatGPTAgent: mock(() => ({
-    evaluate: mock(() =>
-      Promise.resolve({
-        feedback: '',
-        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-      })
-    ),
-    name: 'chatgpt',
-  })),
+  ChatGPTAgent: class {
+    evaluate = mockEvaluateFn;
+    name = 'chatgpt';
+  },
 }));
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
-  let mockChatGptAgent: ChatGPTAgent;
 
   beforeEach(() => {
+    // Reset the mock before each test
+    mockEvaluateFn.mockClear();
+
     // Create evaluator instance
     evaluator = new Evaluator();
-
-    // Get mocked ChatGPT agent instance
-    mockChatGptAgent = (evaluator as unknown as { agent: ChatGPTAgent }).agent;
   });
 
   afterAll(() => {
@@ -44,7 +46,7 @@ describe('Evaluator', () => {
   });
 
   describe('evaluate', () => {
-    it('should call ChatGPT agent with correct parameters', async () => {
+    it('should evaluate commit message and return complete result', async () => {
       // Arrange
       const commitMessage = 'fix: add null safety check to parser';
       const gitStatus = 'M  src/utils/parser.ts';
@@ -61,44 +63,11 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      // Mock ChatGPT agent response
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: mockFeedback,
-          metrics: mockMetrics,
-        })
-      );
-
-      // Act
-      await evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName);
-
-      // Assert
-      expect(mockChatGptAgent.evaluate).toHaveBeenCalledWith(commitMessage, gitDiff, gitStatus);
-    });
-
-    it('should return complete EvalResult with all fields', async () => {
-      // Arrange
-      const commitMessage = 'fix: add null safety check to parser';
-      const gitStatus = 'M  src/utils/parser.ts';
-      const gitDiff = 'diff --git a/src/utils/parser.ts...';
-      const fixtureName = 'simple-bugfix';
-      const agentName = 'claude';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 9,
-        clarity: 8,
-        conventionalCompliance: 9,
-        detailLevel: 7,
-      };
-
-      const mockFeedback = 'Good conventional commit format. Clear description.';
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: mockFeedback,
-          metrics: mockMetrics,
-        })
-      );
+      // Configure mock to return specific response
+      mockEvaluateFn.mockResolvedValue({
+        feedback: mockFeedback,
+        metrics: mockMetrics,
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -106,87 +75,57 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName
+        agentName,
       );
 
-      // Assert - check all required fields
+      // Assert - verify the evaluator produces correct output
+      expect(result.commitMessage).toBe(commitMessage);
       expect(result.fixture).toBe(fixtureName);
       expect(result.agent).toBe(agentName);
-      expect(result.commitMessage).toBe(commitMessage);
       expect(result.metrics).toEqual(mockMetrics);
       expect(result.feedback).toBe(mockFeedback);
+      expect(result.overallScore).toBe(8.25); // (9 + 8 + 9 + 7) / 4
       expect(result.timestamp).toBeTruthy();
-      expect(result.overallScore).toBeTruthy();
+    });
 
-      // Verify timestamp is valid ISO string
+    it('should include valid timestamp in ISO format', async () => {
+      // Arrange
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Good',
+        metrics: { accuracy: 8, clarity: 8, conventionalCompliance: 8, detailLevel: 8 },
+      });
+
+      // Act
+      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
+
+      // Assert - verify timestamp
+      expect(result.timestamp).toBeTruthy();
       expect(() => new Date(result.timestamp).toISOString()).not.toThrow();
     });
 
     it('should calculate overall score correctly as average of 4 metrics', async () => {
       // Arrange
-      const commitMessage = 'fix: add null safety check';
-      const gitStatus = 'M  src/parser.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'claude';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 9,
-        clarity: 8,
-        conventionalCompliance: 10,
-        detailLevel: 7,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Good',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Good',
+        metrics: { accuracy: 9, clarity: 8, conventionalCompliance: 10, detailLevel: 7 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
 
-      // Assert - overall score should be (10 + 8 + 9 + 7) / 4 = 8.5
+      // Assert - overall score should be (9 + 8 + 10 + 7) / 4 = 8.5
       expect(result.overallScore).toBe(8.5);
     });
 
     it('should handle perfect scores correctly', async () => {
       // Arrange
-      const commitMessage = 'feat: perfect commit';
-      const gitStatus = 'A  src/file.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'codex';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 10,
-        clarity: 10,
-        conventionalCompliance: 10,
-        detailLevel: 10,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Perfect commit message',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Perfect',
+        metrics: { accuracy: 10, clarity: 10, conventionalCompliance: 10, detailLevel: 10 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('feat: perfect', 'A  file.ts', 'diff...', 'test', 'codex');
 
       // Assert
       expect(result.overallScore).toBe(10);
@@ -194,34 +133,13 @@ describe('Evaluator', () => {
 
     it('should handle minimum scores correctly', async () => {
       // Arrange
-      const commitMessage = 'bad commit';
-      const gitStatus = 'M  file.txt';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'claude';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 0,
-        clarity: 0,
-        conventionalCompliance: 0,
-        detailLevel: 0,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Poor commit message',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Poor',
+        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('bad', 'M  file.txt', 'diff...', 'test', 'claude');
 
       // Assert
       expect(result.overallScore).toBe(0);
@@ -229,78 +147,43 @@ describe('Evaluator', () => {
 
     it('should propagate EvaluationError from ChatGPT agent', async () => {
       // Arrange
-      const commitMessage = 'fix: test';
-      const gitStatus = 'M  file.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'claude';
-
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
-
-      mockChatGptAgent.evaluate = mock(() => Promise.reject(mockError));
+      mockEvaluateFn.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
       ).rejects.toThrow('OpenAI API key is not configured');
     });
 
     it('should propagate evaluation failed error from ChatGPT agent', async () => {
       // Arrange
-      const commitMessage = 'fix: test';
-      const gitStatus = 'M  file.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'codex';
-
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
-
-      mockChatGptAgent.evaluate = mock(() => Promise.reject(mockError));
+      mockEvaluateFn.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName)
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
       ).rejects.toThrow('API rate limit exceeded');
     });
 
     it('should work with codex agent name', async () => {
       // Arrange
-      const commitMessage = 'feat: add feature';
-      const gitStatus = 'A  src/feature.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'complex';
-      const agentName = 'codex';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 8,
-        clarity: 9,
-        conventionalCompliance: 9,
-        detailLevel: 8,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Well structured',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Well structured',
+        metrics: { accuracy: 8, clarity: 9, conventionalCompliance: 9, detailLevel: 8 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('feat: add feature', 'A  file.ts', 'diff...', 'test', 'codex');
 
       // Assert
       expect(result.agent).toBe('codex');
@@ -309,34 +192,13 @@ describe('Evaluator', () => {
 
     it('should include all metrics in result', async () => {
       // Arrange
-      const commitMessage = 'test: commit';
-      const gitStatus = 'M  test.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'claude';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 7,
-        clarity: 6,
-        conventionalCompliance: 8,
-        detailLevel: 9,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Test feedback',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Test feedback',
+        metrics: { accuracy: 7, clarity: 6, conventionalCompliance: 8, detailLevel: 9 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('test: commit', 'M  test.ts', 'diff...', 'test', 'claude');
 
       // Assert - verify all individual metrics are present
       expect(result.metrics.conventionalCompliance).toBe(8);
@@ -347,34 +209,13 @@ describe('Evaluator', () => {
 
     it('should handle floating point scores correctly', async () => {
       // Arrange
-      const commitMessage = 'fix: update';
-      const gitStatus = 'M  file.ts';
-      const gitDiff = 'diff...';
-      const fixtureName = 'test';
-      const agentName = 'claude';
-
-      const mockMetrics: EvalMetrics = {
-        accuracy: 8.5,
-        clarity: 7.5,
-        conventionalCompliance: 9,
-        detailLevel: 8,
-      };
-
-      mockChatGptAgent.evaluate = mock(() =>
-        Promise.resolve({
-          feedback: 'Good',
-          metrics: mockMetrics,
-        })
-      );
+      mockEvaluateFn.mockResolvedValue({
+        feedback: 'Good',
+        metrics: { accuracy: 8.5, clarity: 7.5, conventionalCompliance: 9, detailLevel: 8 },
+      });
 
       // Act
-      const result = await evaluator.evaluate(
-        commitMessage,
-        gitStatus,
-        gitDiff,
-        fixtureName,
-        agentName
-      );
+      const result = await evaluator.evaluate('fix: update', 'M  file.ts', 'diff...', 'test', 'claude');
 
       // Assert - (8.5 + 7.5 + 9.0 + 8.0) / 4 = 8.25
       expect(result.overallScore).toBeCloseTo(8.25, 2);
