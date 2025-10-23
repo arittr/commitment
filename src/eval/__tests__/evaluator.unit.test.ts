@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 /**
  * Unit tests for Evaluator module
  *
@@ -31,15 +31,16 @@ describe('Evaluator', () => {
   let mockChatGptAgent: ChatGPTAgent;
 
   beforeEach(() => {
-    // Reset mocks
-    mock.restore();
-
     // Create evaluator instance
     evaluator = new Evaluator();
 
     // Get mocked ChatGPT agent instance
-
     mockChatGptAgent = (evaluator as unknown as { agent: ChatGPTAgent }).agent;
+  });
+
+  afterAll(() => {
+    // Clean up module mocks after this test suite
+    mock.restore();
   });
 
   describe('evaluate', () => {

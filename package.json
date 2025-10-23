@@ -41,7 +41,7 @@
   ],
   "license": "ISC",
   "name": "@arittr/commitment",
-  "packageManager": "bun@1.1.0",
+  "packageManager": "bun@1.3.0",
   "scripts": {
     "build": "bun run build.ts",
     "check-types": "bun tsc --noEmit",

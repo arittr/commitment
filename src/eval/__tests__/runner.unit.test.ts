@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 /**
  * Unit tests for EvalRunner module
  *
@@ -63,8 +63,12 @@ describe('EvalRunner', () => {
   let runner: EvalRunner;
 
   beforeEach(() => {
-    mock.restore();
     runner = new EvalRunner();
+  });
+
+  afterAll(() => {
+    // Clean up module mocks after this test suite
+    mock.restore();
   });
 
   describe('loadFixture', () => {
