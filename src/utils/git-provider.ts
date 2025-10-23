@@ -19,7 +19,7 @@
  * ```
  */
 
-import { exec } from './shell.js';
+import { exec as execCommand } from './shell';
 
 /**
  * Git provider interface
@@ -45,7 +45,7 @@ export interface GitProvider {
  */
 export class RealGitProvider implements GitProvider {
   async exec(args: string[], cwd: string): Promise<string> {
-    const result = await exec('git', args, { cwd });
+    const result = await execCommand('git', args, { cwd });
     return result.stdout;
   }
 }
