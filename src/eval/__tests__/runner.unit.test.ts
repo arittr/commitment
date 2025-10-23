@@ -227,15 +227,17 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      mockEvaluator.evaluate = mock(() => Promise.resolve({
-        agent: 'claude',
-        commitMessage: claudeMessage,
-        feedback: 'Good',
-        fixture: 'test',
-        metrics: mockMetrics,
-        overallScore: 8,
-        timestamp: new Date().toISOString(),
-      } as EvalResult));
+      mockEvaluator.evaluate = mock(() =>
+        Promise.resolve({
+          agent: 'claude',
+          commitMessage: claudeMessage,
+          feedback: 'Good',
+          fixture: 'test',
+          metrics: mockMetrics,
+          overallScore: 8,
+          timestamp: new Date().toISOString(),
+        } as EvalResult)
+      );
 
       // Act
       await runner.runFixture(fixture);
@@ -623,15 +625,17 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      mockEvaluator.evaluate = mock(() => Promise.resolve({
-        agent: 'claude',
-        commitMessage: 'fix: test',
-        feedback: 'Good',
-        fixture: 'test',
-        metrics: mockMetrics,
-        overallScore: 8,
-        timestamp: new Date().toISOString(),
-      } as EvalResult));
+      mockEvaluator.evaluate = mock(() =>
+        Promise.resolve({
+          agent: 'claude',
+          commitMessage: 'fix: test',
+          feedback: 'Good',
+          fixture: 'test',
+          metrics: mockMetrics,
+          overallScore: 8,
+          timestamp: new Date().toISOString(),
+        } as EvalResult)
+      );
 
       // Act
       const results = await runner.runAll('mocked');
@@ -669,15 +673,17 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      mockEvaluator.evaluate = mock(() => Promise.resolve({
-        agent: 'claude',
-        commitMessage: 'fix: test',
-        feedback: 'Good',
-        fixture: 'test',
-        metrics: mockMetrics,
-        overallScore: 8,
-        timestamp: new Date().toISOString(),
-      } as EvalResult));
+      mockEvaluator.evaluate = mock(() =>
+        Promise.resolve({
+          agent: 'claude',
+          commitMessage: 'fix: test',
+          feedback: 'Good',
+          fixture: 'test',
+          metrics: mockMetrics,
+          overallScore: 8,
+          timestamp: new Date().toISOString(),
+        } as EvalResult)
+      );
 
       // Act
       const results = await runner.runAll('live');
@@ -712,15 +718,17 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      mockEvaluator.evaluate = mock(() => Promise.resolve({
-        agent: 'claude',
-        commitMessage: 'fix: test',
-        feedback: 'Good',
-        fixture: 'test',
-        metrics: mockMetrics,
-        overallScore: 8,
-        timestamp: new Date().toISOString(),
-      } as EvalResult));
+      mockEvaluator.evaluate = mock(() =>
+        Promise.resolve({
+          agent: 'claude',
+          commitMessage: 'fix: test',
+          feedback: 'Good',
+          fixture: 'test',
+          metrics: mockMetrics,
+          overallScore: 8,
+          timestamp: new Date().toISOString(),
+        } as EvalResult)
+      );
 
       // Act
       const results = await runner.runAll('mocked');
