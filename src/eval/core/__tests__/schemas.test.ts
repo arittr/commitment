@@ -21,6 +21,7 @@ describe('attemptOutcomeSchema', () => {
           specificity: 8,
         },
         overallScore: 8.5,
+        responseTimeMs: 1000,
         status: 'success' as const,
       };
 
@@ -46,6 +47,7 @@ describe('attemptOutcomeSchema', () => {
             specificity: 7,
           },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         };
 
@@ -65,6 +67,7 @@ describe('attemptOutcomeSchema', () => {
           specificity: 7,
         },
         overallScore: 7.5,
+        responseTimeMs: 1000,
         status: 'success' as const,
       };
 
@@ -82,6 +85,7 @@ describe('attemptOutcomeSchema', () => {
           specificity: 7,
         },
         overallScore: 11, // Invalid: > 10
+        responseTimeMs: 1000,
         status: 'success' as const,
       };
 
@@ -99,6 +103,7 @@ describe('attemptOutcomeSchema', () => {
           specificity: 7,
         },
         overallScore: 7.5,
+        responseTimeMs: 1000,
         status: 'success' as const,
       };
 
@@ -112,6 +117,7 @@ describe('attemptOutcomeSchema', () => {
         attemptNumber: 2,
         failureReason: 'Commit message does not follow conventional format',
         failureType: 'validation' as const,
+        responseTimeMs: 100,
         status: 'failure' as const,
       };
 
@@ -132,6 +138,7 @@ describe('attemptOutcomeSchema', () => {
           attemptNumber: 1,
           failureReason: `Test ${failureType} error`,
           failureType,
+          responseTimeMs: 100,
           status: 'failure' as const,
         };
 
@@ -147,6 +154,7 @@ describe('attemptOutcomeSchema', () => {
         attemptNumber: 1,
         failureReason: '', // Invalid: empty
         failureType: 'validation' as const,
+        responseTimeMs: 100,
         status: 'failure' as const,
       };
 
@@ -166,6 +174,7 @@ describe('attemptOutcomeSchema', () => {
           specificity: 7,
         },
         overallScore: 7.5,
+        responseTimeMs: 1000,
         status: 'success',
       };
 
@@ -188,12 +197,14 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test 1',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
         {
           attemptNumber: 2,
           failureReason: 'Invalid format',
           failureType: 'validation' as const,
+          responseTimeMs: 100,
           status: 'failure' as const,
         },
         {
@@ -201,6 +212,7 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test 3',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1200,
           status: 'success' as const,
         },
       ],
@@ -227,6 +239,7 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
       ], // Only 1 attempt, should be 3
@@ -252,6 +265,7 @@ describe('evalResultSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -259,6 +273,7 @@ describe('evalResultSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -266,6 +281,7 @@ describe('evalResultSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
         ],
@@ -290,6 +306,7 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
         {
@@ -297,6 +314,7 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
         {
@@ -304,6 +322,7 @@ describe('evalResultSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
       ],
@@ -325,18 +344,21 @@ describe('evalResultSchema', () => {
           attemptNumber: 1,
           failureReason: 'Test',
           failureType: 'validation' as const,
+          responseTimeMs: 100,
           status: 'failure' as const,
         },
         {
           attemptNumber: 2,
           failureReason: 'Test',
           failureType: 'validation' as const,
+          responseTimeMs: 100,
           status: 'failure' as const,
         },
         {
           attemptNumber: 3,
           failureReason: 'Test',
           failureType: 'validation' as const,
+          responseTimeMs: 100,
           status: 'failure' as const,
         },
       ],
@@ -362,12 +384,14 @@ describe('metaEvaluationInputSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
           overallScore: 7.5,
+          responseTimeMs: 1000,
           status: 'success' as const,
         },
         {
           attemptNumber: 2,
           failureReason: 'Invalid',
           failureType: 'validation' as const,
+          responseTimeMs: 100,
           status: 'failure' as const,
         },
         {
@@ -375,6 +399,7 @@ describe('metaEvaluationInputSchema', () => {
           commitMessage: 'feat: test',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1200,
           status: 'success' as const,
         },
       ],
@@ -432,6 +457,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -439,6 +465,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -446,6 +473,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
         ],
@@ -463,6 +491,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 7, conventionalFormat: 8, scope: 5, specificity: 6 },
             overallScore: 6.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -470,6 +499,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 7, conventionalFormat: 8, scope: 5, specificity: 6 },
             overallScore: 6.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -477,6 +507,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 7, conventionalFormat: 8, scope: 5, specificity: 6 },
             overallScore: 6.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
         ],
@@ -507,6 +538,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -514,6 +546,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -521,6 +554,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
         ],
@@ -538,6 +572,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -545,6 +580,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
           {
@@ -552,6 +588,7 @@ describe('evalComparisonSchema', () => {
             commitMessage: 'feat: test',
             metrics: { clarity: 8, conventionalFormat: 9, scope: 6, specificity: 7 },
             overallScore: 7.5,
+            responseTimeMs: 1000,
             status: 'success' as const,
           },
         ],

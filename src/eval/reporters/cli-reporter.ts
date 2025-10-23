@@ -90,7 +90,9 @@ export class CLIReporter {
     failureType: FailureType,
     responseTimeMs: number
   ): void {
-    console.log(chalk.red(`  ✗ Attempt ${attemptNumber}: Failed (${failureType}, ${responseTimeMs}ms)`));
+    console.log(
+      chalk.red(`  ✗ Attempt ${attemptNumber}: Failed (${failureType}, ${responseTimeMs}ms)`)
+    );
   }
 
   /**
