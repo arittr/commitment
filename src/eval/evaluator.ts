@@ -36,19 +36,26 @@ import type { EvalResult } from './schemas';
  * - Return structured EvalResult with all details
  */
 export class Evaluator {
-  /** ChatGPT agent instance for evaluation */
+  /** Evaluation agent instance (defaults to ChatGPT) */
   private readonly agent: ChatGPTAgent;
 
   /**
    * Create a new Evaluator instance
    *
+   * @param agent - Optional evaluation agent (defaults to ChatGPTAgent)
+   *
    * @example
    * ```typescript
+   * // Use default ChatGPT agent
    * const evaluator = new Evaluator();
+   *
+   * // Inject custom agent for testing
+   * const mockAgent = { evaluate: async () => ({ metrics: {...}, feedback: '...' }) };
+   * const evaluator = new Evaluator(mockAgent);
    * ```
    */
-  constructor() {
-    this.agent = new ChatGPTAgent();
+  constructor(agent?: ChatGPTAgent) {
+    this.agent = agent ?? new ChatGPTAgent();
   }
 
   /**
