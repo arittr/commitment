@@ -26,6 +26,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -33,6 +34,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature v2',
           metrics: { clarity: 8, conventionalFormat: 10, scope: 8, specificity: 9 },
           overallScore: 8.75,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
@@ -40,6 +42,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature v3',
           metrics: { clarity: 9, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -123,12 +126,14 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
           attemptNumber: 2,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
@@ -136,6 +141,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature v3',
           metrics: { clarity: 8, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.25,
+          responseTimeMs: 1100,
           status: 'success',
         },
       ];
@@ -157,6 +163,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: implement feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 8, specificity: 9 },
           overallScore: 9.0,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -164,6 +171,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: implement feature v2',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 8, specificity: 8 },
           overallScore: 8.75,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
@@ -171,6 +179,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: implement feature v3',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 9, specificity: 9 },
           overallScore: 9.25,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
@@ -238,18 +247,21 @@ describe('EvalRunner', () => {
           attemptNumber: 1,
           failureReason: 'Command not found',
           failureType: 'api_error',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 2,
           failureReason: 'Timeout occurred',
           failureType: 'generation',
+          responseTimeMs: 100,
           status: 'failure',
         },
         {
           attemptNumber: 3,
           failureReason: 'Invalid format',
           failureType: 'validation',
+          responseTimeMs: 100,
           status: 'failure',
         },
       ];
@@ -316,6 +328,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature',
           metrics: { clarity: 9, conventionalFormat: 10, scope: 7, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1000,
           status: 'success',
         },
         {
@@ -323,6 +336,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature v2',
           metrics: { clarity: 8, conventionalFormat: 10, scope: 8, specificity: 9 },
           overallScore: 8.75,
+          responseTimeMs: 1100,
           status: 'success',
         },
         {
@@ -330,6 +344,7 @@ describe('EvalRunner', () => {
           commitMessage: 'feat: add feature v3',
           metrics: { clarity: 9, conventionalFormat: 9, scope: 8, specificity: 8 },
           overallScore: 8.5,
+          responseTimeMs: 1200,
           status: 'success',
         },
       ];
