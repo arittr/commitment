@@ -23,7 +23,7 @@
  * ```
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { AttemptOutcome, EvalComparison, EvalResult } from '../core/types.js';
@@ -58,24 +58,38 @@ export class MarkdownReporter {
    * Generate markdown report for evaluation comparison
    *
    * Creates a markdown file with:
+   * - Run subdirectory: YYYY-MM-DDTHH-MM-SS.sssZ/ (shared with JSON files)
+   * - Report file: YYYY-MM-DDTHH-MM-SS.sssZ/report.md
+   * - Symlink: latest-report.md -> YYYY-MM-DDTHH-MM-SS.sssZ/report.md
    * - Fixture name
    * - Winner announcement
    * - Per-agent results (attempts + meta-evaluation)
    * - Best attempt details
    *
    * @param comparison - Evaluation comparison to report
+   * @param runDir - Run directory name from JSONReporter (to share same directory)
    * @throws {Error} If unable to write report file
    *
    * @example
    * ```typescript
-   * await reporter.generateReport(comparison);
-   * // Creates: latest-report.md
+   * const runDir = jsonReporter.getRunDir();
+   * await reporter.generateReport(comparison, runDir);
+   * // Creates: 2025-10-23T12-34-56.789Z/report.md
+   * // Symlink: latest-report.md -> 2025-10-23T12-34-56.789Z/report.md
    * ```
    */
-  async generateReport(comparison: EvalComparison): Promise<void> {
+  async generateReport(comparison: EvalComparison, runDir: string): Promise<void> {
     // Ensure results directory exists
     if (!existsSync(this.resultsDir)) {
       mkdirSync(this.resultsDir, { recursive: true });
+    }
+
+    // Use the provided run directory (shared with JSON files)
+    const runDirPath = join(this.resultsDir, runDir);
+
+    // Ensure run subdirectory exists
+    if (!existsSync(runDirPath)) {
+      mkdirSync(runDirPath, { recursive: true });
     }
 
     const sections: string[] = [];
@@ -110,9 +124,26 @@ export class MarkdownReporter {
       sections.push('No results available.\n');
     }
 
+    // Generate filename (simple name, timestamp is in directory)
+    const filename = 'report.md';
+    const relativeFilepath = join(runDir, filename); // Relative to resultsDir
+    const absoluteFilepath = join(this.resultsDir, relativeFilepath);
+
     // Write report
-    const reportPath = join(this.resultsDir, 'latest-report.md');
-    writeFileSync(reportPath, sections.join('\n'), 'utf-8');
+    writeFileSync(absoluteFilepath, sections.join('\n'), 'utf-8');
+
+    // Create or update symlink to latest report (in root of resultsDir)
+    const symlinkPath = join(this.resultsDir, 'latest-report.md');
+
+    // Remove existing symlink if it exists
+    try {
+      unlinkSync(symlinkPath);
+    } catch {
+      // Symlink doesn't exist, continue
+    }
+
+    // Create new symlink pointing to report (relative path)
+    symlinkSync(relativeFilepath, symlinkPath);
   }
 
   /**
