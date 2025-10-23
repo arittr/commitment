@@ -16,8 +16,14 @@ import { parseArgs } from 'node:util';
 
 import chalk from 'chalk';
 
-import { EvalReporter } from './reporter';
-import { EvalRunner } from './runner';
+import { CommitMessageGenerator } from '../generator.js';
+import { MetaEvaluator } from './evaluators/meta-evaluator.js';
+import { SingleAttemptEvaluator } from './evaluators/single-attempt.js';
+import { CLIReporter } from './reporters/cli-reporter.js';
+import { JSONReporter } from './reporters/json-reporter.js';
+import { MarkdownReporter } from './reporters/markdown-reporter.js';
+import { AttemptRunner } from './runners/attempt-runner.js';
+import { EvalRunner } from './runners/eval-runner.js';
 
 const RESULTS_DIR = './.eval-results';
 
@@ -46,16 +52,28 @@ if (!process.env.OPENAI_API_KEY?.trim()) {
 }
 
 // Display header
-console.log(chalk.bold('\n🧪 Commitment Evaluation System\n'));
+console.log(chalk.bold('\n🧪 Commitment Evaluation System (Multi-Attempt)\n'));
 console.log(chalk.gray('Mode:'), mode);
 if (agent) console.log(chalk.gray('Agent:'), agent);
 else console.log(chalk.gray('Agents:'), 'claude vs codex');
 if (fixtureName) console.log(chalk.gray('Fixture:'), fixtureName);
 console.log(chalk.gray('Results:'), RESULTS_DIR);
+console.log(chalk.gray('Attempts:'), '3 per agent per fixture');
 console.log('');
 
-const runner = new EvalRunner();
-const reporter = new EvalReporter(RESULTS_DIR);
+// Instantiate dependencies
+const generator = new CommitMessageGenerator({ enableAI: true });
+const singleAttemptEvaluator = new SingleAttemptEvaluator();
+const metaEvaluator = new MetaEvaluator();
+const cliReporter = new CLIReporter();
+const jsonReporter = new JSONReporter(RESULTS_DIR);
+const markdownReporter = new MarkdownReporter(RESULTS_DIR);
+
+// Create attempt runner
+const attemptRunner = new AttemptRunner(generator, singleAttemptEvaluator, cliReporter);
+
+// Create eval runner with all dependencies
+const runner = new EvalRunner(attemptRunner, metaEvaluator, jsonReporter, markdownReporter);
 
 try {
   if (fixtureName) {
@@ -64,26 +82,21 @@ try {
     const fixture = runner.loadFixture(fixtureName, mode);
     const comparison = await runner.runFixture(fixture, agent);
 
-    reporter.storeResults(comparison);
-    reporter.storeMarkdownReport([comparison]);
-
-    // Baseline comparison
-    const baseline = reporter.compareWithBaseline(comparison);
-    if (baseline) {
-      console.log(chalk.yellow('\n📊 Baseline Comparison:'));
-      console.log(baseline);
-    }
-
     // Results
     console.log(chalk.green('\n✅ Complete'));
     if (comparison.winner) {
       console.log(chalk.gray('Winner:'), comparison.winner);
-      const sign = comparison.scoreDiff > 0 ? '+' : '';
-      console.log(chalk.gray('Score diff:'), `${sign}${comparison.scoreDiff.toFixed(2)}`);
+      const claudeScore = comparison.claudeResult?.finalScore ?? 0;
+      const codexScore = comparison.codexResult?.finalScore ?? 0;
+      const scoreDiff = Math.abs(claudeScore - codexScore);
+      const sign = claudeScore > codexScore ? '+' : '-';
+      console.log(chalk.gray('Score diff:'), `${sign}${scoreDiff.toFixed(2)}`);
     } else if (comparison.claudeResult) {
-      console.log(chalk.gray('Score:'), comparison.claudeResult.overallScore.toFixed(2));
+      console.log(chalk.gray('Claude Score:'), comparison.claudeResult.finalScore.toFixed(2));
+      console.log(chalk.gray('Success Rate:'), comparison.claudeResult.successRate);
     } else if (comparison.codexResult) {
-      console.log(chalk.gray('Score:'), comparison.codexResult.overallScore.toFixed(2));
+      console.log(chalk.gray('Codex Score:'), comparison.codexResult.finalScore.toFixed(2));
+      console.log(chalk.gray('Success Rate:'), comparison.codexResult.successRate);
     }
     console.log(chalk.gray('Results:'), `${RESULTS_DIR}/latest-${fixtureName}.json\n`);
   } else {
@@ -91,23 +104,24 @@ try {
     console.log(chalk.blue(`Running all ${mode} fixtures...\n`));
     const comparisons = await runner.runAll(mode, agent);
 
-    for (const comparison of comparisons) {
-      reporter.storeResults(comparison);
-    }
-    reporter.storeMarkdownReport(comparisons);
-
     console.log(chalk.green(`\n✅ Complete: ${comparisons.length} fixtures`));
 
     // Summary
     if (agent) {
-      // Single-agent mode: show average score
+      // Single-agent mode: show average score and success rates
       const avgScore =
         comparisons.reduce((sum, c) => {
           const result = c.claudeResult || c.codexResult;
-          return sum + (result?.overallScore || 0);
+          return sum + (result?.finalScore || 0);
         }, 0) / comparisons.length;
 
+      const successRates = comparisons.map((c) => {
+        const result = c.claudeResult || c.codexResult;
+        return result?.successRate || '0/3';
+      });
+
       console.log(chalk.gray('\nAverage Score:'), avgScore.toFixed(2));
+      console.log(chalk.gray('Success Rates:'), successRates.join(', '));
     } else {
       // Comparison mode: show wins/losses
       const wins = comparisons.reduce(
@@ -134,5 +148,9 @@ try {
   }
 } catch (error) {
   console.error(chalk.red('\n❌ Failed:'), error instanceof Error ? error.message : String(error));
+  if (error instanceof Error && error.stack) {
+    console.error(chalk.gray('\nStack trace:'));
+    console.error(error.stack);
+  }
   process.exit(1);
 }
