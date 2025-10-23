@@ -52,35 +52,45 @@ export class CLIReporter {
   }
 
   /**
-   * Report a successful attempt with score
+   * Report a successful attempt with score and timing
    *
    * @param attemptNumber - Attempt number (1, 2, or 3)
    * @param score - Overall score (0-10)
+   * @param responseTimeMs - Time taken to generate (milliseconds)
    *
    * @example
    * ```typescript
-   * reporter.reportAttemptSuccess(1, 8.5);
-   * // Output: "✓ Attempt 1: Success (score: 8.5)"
+   * reporter.reportAttemptSuccess(1, 8.5, 1234);
+   * // Output: "✓ Attempt 1: Success (score: 8.5, 1234ms)"
    * ```
    */
-  reportAttemptSuccess(attemptNumber: number, score: number): void {
-    console.log(chalk.green(`  ✓ Attempt ${attemptNumber}: Success (score: ${score.toFixed(1)})`));
+  reportAttemptSuccess(attemptNumber: number, score: number, responseTimeMs: number): void {
+    console.log(
+      chalk.green(
+        `  ✓ Attempt ${attemptNumber}: Success (score: ${score.toFixed(1)}, ${responseTimeMs}ms)`
+      )
+    );
   }
 
   /**
-   * Report a failed attempt with failure type
+   * Report a failed attempt with failure type and timing
    *
    * @param attemptNumber - Attempt number (1, 2, or 3)
    * @param failureType - Type of failure
+   * @param responseTimeMs - Time taken before failure (milliseconds)
    *
    * @example
    * ```typescript
-   * reporter.reportAttemptFailure(2, 'validation');
-   * // Output: "✗ Attempt 2: Failed (validation)"
+   * reporter.reportAttemptFailure(2, 'validation', 567);
+   * // Output: "✗ Attempt 2: Failed (validation, 567ms)"
    * ```
    */
-  reportAttemptFailure(attemptNumber: number, failureType: FailureType): void {
-    console.log(chalk.red(`  ✗ Attempt ${attemptNumber}: Failed (${failureType})`));
+  reportAttemptFailure(
+    attemptNumber: number,
+    failureType: FailureType,
+    responseTimeMs: number
+  ): void {
+    console.log(chalk.red(`  ✗ Attempt ${attemptNumber}: Failed (${failureType}, ${responseTimeMs}ms)`));
   }
 
   /**

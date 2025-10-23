@@ -110,16 +110,24 @@ export abstract class BaseAgent implements Agent {
   /**
    * Check if CLI command is available on the system
    *
-   * Uses `which` command to verify CLI is installed and accessible.
+   * Uses `command -v` via sh to verify CLI is installed and accessible.
+   * This is more portable than `which` (which may be a shell built-in).
+   *
    * Concrete method used by all agents.
    *
    * @param cliCommand - Name of the CLI command to check
    * @param workdir - Working directory for command execution
-   * @throws {Error} If CLI not found (ENOENT) or other execution error
+   * @throws {Error} If CLI not found or other execution error
    */
-  protected async checkAvailability(cliCommand: string, workdir: string): Promise<void> {
-    // exec() already throws helpful errors for ENOENT and other failures
-    await exec('which', [cliCommand], { cwd: workdir });
+  protected async checkAvailability(cliCommand: string, _workdir: string): Promise<void> {
+    // Use /bin/sh with full path for Bun compatibility
+    // Use /tmp as cwd since we're just checking if command exists in PATH (doesn't need actual repo)
+    const result = await exec('/bin/sh', ['-c', `command -v ${cliCommand}`], { cwd: '/tmp' });
+
+    // command -v returns empty if not found
+    if (!result.stdout.trim()) {
+      throw new Error(`Command "${cliCommand}" not found. Please ensure it is installed and in your PATH.`);
+    }
   }
 
   /**
