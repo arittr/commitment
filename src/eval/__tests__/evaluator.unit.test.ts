@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, spyOn } from 'bun:test';
 
 /**
  * Unit tests for Evaluator module
@@ -6,26 +6,25 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
  * Tests the orchestration of evaluation using dependency injection.
  *
  * NOTE: These tests verify the public API by injecting a mock agent.
- * We use Bun's mock() function and configure with mockImplementation() inside each test.
+ * We use spyOn pattern matching runner.unit.test.ts approach.
  */
 
+import type { ChatGPTAgent } from '../chatgpt-agent';
 import { EvaluationError } from '../../errors';
 import { Evaluator } from '../evaluator';
 import type { EvalMetrics } from '../schemas';
 
 describe('Evaluator', () => {
   let evaluator: Evaluator;
-
-  // Create mock function at module level (same pattern as runner.unit.test.ts)
-  const mockEvaluate = mock();
+  let mockAgent: ChatGPTAgent;
 
   beforeEach(() => {
-    // Reset mock before each test
-    mockEvaluate.mockReset();
-
-    // Create mock agent with evaluate method
-    const mockAgent = {
-      evaluate: mockEvaluate,
+    // Create a simple mock agent
+    mockAgent = {
+      evaluate: async () => ({
+        feedback: '',
+        metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
+      }),
       name: 'chatgpt',
     } as any;
 
@@ -51,11 +50,12 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      // Configure mock inside test case (same pattern as runner.unit.test.ts)
-      mockEvaluate.mockImplementation(async () => ({
+      // Spy on mock agent and configure (same pattern as runner.unit.test.ts)
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: mockFeedback,
         metrics: mockMetrics,
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -78,10 +78,11 @@ describe('Evaluator', () => {
 
     it('should include valid timestamp in ISO format', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Good',
         metrics: { accuracy: 8, clarity: 8, conventionalCompliance: 8, detailLevel: 8 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -99,10 +100,11 @@ describe('Evaluator', () => {
 
     it('should calculate overall score correctly as average of 4 metrics', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Good',
         metrics: { accuracy: 9, clarity: 8, conventionalCompliance: 10, detailLevel: 7 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -119,10 +121,11 @@ describe('Evaluator', () => {
 
     it('should handle perfect scores correctly', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Perfect',
         metrics: { accuracy: 10, clarity: 10, conventionalCompliance: 10, detailLevel: 10 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -139,10 +142,11 @@ describe('Evaluator', () => {
 
     it('should handle minimum scores correctly', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Poor',
         metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate('bad', 'M  file.txt', 'diff...', 'test', 'claude');
@@ -154,9 +158,8 @@ describe('Evaluator', () => {
     it('should propagate EvaluationError from agent', async () => {
       // Arrange
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
-      mockEvaluate.mockImplementation(async () => {
-        throw mockError;
-      });
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -171,9 +174,8 @@ describe('Evaluator', () => {
     it('should propagate evaluation failed error from agent', async () => {
       // Arrange
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
-      mockEvaluate.mockImplementation(async () => {
-        throw mockError;
-      });
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -187,10 +189,11 @@ describe('Evaluator', () => {
 
     it('should work with codex agent name', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Well structured',
         metrics: { accuracy: 8, clarity: 9, conventionalCompliance: 9, detailLevel: 8 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -208,10 +211,11 @@ describe('Evaluator', () => {
 
     it('should include all metrics in result', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Test feedback',
         metrics: { accuracy: 7, clarity: 6, conventionalCompliance: 8, detailLevel: 9 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
@@ -231,10 +235,11 @@ describe('Evaluator', () => {
 
     it('should handle floating point scores correctly', async () => {
       // Arrange
-      mockEvaluate.mockImplementation(async () => ({
+      const evaluateSpy = spyOn(mockAgent, 'evaluate');
+      evaluateSpy.mockResolvedValue({
         feedback: 'Good',
         metrics: { accuracy: 8.5, clarity: 7.5, conventionalCompliance: 9, detailLevel: 8 },
-      }));
+      });
 
       // Act
       const result = await evaluator.evaluate(
