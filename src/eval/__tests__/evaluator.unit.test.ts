@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
 /**
  * Unit tests for Evaluator module
@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
  * Tests the orchestration of evaluation using dependency injection.
  *
  * NOTE: These tests verify the public API by injecting a mock agent.
- * We use an object property for the mock to ensure reliable closure behavior in CI.
+ * We use Bun's mock() function and configure with mockImplementation() inside each test.
  */
 
 import { EvaluationError } from '../../errors';
@@ -16,18 +16,16 @@ import type { EvalMetrics } from '../schemas';
 describe('Evaluator', () => {
   let evaluator: Evaluator;
 
-  // Use an object property instead of a variable for more reliable closure behavior
-  const mockState = {
-    evaluateImpl: async (): Promise<{ feedback: string; metrics: EvalMetrics }> => ({
-      feedback: 'ERROR: Mock not configured',
-      metrics: { accuracy: -1, clarity: -1, conventionalCompliance: -1, detailLevel: -1 },
-    }),
-  };
+  // Create mock function at module level (same pattern as runner.unit.test.ts)
+  const mockEvaluate = mock();
 
   beforeEach(() => {
-    // Create a simple manual mock
+    // Reset mock before each test
+    mockEvaluate.mockReset();
+
+    // Create mock agent with evaluate method
     const mockAgent = {
-      evaluate: async () => mockState.evaluateImpl(),
+      evaluate: mockEvaluate,
       name: 'chatgpt',
     } as any;
 
@@ -53,11 +51,11 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      // Configure mock to return specific response
-      mockState.evaluateImpl = async () => ({
+      // Configure mock inside test case (same pattern as runner.unit.test.ts)
+      mockEvaluate.mockImplementation(async () => ({
         feedback: mockFeedback,
         metrics: mockMetrics,
-      });
+      }));
 
       // Act
       const result = await evaluator.evaluate(
@@ -65,7 +63,7 @@ describe('Evaluator', () => {
         gitStatus,
         gitDiff,
         fixtureName,
-        agentName,
+        agentName
       );
 
       // Assert - verify the evaluator produces correct output
@@ -80,13 +78,19 @@ describe('Evaluator', () => {
 
     it('should include valid timestamp in ISO format', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Good',
         metrics: { accuracy: 8, clarity: 8, conventionalCompliance: 8, detailLevel: 8 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: test',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - verify timestamp
       expect(result.timestamp).toBeTruthy();
@@ -95,13 +99,19 @@ describe('Evaluator', () => {
 
     it('should calculate overall score correctly as average of 4 metrics', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Good',
         metrics: { accuracy: 9, clarity: 8, conventionalCompliance: 10, detailLevel: 7 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: test',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - overall score should be (9 + 8 + 10 + 7) / 4 = 8.5
       expect(result.overallScore).toBe(8.5);
@@ -109,13 +119,19 @@ describe('Evaluator', () => {
 
     it('should handle perfect scores correctly', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Perfect',
         metrics: { accuracy: 10, clarity: 10, conventionalCompliance: 10, detailLevel: 10 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('feat: perfect', 'A  file.ts', 'diff...', 'test', 'codex');
+      const result = await evaluator.evaluate(
+        'feat: perfect',
+        'A  file.ts',
+        'diff...',
+        'test',
+        'codex'
+      );
 
       // Assert
       expect(result.overallScore).toBe(10);
@@ -123,10 +139,10 @@ describe('Evaluator', () => {
 
     it('should handle minimum scores correctly', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Poor',
         metrics: { accuracy: 0, clarity: 0, conventionalCompliance: 0, detailLevel: 0 },
-      });
+      }));
 
       // Act
       const result = await evaluator.evaluate('bad', 'M  file.txt', 'diff...', 'test', 'claude');
@@ -138,46 +154,52 @@ describe('Evaluator', () => {
     it('should propagate EvaluationError from agent', async () => {
       // Arrange
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
-      mockState.evaluateImpl = async () => {
+      mockEvaluate.mockImplementation(async () => {
         throw mockError;
-      };
+      });
 
       // Act & Assert
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude')
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'claude')
       ).rejects.toThrow('OpenAI API key is not configured');
     });
 
     it('should propagate evaluation failed error from agent', async () => {
       // Arrange
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
-      mockState.evaluateImpl = async () => {
+      mockEvaluate.mockImplementation(async () => {
         throw mockError;
-      };
+      });
 
       // Act & Assert
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex')
       ).rejects.toThrow(EvaluationError);
 
       await expect(
-        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex'),
+        evaluator.evaluate('fix: test', 'M  file.ts', 'diff...', 'test', 'codex')
       ).rejects.toThrow('API rate limit exceeded');
     });
 
     it('should work with codex agent name', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Well structured',
         metrics: { accuracy: 8, clarity: 9, conventionalCompliance: 9, detailLevel: 8 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('feat: add feature', 'A  file.ts', 'diff...', 'test', 'codex');
+      const result = await evaluator.evaluate(
+        'feat: add feature',
+        'A  file.ts',
+        'diff...',
+        'test',
+        'codex'
+      );
 
       // Assert
       expect(result.agent).toBe('codex');
@@ -186,13 +208,19 @@ describe('Evaluator', () => {
 
     it('should include all metrics in result', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Test feedback',
         metrics: { accuracy: 7, clarity: 6, conventionalCompliance: 8, detailLevel: 9 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('test: commit', 'M  test.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'test: commit',
+        'M  test.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - verify all individual metrics are present
       expect(result.metrics.conventionalCompliance).toBe(8);
@@ -203,13 +231,19 @@ describe('Evaluator', () => {
 
     it('should handle floating point scores correctly', async () => {
       // Arrange
-      mockState.evaluateImpl = async () => ({
+      mockEvaluate.mockImplementation(async () => ({
         feedback: 'Good',
         metrics: { accuracy: 8.5, clarity: 7.5, conventionalCompliance: 9, detailLevel: 8 },
-      });
+      }));
 
       // Act
-      const result = await evaluator.evaluate('fix: update', 'M  file.ts', 'diff...', 'test', 'claude');
+      const result = await evaluator.evaluate(
+        'fix: update',
+        'M  file.ts',
+        'diff...',
+        'test',
+        'claude'
+      );
 
       // Assert - (8.5 + 7.5 + 9.0 + 8.0) / 4 = 8.25
       expect(result.overallScore).toBeCloseTo(8.25, 2);
