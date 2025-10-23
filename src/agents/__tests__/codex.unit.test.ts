@@ -59,7 +59,9 @@ describe('CodexAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['codex'], { cwd: workdir });
+      expect(mockExec).toHaveBeenNthCalledWith(1, '/bin/sh', ['-c', 'command -v codex'], {
+        cwd: '/tmp',
+      });
       expect(mockExec).toHaveBeenNthCalledWith(
         2,
         'codex',
