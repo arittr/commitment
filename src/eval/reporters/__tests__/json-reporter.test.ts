@@ -85,8 +85,8 @@ describe('JSONReporter', () => {
       // Check file exists
       expect(existsSync(join(testResultsDir, filename))).toBe(true);
 
-      // Check filename format: test-fixture-YYYY-MM-DDTHH-mm-ss.sssZ.json
-      expect(filename).toMatch(/^test-fixture-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z\.json$/);
+      // Check filename format: YYYY-MM-DDTHH-mm-ss.sssZ/test-fixture.json
+      expect(filename).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z\/test-fixture\.json$/);
     });
 
     it('should save valid JSON content', async () => {
@@ -155,17 +155,19 @@ describe('JSONReporter', () => {
       // Wait a tiny bit to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Save second time
+      // Save second time (same runDir, so filename will be identical)
       const filename2 = await reporter.saveResults(result, 'test-fixture');
       createdFiles.push(join(testResultsDir, filename2));
 
       const symlinkPath = join(testResultsDir, 'latest-test-fixture.json');
       createdFiles.push(symlinkPath);
 
-      // Symlink should point to second (latest) file
+      // Within the same reporter instance, runDir is shared, so filenames are identical
+      expect(filename2).toBe(filename1);
+
+      // Symlink should still point to the file
       const target = await readlink(symlinkPath);
-      expect(target).toBe(filename2);
-      expect(target).not.toBe(filename1);
+      expect(target).toBe(filename1);
     });
 
     it('should handle all-failure scenario', async () => {

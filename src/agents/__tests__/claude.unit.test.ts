@@ -60,16 +60,14 @@ describe('ClaudeAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['claude'], { cwd: workdir });
-      expect(mockExec).toHaveBeenNthCalledWith(
-        2,
-        'claude',
-        ['--print'],
-        expect.objectContaining({
-          cwd: workdir,
-          input: prompt,
-        })
-      );
+      expect(mockExec).toHaveBeenNthCalledWith(1, '/bin/sh', ['-c', 'command -v claude'], {
+        cwd: '/tmp',
+      });
+      expect(mockExec).toHaveBeenNthCalledWith(2, '/bin/sh', ['-c', 'claude --print'], {
+        cwd: workdir,
+        input: prompt,
+        timeout: 120000,
+      });
     });
 
     it('should clean AI artifacts from response', async () => {
