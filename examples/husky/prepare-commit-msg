@@ -4,5 +4,5 @@
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
+  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
 fi

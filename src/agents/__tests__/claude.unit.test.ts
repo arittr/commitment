@@ -28,7 +28,7 @@ describe('ClaudeAgent', () => {
   const mockSuccessfulGeneration = (output: string): void => {
     mockExec
       .mockResolvedValueOnce({
-        // First call: which Claude CLI
+        // First call: which claude
         exitCode: 0,
         stderr: '',
         stdout: '/usr/local/bin/claude',
@@ -43,7 +43,7 @@ describe('ClaudeAgent', () => {
 
   describe('name', () => {
     it('should return correct agent name', () => {
-      expect(agent.name).toBe('Claude CLI');
+      expect(agent.name).toBe('claude');
     });
   });
 
@@ -60,7 +60,7 @@ describe('ClaudeAgent', () => {
       const message = await agent.generate(prompt, workdir);
 
       expect(message).toBe('feat: add dark mode toggle\n\nImplement theme switching functionality');
-      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['Claude CLI'], { cwd: workdir });
+      expect(mockExec).toHaveBeenNthCalledWith(1, 'which', ['claude'], { cwd: workdir });
       expect(mockExec).toHaveBeenNthCalledWith(
         2,
         'claude',

@@ -161,7 +161,7 @@ Create `.husky/prepare-commit-msg`:
 # Generate commit message with AI
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
+  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
 fi
 ```
 
@@ -188,7 +188,7 @@ Add to your `package.json`:
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1 || exit 0"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
   }
 }
 ```
@@ -215,7 +215,7 @@ Create `.git/hooks/prepare-commit-msg`:
 #!/bin/sh
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment --message-only > "$1" || exit 1
 fi
 ```
 

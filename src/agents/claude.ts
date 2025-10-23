@@ -20,9 +20,9 @@ import { BaseAgent } from './base-agent';
  */
 export class ClaudeAgent extends BaseAgent {
   /**
-   * Human-readable name of the agent
+   * CLI command name for the agent
    */
-  readonly name = 'Claude CLI';
+  readonly name = 'claude';
 
   /**
    * Execute Claude CLI to generate commit message

@@ -4,5 +4,5 @@
 
 # Only run for regular commits
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment --message-only > "$1" || exit 1
 fi
