@@ -69,6 +69,7 @@ describe('EvalRunner', () => {
 
       // Mock JSONReporter
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
@@ -210,6 +211,7 @@ describe('EvalRunner', () => {
 
       // Mock reporters
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
@@ -286,6 +288,7 @@ describe('EvalRunner', () => {
       } as unknown as MetaEvaluator;
 
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
@@ -363,6 +366,7 @@ describe('EvalRunner', () => {
 
       // Mock reporters
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
@@ -438,6 +442,7 @@ describe('EvalRunner', () => {
       } as unknown as MetaEvaluator;
 
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
@@ -504,6 +509,7 @@ describe('EvalRunner', () => {
       } as unknown as MetaEvaluator;
 
       const mockJSONReporter = {
+        getRunDir: mock(() => '2025-01-01T00-00-00.000Z'),
         saveResults: mock(async () => {}),
       } as unknown as JSONReporter;
 
