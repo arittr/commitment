@@ -44,7 +44,10 @@ describe('AttemptRunner', () => {
         ),
       } as unknown as CLIReporter;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter);
+      // Generator factory that returns our mock
+      const generatorFactory = () => mockGenerator;
+
+      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -105,7 +108,9 @@ describe('AttemptRunner', () => {
         ),
       } as unknown as CLIReporter;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter);
+      const generatorFactory = () => mockGenerator;
+
+      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -178,7 +183,9 @@ describe('AttemptRunner', () => {
         ),
       } as unknown as CLIReporter;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter);
+      const generatorFactory = () => mockGenerator;
+
+      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -311,7 +318,9 @@ describe('AttemptRunner', () => {
         ),
       } as unknown as CLIReporter;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter);
+      const generatorFactory = () => mockGenerator;
+
+      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -379,7 +388,9 @@ describe('AttemptRunner', () => {
         ),
       } as unknown as CLIReporter;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter);
+      const generatorFactory = () => mockGenerator;
+
+      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
 
       const fixture = {
         diff: 'diff --git a/src/file.ts...',
