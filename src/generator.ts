@@ -1,4 +1,3 @@
-import { execa } from 'execa';
 import { ClaudeAgent } from './agents/claude';
 import { CodexAgent } from './agents/codex';
 import type { Agent } from './agents/types';
@@ -10,6 +9,7 @@ import {
 } from './types/schemas';
 import { categorizeFiles } from './utils/git-schemas';
 import { hasContent, isDefined, isString } from './utils/guards';
+import { exec } from './utils/shell';
 
 /**
  * Minimal task interface for commit message generation
@@ -473,14 +473,14 @@ ${changeAnalysis}`;
     }
 
     try {
-      const { stdout } = await execa('git', args, { cwd });
+      const result = await exec('git', args, { cwd });
 
       // Validate output is a string
-      if (!isString(stdout)) {
+      if (!isString(result.stdout)) {
         throw new Error('Git command returned non-string output');
       }
 
-      return stdout;
+      return result.stdout;
     } catch (error) {
       throw new Error(
         `Git command failed: ${error instanceof Error ? error.message : String(error)}`
