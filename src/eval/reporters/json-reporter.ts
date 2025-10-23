@@ -45,14 +45,14 @@ export class JSONReporter {
   /**
    * Create a new JSON reporter
    *
-   * @param resultsDir - Directory to store JSON results (default: src/eval/results)
+   * @param resultsDir - Directory to store JSON results (default: .eval-results)
    *
    * @example
    * ```typescript
    * const reporter = new JSONReporter('/path/to/results');
    * ```
    */
-  constructor(resultsDir: string = join(process.cwd(), 'src/eval/results')) {
+  constructor(resultsDir: string = join(process.cwd(), '.eval-results')) {
     this.resultsDir = resultsDir;
   }
 
