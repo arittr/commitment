@@ -1,33 +1,82 @@
 /**
  * Evaluation system barrel export
  *
- * This module exports all evaluation system components:
- * - Schemas and types (EvalFixture, EvalMetrics, EvalResult, EvalComparison)
- * - Evaluator (ChatGPT-based commit message evaluator)
- * - EvalRunner (fixture loading and execution orchestration)
- * - EvalReporter (result storage and markdown report generation)
+ * This module exports all evaluation system components for the multi-attempt evaluation system:
+ * - Core schemas and types (AttemptOutcome, EvalResult, EvalComparison, etc.)
+ * - Evaluators (ChatGPTAgent, SingleAttemptEvaluator, MetaEvaluator)
+ * - Runners (AttemptRunner, EvalRunner)
+ * - Reporters (CLIReporter, JSONReporter, MarkdownReporter)
+ * - Utilities (categorizeError, getBestAttempt)
  *
  * @example
  * ```typescript
- * import { EvalRunner, EvalReporter } from './eval/index';
+ * import {
+ *   EvalRunner,
+ *   AttemptRunner,
+ *   MetaEvaluator,
+ *   JSONReporter,
+ *   MarkdownReporter,
+ *   CLIReporter,
+ *   SingleAttemptEvaluator,
+ *   ChatGPTAgent
+ * } from './eval/index.js';
  *
- * const runner = new EvalRunner();
- * const reporter = new EvalReporter();
+ * // Create dependencies
+ * const chatgptAgent = new ChatGPTAgent();
+ * const evaluator = new SingleAttemptEvaluator(chatgptAgent);
+ * const metaEvaluator = new MetaEvaluator(chatgptAgent);
+ * const attemptRunner = new AttemptRunner(generator, evaluator, cliReporter);
+ * const runner = new EvalRunner(attemptRunner, metaEvaluator, jsonReporter, markdownReporter);
  *
- * // Run evaluation for a fixture
+ * // Run evaluation
  * const fixture = runner.loadFixture('simple', 'mocked');
  * const comparison = await runner.runFixture(fixture);
- *
- * // Store and report results
- * reporter.storeResults(comparison);
- * reporter.storeMarkdownReport([comparison]);
+ * console.log(comparison.winner); // 'claude' | 'codex' | 'tie'
+ * console.log(comparison.claudeResult.finalScore); // 8.5
+ * console.log(comparison.claudeResult.successRate); // '3/3'
  * ```
  */
 
-// Export core evaluation components
-export { ChatGPTAgent } from './chatgpt-agent';
-export { Evaluator } from './evaluator';
-export { EvalReporter } from './reporter';
-export { EvalRunner } from './runner';
-// Export all schemas and types
-export * from './schemas';
+// Export core types and schemas
+export type {
+  AttemptMetrics,
+  AttemptOutcome,
+  EvalComparison,
+  EvalResult,
+  FailureOutcome,
+  FailureType,
+  MetaEvaluationInput,
+  MetaEvaluationOutput,
+  SuccessOutcome,
+  SuccessRate,
+} from './core/index.js';
+export {
+  attemptMetricsSchema,
+  attemptOutcomeSchema,
+  EvaluationError,
+  evalComparisonSchema,
+  evalResultSchema,
+  failureOutcomeSchema,
+  failureTypeSchema,
+  isFailureOutcome,
+  isSuccessOutcome,
+  metaEvaluationInputSchema,
+  metaEvaluationOutputSchema,
+  successOutcomeSchema,
+  successRateSchema,
+  validateAttemptOutcome,
+  validateEvalComparison,
+  validateEvalResult,
+  validateMetaEvaluationInput,
+  validateMetaEvaluationOutput,
+} from './core/index.js';
+export type { SingleAttemptResult } from './evaluators/index.js';
+// Export evaluators
+export { ChatGPTAgent, MetaEvaluator, SingleAttemptEvaluator } from './evaluators/index.js';
+// Export reporters
+export { CLIReporter, JSONReporter, MarkdownReporter } from './reporters/index.js';
+export type { Fixture } from './runners/index.js';
+// Export runners
+export { AttemptRunner, EvalRunner } from './runners/index.js';
+// Export utilities
+export { categorizeError, getBestAttempt } from './utils/index.js';
