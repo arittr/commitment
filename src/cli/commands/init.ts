@@ -3,9 +3,9 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import chalk from 'chalk';
-import { execa } from 'execa';
 
 import type { AgentName } from '../../agents/types';
+import { exec } from '../../utils/shell';
 
 type HookManager = 'husky' | 'simple-git-hooks' | 'plain';
 
@@ -231,7 +231,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   try {
     // Verify we're in a git repository
     try {
-      await execa('git', ['rev-parse', '--git-dir'], { cwd });
+      await exec('git', ['rev-parse', '--git-dir'], { cwd });
     } catch {
       console.error(chalk.red('❌ Not a git repository'));
       console.log(chalk.gray('   Run `git init` first'));
