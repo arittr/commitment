@@ -43,14 +43,14 @@ export class MarkdownReporter {
   /**
    * Create a new Markdown reporter
    *
-   * @param resultsDir - Directory to store markdown reports (default: src/eval/results)
+   * @param resultsDir - Directory to store markdown reports (default: .eval-results)
    *
    * @example
    * ```typescript
    * const reporter = new MarkdownReporter('/path/to/results');
    * ```
    */
-  constructor(resultsDir: string = join(process.cwd(), 'src/eval/results')) {
+  constructor(resultsDir: string = join(process.cwd(), '.eval-results')) {
     this.resultsDir = resultsDir;
   }
 
@@ -167,6 +167,7 @@ export class MarkdownReporter {
 
     if (isSuccessOutcome(attempt)) {
       sections.push(`**Status:** ✓ Success\n`);
+      sections.push(`**Response Time:** ${attempt.responseTimeMs}ms\n`);
       sections.push(`**Commit Message:**`);
       sections.push('```');
       sections.push(attempt.commitMessage);
@@ -181,6 +182,7 @@ export class MarkdownReporter {
       sections.push(`| Scope | ${attempt.metrics.scope.toFixed(1)} |\n`);
     } else {
       sections.push(`**Status:** ✗ Failed\n`);
+      sections.push(`**Response Time:** ${attempt.responseTimeMs}ms\n`);
       sections.push(`**Failure Type:** ${attempt.failureType}\n`);
       sections.push(`**Failure Reason:** ${attempt.failureReason}\n`);
     }

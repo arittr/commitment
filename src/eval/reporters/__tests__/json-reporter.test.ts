@@ -7,7 +7,7 @@ import type { EvalResult } from '../../core/types.js';
 import { JSONReporter } from '../json-reporter.js';
 
 describe('JSONReporter', () => {
-  const testResultsDir = join(process.cwd(), 'src/eval/results');
+  const testResultsDir = join(process.cwd(), '.eval-results');
   let createdFiles: string[] = [];
 
   beforeEach(() => {

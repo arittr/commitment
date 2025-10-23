@@ -244,7 +244,7 @@ import { EvalRunner } from './runner';
 import { EvalReporter } from './reporter';
 
 const runner = new EvalRunner();
-const reporter = new EvalReporter('./src/eval/results');
+const reporter = new EvalReporter('./.eval-results');
 
 // Run evaluation with real API calls
 const comparisons = await runner.runAll('mocked');

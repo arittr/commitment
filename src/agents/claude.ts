@@ -33,7 +33,8 @@ export class ClaudeAgent extends BaseAgent {
    * @throws {Error} If CLI execution fails
    */
   protected async executeCommand(prompt: string, workdir: string): Promise<string> {
-    const result = await exec('claude', ['--print'], {
+    // Use /bin/sh -c for Bun compatibility (Bun.spawn doesn't search PATH)
+    const result = await exec('/bin/sh', ['-c', 'claude --print'], {
       cwd: workdir,
       input: prompt,
       timeout: 120_000, // 2 minutes
