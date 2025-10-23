@@ -66,7 +66,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: mockFeedback,
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -97,7 +97,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: mockFeedback,
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -141,7 +141,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Good',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -176,7 +176,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Perfect commit message',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -211,7 +211,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Poor commit message',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -290,7 +290,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Well structured',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -326,7 +326,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Test feedback',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
@@ -364,7 +364,7 @@ describe('Evaluator', () => {
         Promise.resolve({
           feedback: 'Good',
           metrics: mockMetrics,
-        }),
+        })
       );
 
       // Act
