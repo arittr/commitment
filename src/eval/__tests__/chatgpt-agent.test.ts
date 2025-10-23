@@ -24,8 +24,9 @@ describe('ChatGPTAgent', () => {
   let agent: ChatGPTAgent;
 
   beforeEach(() => {
-    // Reset mocks before each test
-    mock.restore();
+    // Clear specific mocks before each test (not restore() which clears ALL mocks globally)
+    mockAgent.mockClear();
+    mockRun.mockClear();
 
     agent = new ChatGPTAgent();
   });
