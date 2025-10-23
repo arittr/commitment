@@ -157,25 +157,18 @@ export class CommitMessageGenerator {
 
     // Try AI-powered generation first if enabled
     if (this.config.enableAI) {
-      try {
-        const aiMessage = await this._generateAICommitMessage(validatedTask, validatedOptions);
-        if (this._isValidMessage(aiMessage)) {
-          return this._addSignature(aiMessage);
-        }
-      } catch (error) {
-        // Log warning but don't throw - will fall back to rule-based
-        const errorMessage =
-          error instanceof AgentError
-            ? `${error.agentName ?? 'Agent'} failed: ${error.message}`
-            : error instanceof Error
-              ? error.message
-              : String(error);
-
-        this.config.logger.warn(`⚠️ AI commit message generation failed: ${errorMessage}`);
+      const aiMessage = await this._generateAICommitMessage(validatedTask, validatedOptions);
+      if (this._isValidMessage(aiMessage)) {
+        return this._addSignature(aiMessage);
       }
+      // If AI message is invalid, throw error instead of falling back
+      throw new GeneratorError('AI generation produced invalid commit message', {
+        context: { message: aiMessage },
+        suggestedAction: 'Check AI agent output format and conventional commit compliance',
+      });
     }
 
-    // Fallback to intelligent rule-based generation
+    // Fallback to intelligent rule-based generation (only when AI is disabled)
     const ruleBasedMessage = this._generateRuleBasedCommitMessage(validatedTask, validatedOptions);
     return this._addSignature(ruleBasedMessage);
   }
