@@ -5,14 +5,13 @@ import { exec } from '../shell';
  * Integration tests for shell execution adapter
  *
  * These tests execute real commands to verify end-to-end functionality.
- * For unit tests with mocked Bun.spawn, see shell.test.ts
+ * For unit tests with mocked exec, see shell.unit.test.ts
  *
- * NOTE: These tests are skipped in the full test suite to avoid conflicts
- * with module mocking in agent tests. Run with:
- *   bun test src/utils/__tests__/shell.integration.test.ts
+ * Run with:
+ *   bun run test:integration
  */
 
-describe.skip('shell execution adapter (integration tests)', () => {
+describe('shell execution adapter (integration tests)', () => {
   describe('runtime detection', () => {
     it('should detect Bun runtime when process.versions.bun is defined', () => {
       // Bun runtime is the default in test environment
