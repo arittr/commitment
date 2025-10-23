@@ -148,6 +148,14 @@ export const successOutcomeSchema = z.object({
     .describe('Average of all metrics (0-10)'),
 
   /**
+   * Time taken to generate the commit message (milliseconds)
+   */
+  responseTimeMs: z
+    .number()
+    .min(0, 'Response time must be non-negative')
+    .describe('Generation time in milliseconds'),
+
+  /**
    * Discriminator: success
    */
   status: z.literal('success'),
@@ -177,6 +185,14 @@ export const failureOutcomeSchema = z.object({
    * Type of failure for categorization
    */
   failureType: failureTypeSchema,
+
+  /**
+   * Time taken before the failure occurred (milliseconds)
+   */
+  responseTimeMs: z
+    .number()
+    .min(0, 'Response time must be non-negative')
+    .describe('Time until failure in milliseconds'),
 
   /**
    * Discriminator: failure

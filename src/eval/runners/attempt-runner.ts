@@ -21,7 +21,8 @@
  * ```
  */
 
-import type { CommitMessageGenerator } from '../../generator.js';
+import { CommitMessageGenerator } from '../../generator.js';
+import { MockGitProvider } from '../../utils/git-provider.js';
 import type { AttemptOutcome } from '../core/types.js';
 import type { SingleAttemptEvaluator } from '../evaluators/single-attempt.js';
 import type { CLIReporter } from '../reporters/cli-reporter.js';
@@ -49,12 +50,10 @@ export class AttemptRunner {
   /**
    * Create a new attempt runner
    *
-   * @param generator - Commit message generator instance
    * @param evaluator - Single-attempt evaluator instance
    * @param reporter - CLI reporter for progress updates
    */
   constructor(
-    private readonly generator: CommitMessageGenerator,
     private readonly evaluator: SingleAttemptEvaluator,
     private readonly reporter: CLIReporter
   ) {}
@@ -98,16 +97,21 @@ export class AttemptRunner {
    * });
    * ```
    */
-  async runAttempts(_agentName: string, fixture: Fixture): Promise<AttemptOutcome[]> {
+  async runAttempts(agentName: string, fixture: Fixture): Promise<AttemptOutcome[]> {
     const outcomes: AttemptOutcome[] = [];
 
     // Execute exactly 3 attempts (no early returns!)
     for (let attemptNumber = 1; attemptNumber <= 3; attemptNumber++) {
       this.reporter.reportAttemptStart(attemptNumber);
 
+      const startTime = performance.now();
+
       try {
         // Attempt to generate commit message
-        const commitMessage = await this._generateMessage(fixture);
+        const commitMessage = await this._generateMessage(agentName, fixture);
+
+        const endTime = performance.now();
+        const responseTimeMs = Math.round(endTime - startTime);
 
         // Evaluate the generated message
         const evaluation = await this.evaluator.evaluate(commitMessage, fixture.diff, fixture.name);
@@ -118,14 +122,18 @@ export class AttemptRunner {
           commitMessage,
           metrics: evaluation.metrics,
           overallScore: evaluation.overallScore,
+          responseTimeMs,
           status: 'success',
         };
 
         outcomes.push(successOutcome);
 
         // Report success
-        this.reporter.reportAttemptSuccess(attemptNumber, evaluation.overallScore);
+        this.reporter.reportAttemptSuccess(attemptNumber, evaluation.overallScore, responseTimeMs);
       } catch (error) {
+        const endTime = performance.now();
+        const responseTimeMs = Math.round(endTime - startTime);
+
         // Categorize the error
         const failureType = categorizeError(error);
         const failureReason = error instanceof Error ? error.message : String(error);
@@ -135,13 +143,14 @@ export class AttemptRunner {
           attemptNumber,
           failureReason,
           failureType,
+          responseTimeMs,
           status: 'failure',
         };
 
         outcomes.push(failureOutcome);
 
         // Report failure
-        this.reporter.reportAttemptFailure(attemptNumber, failureType);
+        this.reporter.reportAttemptFailure(attemptNumber, failureType, responseTimeMs);
       }
     }
 
@@ -152,26 +161,39 @@ export class AttemptRunner {
   /**
    * Generate commit message using the generator
    *
-   * Creates a task from fixture metadata and calls generator.
+   * Creates a task from fixture metadata and calls generator with mocked git data.
    *
+   * @param agentName - Agent to use for generation ('claude' | 'codex')
    * @param fixture - Fixture to generate message for
    * @returns Generated commit message
    * @throws {Error} If generation fails
    */
-  private async _generateMessage(fixture: Fixture): Promise<string> {
+  private async _generateMessage(agentName: string, fixture: Fixture): Promise<string> {
+    // Create mock git provider with fixture data
+    const mockGit = new MockGitProvider({
+      diff: fixture.diff,
+      status: fixture.status,
+    });
+
+    // Create generator with mock git provider
+    const generator = new CommitMessageGenerator({
+      agent: agentName as 'claude' | 'codex',
+      enableAI: true,
+      gitProvider: mockGit,
+    });
+
     // Create task from fixture
     const task = {
-      description: `Generate conventional commit message for ${fixture.name} changeset`,
+      description: `Implement changes for ${fixture.name}`,
       produces: this._extractFilesFromStatus(fixture.status),
-      title: `Generate commit for ${fixture.name} fixture`,
+      title: `Changes for ${fixture.name}`,
     };
 
-    // Use temporary directory for fixture evaluation
-    // (Fixtures use mocked git status/diff, not actual repo)
-    const workdir = '/tmp/eval-fixture';
+    // Use /tmp as workdir (mocked git provider doesn't need real directory, but must exist for Bun.spawn)
+    const workdir = '/tmp';
 
     // Generate commit message
-    const message = await this.generator.generateCommitMessage(task, { workdir });
+    const message = await generator.generateCommitMessage(task, { workdir });
 
     return message;
   }

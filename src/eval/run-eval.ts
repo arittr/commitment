@@ -16,7 +16,6 @@ import { parseArgs } from 'node:util';
 
 import chalk from 'chalk';
 
-import { CommitMessageGenerator } from '../generator.js';
 import { MetaEvaluator } from './evaluators/meta-evaluator.js';
 import { SingleAttemptEvaluator } from './evaluators/single-attempt.js';
 import { CLIReporter } from './reporters/cli-reporter.js';
@@ -62,15 +61,14 @@ console.log(chalk.gray('Attempts:'), '3 per agent per fixture');
 console.log('');
 
 // Instantiate dependencies
-const generator = new CommitMessageGenerator({ enableAI: true });
 const singleAttemptEvaluator = new SingleAttemptEvaluator();
 const metaEvaluator = new MetaEvaluator();
 const cliReporter = new CLIReporter();
 const jsonReporter = new JSONReporter(RESULTS_DIR);
 const markdownReporter = new MarkdownReporter(RESULTS_DIR);
 
-// Create attempt runner
-const attemptRunner = new AttemptRunner(generator, singleAttemptEvaluator, cliReporter);
+// Create attempt runner (creates its own generator with mock git provider)
+const attemptRunner = new AttemptRunner(singleAttemptEvaluator, cliReporter);
 
 // Create eval runner with all dependencies
 const runner = new EvalRunner(attemptRunner, metaEvaluator, jsonReporter, markdownReporter);
