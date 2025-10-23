@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
+
 /**
  * Unit tests for Evaluator module
  *
@@ -17,7 +18,7 @@ const mockEvaluateFn = mock((_commitMessage: string, _gitDiff: string, _gitStatu
 );
 
 // Mock ChatGPT agent module BEFORE importing Evaluator
-mock.module('../chatgpt-agent', () => ({
+mock.module('../chatgpt-agent.js', () => ({
   // biome-ignore lint/style/useNamingConvention: Class name in mock module export
   ChatGPTAgent: class {
     name = 'chatgpt';
