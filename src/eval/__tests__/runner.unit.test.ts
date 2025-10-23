@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 /**
  * Unit tests for EvalRunner module
  *
@@ -227,7 +227,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      mockEvaluator.evaluate = mock(() => Promise.resolve({
         agent: 'claude',
         commitMessage: claudeMessage,
         feedback: 'Good',
@@ -235,7 +235,7 @@ describe('EvalRunner', () => {
         metrics: mockMetrics,
         overallScore: 8,
         timestamp: new Date().toISOString(),
-      } as EvalResult);
+      } as EvalResult));
 
       // Act
       await runner.runFixture(fixture);
@@ -272,7 +272,8 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = mock();
+      mockEvaluator.evaluate = evaluateSpy;
 
       evaluateSpy.mockResolvedValueOnce({
         agent: 'claude',
@@ -338,7 +339,8 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = mock();
+      mockEvaluator.evaluate = evaluateSpy;
 
       // Claude scores 9.0
       evaluateSpy.mockResolvedValueOnce({
@@ -393,7 +395,8 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = mock();
+      mockEvaluator.evaluate = evaluateSpy;
 
       // Claude scores 6.5
       evaluateSpy.mockResolvedValueOnce({
@@ -448,7 +451,8 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = mock();
+      mockEvaluator.evaluate = evaluateSpy;
 
       // Claude scores 8.0
       evaluateSpy.mockResolvedValueOnce({
@@ -572,7 +576,8 @@ describe('EvalRunner', () => {
         timestamp: new Date().toISOString(),
       };
 
-      const evaluateSpy = spyOn(mockEvaluator, 'evaluate');
+      const evaluateSpy = mock();
+      mockEvaluator.evaluate = evaluateSpy;
       evaluateSpy.mockResolvedValueOnce(claudeResult);
       evaluateSpy.mockResolvedValueOnce(codexResult);
 
@@ -618,7 +623,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      mockEvaluator.evaluate = mock(() => Promise.resolve({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',
@@ -626,7 +631,7 @@ describe('EvalRunner', () => {
         metrics: mockMetrics,
         overallScore: 8,
         timestamp: new Date().toISOString(),
-      } as EvalResult);
+      } as EvalResult));
 
       // Act
       const results = await runner.runAll('mocked');
@@ -664,7 +669,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      mockEvaluator.evaluate = mock(() => Promise.resolve({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',
@@ -672,7 +677,7 @@ describe('EvalRunner', () => {
         metrics: mockMetrics,
         overallScore: 8,
         timestamp: new Date().toISOString(),
-      } as EvalResult);
+      } as EvalResult));
 
       // Act
       const results = await runner.runAll('live');
@@ -707,7 +712,7 @@ describe('EvalRunner', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockEvaluator, 'evaluate').mockResolvedValue({
+      mockEvaluator.evaluate = mock(() => Promise.resolve({
         agent: 'claude',
         commitMessage: 'fix: test',
         feedback: 'Good',
@@ -715,7 +720,7 @@ describe('EvalRunner', () => {
         metrics: mockMetrics,
         overallScore: 8,
         timestamp: new Date().toISOString(),
-      } as EvalResult);
+      } as EvalResult));
 
       // Act
       const results = await runner.runAll('mocked');

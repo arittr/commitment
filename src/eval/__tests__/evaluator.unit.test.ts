@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 /**
  * Unit tests for Evaluator module
  *
@@ -62,10 +62,12 @@ describe('Evaluator', () => {
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
       // Mock ChatGPT agent response
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: mockFeedback,
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: mockFeedback,
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       await evaluator.evaluate(commitMessage, gitStatus, gitDiff, fixtureName, agentName);
@@ -91,10 +93,12 @@ describe('Evaluator', () => {
 
       const mockFeedback = 'Good conventional commit format. Clear description.';
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: mockFeedback,
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: mockFeedback,
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -133,10 +137,12 @@ describe('Evaluator', () => {
         detailLevel: 7,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Good',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Good',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -166,10 +172,12 @@ describe('Evaluator', () => {
         detailLevel: 10,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Perfect commit message',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Perfect commit message',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -199,10 +207,12 @@ describe('Evaluator', () => {
         detailLevel: 0,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Poor commit message',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Poor commit message',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -227,7 +237,7 @@ describe('Evaluator', () => {
 
       const mockError = EvaluationError.apiKeyMissing('OpenAI');
 
-      spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
+      mockChatGptAgent.evaluate = mock(() => Promise.reject(mockError));
 
       // Act & Assert
       await expect(
@@ -249,7 +259,7 @@ describe('Evaluator', () => {
 
       const mockError = EvaluationError.evaluationFailed('API rate limit exceeded');
 
-      spyOn(mockChatGptAgent, 'evaluate').mockRejectedValue(mockError);
+      mockChatGptAgent.evaluate = mock(() => Promise.reject(mockError));
 
       // Act & Assert
       await expect(
@@ -276,10 +286,12 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Well structured',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Well structured',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -310,10 +322,12 @@ describe('Evaluator', () => {
         detailLevel: 9,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Test feedback',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Test feedback',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
@@ -346,10 +360,12 @@ describe('Evaluator', () => {
         detailLevel: 8,
       };
 
-      spyOn(mockChatGptAgent, 'evaluate').mockResolvedValue({
-        feedback: 'Good',
-        metrics: mockMetrics,
-      });
+      mockChatGptAgent.evaluate = mock(() =>
+        Promise.resolve({
+          feedback: 'Good',
+          metrics: mockMetrics,
+        }),
+      );
 
       // Act
       const result = await evaluator.evaluate(
