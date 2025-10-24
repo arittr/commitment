@@ -4,25 +4,29 @@
 
 <img width="500" height="304" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
 
+[![npm version](https://img.shields.io/npm/v/@arittr/commitment)](https://www.npmjs.com/package/@arittr/commitment)
+[![license: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](./LICENSE)
+[![build](https://img.shields.io/github/actions/workflow/status/arittr/commitment/ci.yml?branch=main)](https://github.com/arittr/commitment/actions)
+
 We all know we should write better commit messages. But we don't.
 
 **commitment** analyzes your git diffs using AI and generates professional, conventional commit messages automatically.
 
 ## Why commitment?
 
-- **Save time**: Stop thinking about commit message phrasing - focus on code
+- **No API Keys**: Uses your local AI CLI (e.g. Claude or Codex) to generate commit messages
 - **Consistency**: Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
-- **Context-aware**: AI understands your changes, not just file names
-- **Frictionless**: One-command setup, then forget about it
+- **Context-aware**: AI understands your changes and adds helpful context
+- **Frictionless**: Just add the hook and stop committing `wip2` and `formatting`
 
 ## Features
 
-- 🤖 **AI-powered generation** using Claude CLI or Codex CLI for accurate, context-aware messages
+- 🤖 **AI-powered generation** using your local AI CLI (e.g. Claude or Codex) for accurate, context-aware messages - no extra API keys required!
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
-- ✨ **Conventional commits** follows standard format (feat:, fix:, docs:, etc.)
+- ✨ **Conventional Commits** for a standard format (feat:, fix:, docs:, etc.)
 - 🚀 **One-command setup** with `commitment init` for automatic hook installation
-- 🪝 **Hook integration** works with husky, simple-git-hooks, or plain git hooks
-- 🌍 **Cross-platform** supports macOS, Linux, and Windows
+- 🪝 **Hook integration** with husky, simple-git-hooks, or plain git hooks
+- 🌍 **Cross-platform** support for macOS, Linux, and Windows
 - 📦 **Zero config** works out of the box with sensible defaults
 
 ## Quick Start
@@ -39,7 +43,7 @@ git add .
 git commit  # Message generated automatically!
 ```
 
-That's it! Every commit now gets an AI-generated message.
+That's it! Every commit now gets an AI-generated, pretty good commit message.
 
 ## Installation
 
@@ -62,10 +66,10 @@ bun add -D @arittr/commitment
 - **Node.js** >= 18
 - **Git repository**
 - **AI CLI** (one of):
-  - [Claude CLI](https://docs.claude.com/docs/claude-code) (recommended) - Install with `npm install -g @anthropic-ai/claude-code`
-  - [Codex CLI](https://cursor.sh) (via Cursor) - Requires Cursor installation
+  - [Claude CLI](https://docs.claude.com/en/docs/claude-code/overview) (recommended) - Install with `npm install -g @anthropic-ai/claude-code`
+  - [Codex CLI](https://developers.openai.com/codex/cli) - Install with `npm install -g @openai/codex`
 
-> **Important**: commitment requires an AI CLI to function. If you don't have one installed, see [Troubleshooting](#ai-cli-not-installed).
+> **Important**: commitment requires an AI CLI to function.
 
 ## Usage
 
@@ -102,55 +106,11 @@ npx commitment --agent codex
 ## How It Works
 
 1. **Analyze**: Reads your staged changes with `git diff --cached`
-2. **Generate**: Sends diff to AI (Claude or Codex) with a detailed prompt
+2. **Generate**: Sends diff to AI CLI with a detailed prompt
 3. **Validate**: Ensures response follows Conventional Commits format
 4. **Commit**: Creates commit with generated message
 
-### What Gets Analyzed
-
-commitment's AI understands:
-
-- **Code patterns**: Function/method additions, removals, modifications
-- **Test changes**: New tests, updated assertions, test refactoring
-- **Type definitions**: Interfaces, types, schemas
-- **File context**: Components, utilities, configs, documentation
-- **Change magnitude**: Lines added/removed, scope of changes
-
-## Examples
-
-### Simple Feature
-
-```bash
-$ git add src/components/Button.tsx
-$ npx commitment
-```
-
-**Generated:**
-```
-feat: add button component with variant support
-
-- Create reusable Button component with TypeScript
-- Add props interface for size and variant options
-- Include hover and focus states with animations
-```
-
-### Bug Fix
-
-```bash
-$ git add src/utils/validation.ts
-$ npx commitment
-```
-
-**Generated:**
-```
-fix: correct email validation regex pattern
-
-- Fix regex to handle plus signs in email addresses
-- Update test cases for edge cases
-- Add validation for international domains
-```
-
-### Multiple Files
+## Example
 
 ```bash
 $ git add src/api/ src/types/
@@ -159,12 +119,16 @@ $ npx commitment
 
 **Generated:**
 ```
-feat: implement user authentication API
+test: update test naming conventions and mock patterns
 
-- Add login and logout endpoints with JWT support
-- Create token generation and validation utilities
-- Update user type definitions with auth fields
-- Add authentication middleware for protected routes
+- Rename runner tests to reflect unit vs integration scope
+- Update base-agent tests to use `command -v` instead of `which`
+- Fix mock expectations to require non-empty stdout for availability checks
+- Reorganize markdown reporter tests to use timestamped directories
+- Add responseTimeMs validation to eval runner tests
+- Update CLI invocation mocks to use shell wrapper pattern
+
+🤖 Generated with Claude via commitment
 ```
 
 ## Configuration
@@ -194,39 +158,6 @@ commitment supports multiple hook managers:
 See [docs/HOOKS.md](./docs/HOOKS.md) for detailed hook integration guide.
 
 ## Troubleshooting
-
-### AI CLI Not Installed
-
-**Error:**
-```
-Command "claude" not found. Please ensure it is installed and in your PATH.
-```
-
-**Solution:**
-
-Install Claude CLI (recommended):
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-Or use Codex (requires Cursor):
-```bash
-# Install Cursor from https://cursor.sh
-npx commitment --agent codex
-```
-
-### No Staged Changes
-
-**Error:**
-```
-No staged changes to commit
-```
-
-**Solution:**
-```bash
-git add .
-npx commitment
-```
 
 ### Hooks Not Running
 
@@ -356,6 +287,6 @@ ISC
 ## Acknowledgments
 
 - Follows [Conventional Commits](https://www.conventionalcommits.org/) specification
-- Built with [Claude CLI](https://docs.claude.com/docs/claude-code), [Zod](https://zod.dev), and [Bun](https://bun.sh)
+- Built with [Claude CLI](https://docs.claude.com/en/docs/claude-code/overview), [Zod](https://zod.dev), and [Bun](https://bun.sh)
 - Developed using [Spectacular](https://github.com/arittr/spectacular) and [Superpowers](https://github.com/obra/superpowers) for Claude Code
-- Inspired by the need for better commit messages in modern development workflows
+- Inspired by years of bad commit messages

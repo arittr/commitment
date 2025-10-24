@@ -51,7 +51,7 @@ AI agent to use for generation.
 | Agent | CLI Required | Installation |
 |-------|-------------|--------------|
 | `claude` | Claude CLI | `npm install -g @anthropic-ai/claude-code` |
-| `codex` | Codex CLI (via Cursor) | Install [Cursor](https://cursor.sh) |
+| `codex` | Codex CLI | `npm install -g @openai/codex` |
 
 #### `--dry-run`
 
