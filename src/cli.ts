@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { program } from 'commander';
 import { ZodError } from 'zod';
@@ -13,6 +16,12 @@ import {
 import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import type { GitStatus } from './utils/git-schemas';
+
+// Read version from package.json
+const Filename = fileURLToPath(import.meta.url);
+const Dirname = dirname(Filename);
+const packageJson = JSON.parse(readFileSync(join(Dirname, '../package.json'), 'utf-8'));
+const version = packageJson.version;
 
 /**
  * Generate commit command (default action)
@@ -109,8 +118,8 @@ async function checkGitStatusOrExit(cwd: string): Promise<GitStatus> {
 async function main(): Promise<void> {
   program
     .name('commitment')
-    .description('AI-powered commit message generator with intelligent fallback')
-    .version('0.1.0');
+    .description('AI-powered commit message generator using Claude or Codex')
+    .version(version);
 
   // Init command - setup git hooks
   program
@@ -143,7 +152,6 @@ async function main(): Promise<void> {
         'Example: commitment --agent claude --dry-run'
     )
     .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
-    .option('--no-ai', 'Disable AI generation, use rule-based only')
     .option('--dry-run', 'Generate message without creating commit')
     .option('--message-only', 'Output only the commit message (no commit)')
     .option('--cwd <path>', 'Working directory', process.cwd())
