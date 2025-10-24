@@ -1,0 +1,50 @@
+# Source files (built files in dist/ are included)
+src/
+*.ts
+!*.d.ts
+
+# Build tools
+build.ts
+tsconfig.json
+biome.jsonc
+bunfig.toml
+
+# Tests
+**/__tests__/
+*.test.ts
+*.spec.ts
+coverage/
+
+# Development files
+.vscode/
+.github/
+.husky/
+.worktrees/
+.claude/
+.env*
+!.env.example
+
+# Eval system (not needed for users)
+.eval-results/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation for contributors only
+CLAUDE.md
+docs/constitutions/
+docs/plans/
+
+# Lock files
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Node modules
+node_modules/
+
+# Examples (keep these actually)
+!examples/
