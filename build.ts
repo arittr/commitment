@@ -8,7 +8,11 @@ import { build } from 'bun';
 await build({
   entrypoints: ['./src/cli.ts'],
   format: 'esm',
-  minify: false,
+  minify: {
+    identifiers: true, // Shorten variable names
+    syntax: true, // Minify syntax
+    whitespace: true, // Remove whitespace
+  },
   outdir: './dist',
   sourcemap: 'none',
   target: 'node',

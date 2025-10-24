@@ -7,7 +7,6 @@
     "url": "https://github.com/arittr/commitment/issues"
   },
   "dependencies": {
-    "@openai/agents": "^0.1.11",
     "chalk": "^5.6.2",
     "commander": "^14.0.1",
     "execa": "^9.6.0",
@@ -17,6 +16,7 @@
   "description": "AI-powered commit message generator using Claude or Codex",
   "devDependencies": {
     "@biomejs/biome": "^2.2.7",
+    "@openai/agents": "^0.1.11",
     "@types/node": "^24.3.0",
     "bun-types": "latest",
     "husky": "^9.1.7",
