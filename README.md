@@ -69,7 +69,8 @@ bun add -D @arittr/commitment
   - [Claude CLI](https://docs.claude.com/en/docs/claude-code/overview) (recommended) - Install with `npm install -g @anthropic-ai/claude-code`
   - [Codex CLI](https://developers.openai.com/codex/cli) - Install with `npm install -g @openai/codex`
 
-> **Important**: commitment requires an AI CLI to function.
+>[!IMPORTANT]
+>commitment requires an AI CLI to function.
 
 ## Usage
 
