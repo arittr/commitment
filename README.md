@@ -2,274 +2,136 @@
 
 > AI-powered commit message generator
 
-<img width="500" height="304" alt="Untitled" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
+<img width="500" height="304" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
 
 We all know we should write better commit messages. But we don't.
 
-`commitment` analyzes your git diffs using AI (Claude CLI or Codex CLI) and generates professional, conventional commit messages.
+**commitment** analyzes your git diffs using AI and generates professional, conventional commit messages automatically.
+
+## Why commitment?
+
+- **Save time**: Stop thinking about commit message phrasing - focus on code
+- **Consistency**: Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
+- **Context-aware**: AI understands your changes, not just file names
+- **Frictionless**: One-command setup, then forget about it
 
 ## Features
 
 - 🤖 **AI-powered generation** using Claude CLI or Codex CLI for accurate, context-aware messages
-- 🎯 **Intelligent fallback** to rule-based generation when AI fails or is disabled
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
-- ✨ **Conventional commits** follows standard format (feat:, fix:, etc.)
+- ✨ **Conventional commits** follows standard format (feat:, fix:, docs:, etc.)
 - 🚀 **One-command setup** with `commitment init` for automatic hook installation
 - 🪝 **Hook integration** works with husky, simple-git-hooks, or plain git hooks
 - 🌍 **Cross-platform** supports macOS, Linux, and Windows
 - 📦 **Zero config** works out of the box with sensible defaults
 
-## Installation
-
-```bash
-# Using npm
-npm install -D commitment
-
-# Using yarn
-yarn add -D commitment
-
-# Using bun
-bun add -D commitment
-```
-
-## Requirements
-
-- Node.js >= 18
-- Git repository
-- Optional: [Claude CLI](https://claude.ai/code) or [Codex CLI](https://developers.openai.com/codex) for AI generation
-
-**For Contributors:**
-- Bun 1.1.0+ (required for development - package manager, bundler, and test runner)
-
 ## Quick Start
 
-### Option 1: Automatic Setup (Recommended)
-
-The fastest way to get started - automatic hook installation:
-
 ```bash
-# 1. Install commitment
-npm install -D commitment
+# 1. Install
+npm install -D @arittr/commitment
 
-# 2. Set up git hooks automatically
+# 2. Set up git hooks (automatic)
 npx commitment init
 
 # 3. Make changes and commit
 git add .
-git commit  # Commit message generated automatically!
+git commit  # Message generated automatically!
 ```
 
-### Option 2: Manual Usage
+That's it! Every commit now gets an AI-generated message.
 
-Use commitment directly without hooks:
+## Installation
 
 ```bash
-# Stage your changes
+# Using npm
+npm install -D @arittr/commitment
+
+# Using yarn
+yarn add -D @arittr/commitment
+
+# Using pnpm
+pnpm add -D @arittr/commitment
+
+# Using bun
+bun add -D @arittr/commitment
+```
+
+## Requirements
+
+- **Node.js** >= 18
+- **Git repository**
+- **AI CLI** (one of):
+  - [Claude CLI](https://docs.claude.com/docs/claude-code) (recommended) - Install with `npm install -g @anthropic-ai/claude-code`
+  - [Codex CLI](https://cursor.sh) (via Cursor) - Requires Cursor installation
+
+> **Important**: commitment requires an AI CLI to function. If you don't have one installed, see [Troubleshooting](#ai-cli-not-installed).
+
+## Usage
+
+### Automatic (Recommended)
+
+After running `npx commitment init`, commit messages are generated automatically:
+
+```bash
+git add src/components/Button.tsx
+git commit  # Opens editor with AI-generated message
+```
+
+### Manual
+
+Generate a message and commit in one step:
+
+```bash
 git add .
-
-# Generate and commit
 npx commitment
 ```
 
-## CLI Reference
-
-### Main Command
-
-Generate a commit message and create a commit:
+Generate message only (preview without committing):
 
 ```bash
-npx commitment [options]
-```
-
-**Options:**
-- `--agent <name>` - AI agent to use: `claude`, `codex` (default: `claude`)
-- `--dry-run` - Generate message without creating commit
-- `--message-only` - Output only the commit message (no commit)
-- `--no-ai` - Disable AI generation, use rule-based only
-- `--cwd <path>` - Working directory (default: current directory)
-- `-V, --version` - Output version number
-- `-h, --help` - Display help
-
-**Examples:**
-
-```bash
-# Generate commit with Claude (default)
-npx commitment
-
-# Use Codex instead
-npx commitment --agent codex
-
-# Preview message without committing
 npx commitment --dry-run
-
-# Use rule-based generation only (no AI)
-npx commitment --no-ai
 ```
 
-### Init Command
-
-Set up git hooks automatically:
+Use a specific AI agent:
 
 ```bash
-npx commitment init [options]
-```
-
-**Options:**
-- `--hook-manager <type>` - Hook manager to use: `husky`, `simple-git-hooks`, `plain`
-- `--cwd <path>` - Working directory (default: current directory)
-- `-h, --help` - Display help
-
-**Examples:**
-
-```bash
-# Auto-detect and install (recommended)
-npx commitment init
-
-# Explicitly use husky
-npx commitment init --hook-manager husky
-
-# Use simple-git-hooks (lightweight alternative)
-npx commitment init --hook-manager simple-git-hooks
-
-# Use plain git hooks (no dependencies)
-npx commitment init --hook-manager plain
-```
-
-**What it does:**
-- Detects existing hook managers (husky, simple-git-hooks)
-- Installs appropriate git hooks for your project
-- Configures hooks to generate messages automatically on `git commit`
-- Preserves your custom messages when you use `git commit -m "..."`
-
-## Hook Integration
-
-The `commitment init` command handles hook setup automatically, but you can also configure manually:
-
-### Husky
-
-**Automatic (recommended):**
-```bash
-npx commitment init --hook-manager husky
-```
-
-**Manual setup:**
-
-Create `.husky/prepare-commit-msg`:
-
-```bash
-#!/bin/sh
-# Generate commit message with AI
-# Only run for regular commits (not merge, squash, or when message specified)
-if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
-fi
-```
-
-Make it executable:
-
-```bash
-chmod +x .husky/prepare-commit-msg
-```
-
-### simple-git-hooks
-
-**Automatic (recommended):**
-```bash
-npx commitment init --hook-manager simple-git-hooks
-```
-
-**Manual setup:**
-
-Add to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "prepare": "simple-git-hooks"
-  },
-  "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
-  }
-}
-```
-
-Then run:
-
-```bash
-npm install
-npm run prepare
-```
-
-### Plain Git Hooks
-
-**Automatic (recommended):**
-```bash
-npx commitment init --hook-manager plain
-```
-
-**Manual setup:**
-
-Create `.git/hooks/prepare-commit-msg`:
-
-```bash
-#!/bin/sh
-# Only run for regular commits (not merge, squash, or when message specified)
-if [ -z "$2" ]; then
-  npx commitment --message-only > "$1" || exit 1
-fi
-```
-
-Make it executable:
-
-```bash
-chmod +x .git/hooks/prepare-commit-msg
+npx commitment --agent codex
 ```
 
 ## How It Works
 
-### AI Generation
+1. **Analyze**: Reads your staged changes with `git diff --cached`
+2. **Generate**: Sends diff to AI (Claude or Codex) with a detailed prompt
+3. **Validate**: Ensures response follows Conventional Commits format
+4. **Commit**: Creates commit with generated message
 
-1. Analyzes staged changes using `git diff --cached`
-2. Sends diff to Claude CLI or Codex CLI with detailed prompt
-3. Parses and validates AI response
-4. Returns conventional commit message
+### What Gets Analyzed
 
-### Fallback Generation
+commitment's AI understands:
 
-When AI fails or is disabled (`--no-ai`):
-
-1. Categorizes files (components, APIs, tests, configs, docs)
-2. Analyzes change patterns (additions, modifications, deletions)
-3. Generates title based on file types
-4. Creates bullet points describing changes
-5. Follows conventional commits format
-
-### Code Analysis
-
-Detects patterns in your changes:
-
-- Function/method additions and removals
-- Test cases (test, it, describe)
-- Type definitions and interfaces
-- Mocking patterns
-- Change magnitude (lines added/removed)
+- **Code patterns**: Function/method additions, removals, modifications
+- **Test changes**: New tests, updated assertions, test refactoring
+- **Type definitions**: Interfaces, types, schemas
+- **File context**: Components, utilities, configs, documentation
+- **Change magnitude**: Lines added/removed, scope of changes
 
 ## Examples
 
-### Simple Feature Addition
+### Simple Feature
 
 ```bash
 $ git add src/components/Button.tsx
 $ npx commitment
 ```
 
-Output:
+**Generated:**
 ```
-feat: add button component
+feat: add button component with variant support
 
 - Create reusable Button component with TypeScript
-- Add props interface for size and variant
-- Include hover and focus states
+- Add props interface for size and variant options
+- Include hover and focus states with animations
 ```
 
 ### Bug Fix
@@ -279,12 +141,13 @@ $ git add src/utils/validation.ts
 $ npx commitment
 ```
 
-Output:
+**Generated:**
 ```
-fix: correct email validation regex
+fix: correct email validation regex pattern
 
-- Fix regex pattern to handle plus signs in email addresses
+- Fix regex to handle plus signs in email addresses
 - Update test cases for edge cases
+- Add validation for international domains
 ```
 
 ### Multiple Files
@@ -294,85 +157,94 @@ $ git add src/api/ src/types/
 $ npx commitment
 ```
 
-Output:
+**Generated:**
 ```
 feat: implement user authentication API
 
-- Add login and logout endpoints
-- Create JWT token generation and validation
-- Update user type definitions
-- Add authentication middleware
+- Add login and logout endpoints with JWT support
+- Create token generation and validation utilities
+- Update user type definitions with auth fields
+- Add authentication middleware for protected routes
 ```
 
-## Cross-Platform Support
+## Configuration
 
-`commitment` works on all platforms:
+### CLI Options
 
-| Platform | CLI Usage | Hooks | AI Agents |
-|----------|-----------|-------|-----------|
-| macOS    | ✅         | ✅     | ✅ Claude, Codex |
-| Linux    | ✅         | ✅     | ✅ Claude, Codex |
-| Windows  | ✅         | ⚠️ Git Bash/WSL | ✅ Claude, Codex |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--agent <name>` | AI agent to use (`claude` or `codex`) | `claude` |
+| `--dry-run` | Generate message without creating commit | `false` |
+| `--message-only` | Output only the commit message | `false` |
+| `--cwd <path>` | Working directory | current directory |
 
-⚠️ **Windows users:** For best hook compatibility, use Git Bash or WSL instead of CMD/PowerShell.
+See [docs/CLI.md](./docs/CLI.md) for complete CLI reference.
 
-### Line Ending Handling
+### Hook Setup
 
-`commitment` includes a `.gitattributes` file to ensure hook scripts use LF line endings on all platforms, preventing Windows CRLF issues.
+commitment supports multiple hook managers:
+
+| Manager | Command | Best For |
+|---------|---------|----------|
+| **Auto-detect** | `npx commitment init` | Most projects |
+| **Husky** | `npx commitment init --hook-manager husky` | Teams with existing husky setup |
+| **simple-git-hooks** | `npx commitment init --hook-manager simple-git-hooks` | Lightweight alternative to husky |
+| **Plain Git Hooks** | `npx commitment init --hook-manager plain` | No dependencies |
+
+See [docs/HOOKS.md](./docs/HOOKS.md) for detailed hook integration guide.
 
 ## Troubleshooting
 
-### "No staged changes to commit"
+### AI CLI Not Installed
 
-Make sure you've staged your changes with `git add` first:
+**Error:**
+```
+Command "claude" not found. Please ensure it is installed and in your PATH.
+```
 
+**Solution:**
+
+Install Claude CLI (recommended):
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+Or use Codex (requires Cursor):
+```bash
+# Install Cursor from https://cursor.sh
+npx commitment --agent codex
+```
+
+### No Staged Changes
+
+**Error:**
+```
+No staged changes to commit
+```
+
+**Solution:**
 ```bash
 git add .
 npx commitment
 ```
 
-### AI Generation Fails
-
-If Claude CLI fails, `commitment` automatically falls back to rule-based generation.
-
-**Common causes:**
-- **Claude CLI not installed:** Install with `npm install -g @anthropic-ai/claude-code`
-- **Not authenticated:** Run `claude --help` to authenticate
-- **Network issues:** Check your internet connection
-
-**Solutions:**
-
-```bash
-# Disable AI and use rule-based only
-npx commitment --no-ai
-
-# Try a different agent
-npx commitment --agent codex
-```
-
 ### Hooks Not Running
 
-**Verify hooks are installed:**
-
+**Check installation:**
 ```bash
 # For husky
 ls -la .husky/prepare-commit-msg
 
 # For plain git hooks
 ls -la .git/hooks/prepare-commit-msg
-
-# For simple-git-hooks
-cat package.json | grep simple-git-hooks
 ```
 
-**Reinstall hooks:**
-
+**Reinstall:**
 ```bash
 npx commitment init
 ```
 
-**Check hook permissions (Unix-like systems):**
-
+**Check permissions (Unix-like systems):**
 ```bash
 chmod +x .husky/prepare-commit-msg
 # or
@@ -381,61 +253,109 @@ chmod +x .git/hooks/prepare-commit-msg
 
 ### Hooks Override My Custom Messages
 
-This should not happen! Hooks check if you've specified a message and skip generation if you have:
+This should **not** happen. Hooks check if you've specified a message:
 
 ```bash
 git commit -m "my message"  # Uses your message ✅
 git commit                  # Generates message ✅
 ```
 
-If hooks are overriding your messages, please file an issue.
+If hooks override your messages, please [file an issue](https://github.com/arittr/commitment/issues).
 
-### Windows Hook Issues
+### Windows Issues
 
 **Symptoms:**
 - Hooks don't run
-- Permission errors
 - Line ending errors (`\r` in scripts)
 
 **Solutions:**
 
 1. **Use Git Bash or WSL** instead of CMD/PowerShell
-2. **Ensure LF line endings** - `commitment init` handles this automatically
+2. **Verify line endings** - `commitment init` handles this automatically
 3. **Check git config:**
    ```bash
    git config core.autocrlf false
    ```
 
-## Agent Availability
+## Cross-Platform Support
 
-| Agent  | Installation | Notes |
-|--------|--------------|-------|
-| Claude | `npm install -g @anthropic-ai/claude-code` | Default, recommended |
-| Codex  | Included with [Cursor](https://cursor.sh) | Requires Cursor installation |
+| Platform | CLI Usage | Hooks | AI Agents |
+|----------|-----------|-------|-----------|
+| macOS    | ✅ | ✅ | ✅ Claude, Codex |
+| Linux    | ✅ | ✅ | ✅ Claude, Codex |
+| Windows  | ✅ | ⚠️ Git Bash/WSL | ✅ Claude, Codex |
 
-**No AI CLI?** Use `--no-ai` flag for intelligent rule-based generation.
+> **Note**: Windows users should use Git Bash or WSL for best hook compatibility.
 
 ## Contributing
 
-Contributions welcome! Please open an issue or PR on [GitHub](https://github.com/yourusername/commitment).
+Contributions welcome!
 
-### Adding a New Agent
+### For Contributors
 
-See [CLAUDE.md](./CLAUDE.md) for detailed instructions on adding new AI agents.
+**Requirements:**
+- Bun 1.1.0+ (development, bundling, testing)
+
+**Development:**
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Run linting
+bun run lint
+
+# Build
+bun run build
+
+# Run evaluation system
+bun run eval
+```
+
+**Adding a New AI Agent:**
+
+See [CLAUDE.md](./CLAUDE.md) for detailed instructions.
+
+**Architecture:**
+
+This project follows a strict layered architecture with schema-first type safety. See [docs/constitutions/current/](./docs/constitutions/current/) for:
+- Architecture guidelines
+- Testing patterns
+- Type safety rules
+- Code style requirements
+
+## Evaluation System
+
+commitment includes a comprehensive evaluation framework that compares AI agents using multi-attempt testing:
+
+```bash
+# Run full evaluation
+bun run eval
+
+# Test specific fixture
+bun run eval:fixture simple
+
+# Test with live git changes
+bun run eval:live
+```
+
+Results are saved to `.eval-results/` with:
+- Per-attempt scores and metrics
+- Meta-evaluation across attempts
+- Success rates and consistency analysis
+- Response time measurements
+
+This is **not** part of the test suite - it's a standalone tool for evaluating agent quality.
 
 ## License
 
 ISC
 
-## Built With
-
-- [Claude CLI](https://claude.ai/code) - AI-powered commit generation
-- [execa](https://github.com/sindresorhus/execa) - Subprocess execution
-- [commander](https://github.com/tj/commander.js) - CLI parsing
-- [chalk](https://github.com/chalk/chalk) - Terminal colors
-- [zod](https://github.com/colinhacks/zod) - Runtime validation
-
 ## Acknowledgments
 
 - Follows [Conventional Commits](https://www.conventionalcommits.org/) specification
+- Built with [Claude CLI](https://docs.claude.com/docs/claude-code), [Zod](https://zod.dev), and [Bun](https://bun.sh)
+- Developed using [Spectacular](https://github.com/superpowers-dev/spectacular) and [Superpowers](https://github.com/superpowers-dev/superpowers) for Claude Code
 - Inspired by the need for better commit messages in modern development workflows
