@@ -357,5 +357,5 @@ ISC
 
 - Follows [Conventional Commits](https://www.conventionalcommits.org/) specification
 - Built with [Claude CLI](https://docs.claude.com/docs/claude-code), [Zod](https://zod.dev), and [Bun](https://bun.sh)
-- Developed using [Spectacular](https://github.com/superpowers-dev/spectacular) and [Superpowers](https://github.com/superpowers-dev/superpowers) for Claude Code
+- Developed using [Spectacular](https://github.com/arittr/spectacular) and [Superpowers](https://github.com/obra/superpowers) for Claude Code
 - Inspired by the need for better commit messages in modern development workflows
