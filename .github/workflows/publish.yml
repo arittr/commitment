@@ -9,7 +9,7 @@ jobs:
     name: Publish to npm
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # Needed to comment on release
       id-token: write # Required for npm provenance
 
     steps:
