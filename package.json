@@ -4,7 +4,7 @@
     "commitment": "./dist/cli.js"
   },
   "bugs": {
-    "url": "https://github.com/Snug-Labs/commitment/issues"
+    "url": "https://github.com/arittr/commitment/issues"
   },
   "dependencies": {
     "@openai/agents": "^0.1.11",
@@ -34,7 +34,7 @@
     "docs/CLI.md",
     "docs/HOOKS.md"
   ],
-  "homepage": "https://github.com/Snug-Labs/commitment#readme",
+  "homepage": "https://github.com/arittr/commitment#readme",
   "keywords": [
     "git",
     "commit",
