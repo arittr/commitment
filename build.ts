@@ -3,12 +3,14 @@ import { chmod } from 'node:fs/promises';
 import { build } from 'bun';
 
 // Build CLI entry point
+// Note: No sourcemaps - CLI users don't need them, and it doubles package size
+// For debugging, run TypeScript directly: bun run src/cli.ts
 await build({
   entrypoints: ['./src/cli.ts'],
   format: 'esm',
   minify: false,
   outdir: './dist',
-  sourcemap: 'external',
+  sourcemap: 'none',
   target: 'node',
 });
 
