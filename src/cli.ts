@@ -126,13 +126,13 @@ async function main(): Promise<void> {
     .command('init')
     .description('Initialize commitment hooks in your project')
     .option('--hook-manager <type>', 'Hook manager to use: husky, simple-git-hooks, plain')
-    .option('--agent <name>', 'AI agent to use: claude, codex (default: claude)')
+    .option('--agent <name>', 'AI agent to use: claude, codex, gemini (default: claude)')
     .option('--cwd <path>', 'Working directory', process.cwd())
     .action(
       async (options: {
         cwd: string;
         hookManager?: 'husky' | 'simple-git-hooks' | 'plain';
-        agent?: 'claude' | 'codex';
+        agent?: 'claude' | 'codex' | 'gemini';
       }) => {
         await initCommand({
           agent: options.agent,
@@ -148,10 +148,11 @@ async function main(): Promise<void> {
       'Generate commit message and create commit\n\n' +
         'Available agents:\n' +
         '  claude    - Claude CLI (default)\n' +
-        '  codex     - OpenAI Codex CLI\n\n' +
+        '  codex     - OpenAI Codex CLI\n' +
+        '  gemini    - Google Gemini CLI\n\n' +
         'Example: commitment --agent claude --dry-run'
     )
-    .option('--agent <name>', 'AI agent to use (claude, codex)', 'claude')
+    .option('--agent <name>', 'AI agent to use (claude, codex, gemini)', 'claude')
     .option('--dry-run', 'Generate message without creating commit')
     .option('--message-only', 'Output only the commit message (no commit)')
     .option('--cwd <path>', 'Working directory', process.cwd())

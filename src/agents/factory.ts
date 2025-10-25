@@ -2,6 +2,7 @@ import { match } from 'ts-pattern';
 
 import { ClaudeAgent } from './claude';
 import { CodexAgent } from './codex';
+import { GeminiAgent } from './gemini';
 import type { Agent, AgentName } from './types';
 
 /**
@@ -24,12 +25,6 @@ export function createAgent(name: AgentName): Agent {
   return match(name)
     .with('claude', () => new ClaudeAgent())
     .with('codex', () => new CodexAgent())
-    .with('gemini', () => {
-      // GeminiAgent will be implemented in Task 3
-      // For now, throw a helpful error
-      throw new Error(
-        'Gemini agent not yet implemented. This will be available in the next version.'
-      );
-    })
+    .with('gemini', () => new GeminiAgent())
     .exhaustive();
 }
