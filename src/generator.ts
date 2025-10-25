@@ -1,6 +1,7 @@
-import { ClaudeAgent } from './agents/claude';
-import { CodexAgent } from './agents/codex';
-import type { Agent } from './agents/types';
+import { match } from 'ts-pattern';
+
+import { createAgent } from './agents/factory';
+import type { Agent, AgentName } from './agents/types';
 import { AgentError, GeneratorError } from './errors';
 import {
   safeValidateCommitOptions,
@@ -26,8 +27,8 @@ export type CommitTask = {
  * Configuration options for commit message generation
  */
 export type CommitMessageGeneratorConfig = {
-  /** AI agent to use ('claude' | 'codex', default: 'claude') */
-  agent?: 'claude' | 'codex';
+  /** AI agent to use ('claude' | 'codex' | 'gemini', default: 'claude') */
+  agent?: AgentName;
   /** Enable/disable AI generation (default: true) */
   enableAI?: boolean;
   /** Custom git provider (default: RealGitProvider) */
@@ -103,15 +104,16 @@ export class CommitMessageGenerator {
     // Use validated config (now fully type-safe)
     const validatedConfig = validationResult.data;
 
-    // Instantiate agent directly based on config (defaults to Claude)
+    // Instantiate agent using factory (defaults to Claude)
     const agentName = validatedConfig.agent ?? 'claude';
-    this.agent = agentName === 'codex' ? new CodexAgent() : new ClaudeAgent();
+    this.agent = createAgent(agentName);
 
     // Generate default signature based on the agent being used
-    const defaultSignature =
-      agentName === 'codex'
-        ? '🤖 Generated with Codex via commitment'
-        : '🤖 Generated with Claude via commitment';
+    const defaultSignature = match<AgentName, string>(agentName)
+      .with('claude', () => '🤖 Generated with Claude via commitment')
+      .with('codex', () => '🤖 Generated with Codex via commitment')
+      .with('gemini', () => '🤖 Generated with Gemini via commitment')
+      .exhaustive();
 
     this.config = {
       enableAI: validatedConfig.enableAI ?? true,
