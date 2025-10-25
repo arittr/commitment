@@ -18,5 +18,6 @@ export { BaseAgent } from './base-agent';
 export { ClaudeAgent } from './claude';
 export { CodexAgent } from './codex';
 export { createAgent } from './factory';
+export { GeminiAgent } from './gemini';
 export type { Agent, AgentConfig, AgentName } from './types';
 export { agentConfigSchema, safeValidateAgentConfig, validateAgentConfig } from './types';
