@@ -46,19 +46,19 @@ export class ClaudeAgent extends BaseAgent {
   /**
    * Clean Claude-specific artifacts from response
    *
-   * Extends base cleaning to remove Claude's commit message markers.
+   * Claude doesn't produce agent-specific artifacts beyond the common ones
+   * handled by BaseAgent (commit message markers, AI preambles, markdown, thinking tags).
+   * This override exists for future Claude-specific cleaning needs.
    *
    * @param output - Raw output from Claude CLI
    * @returns Cleaned commit message
    */
   protected override cleanResponse(output: string): string {
-    // First apply base cleaning (removes markdown, thinking tags, etc.)
-    let cleaned = super.cleanResponse(output);
+    // Apply base cleaning (removes markers, preambles, markdown, thinking tags, etc.)
+    const cleaned = super.cleanResponse(output);
 
-    // Remove Claude-specific commit message markers
-    cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
-    cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
-
+    // No Claude-specific cleaning needed currently
+    // All common artifacts handled by BaseAgent.cleanResponse()
     return cleaned.trim();
   }
 }

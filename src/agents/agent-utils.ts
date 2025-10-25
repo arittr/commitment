@@ -30,13 +30,88 @@
  */
 
 /**
+ * Remove commit message markers from AI response
+ *
+ * Removes markers like:
+ * - <<<COMMIT_MESSAGE_START>>>
+ * - <<<COMMIT_MESSAGE_END>>>
+ * - Variations with different spacing
+ *
+ * This is a pure function with no side effects.
+ *
+ * @param output - Raw output from AI agent that may contain commit message markers
+ * @returns Output with all commit message markers removed
+ *
+ * @example
+ * ```typescript
+ * const raw = '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>';
+ * const clean = cleanCommitMessageMarkers(raw);
+ * // => "feat: add feature"
+ *
+ * const withSpacing = '<<<COMMIT_MESSAGE_START>>>   \nfeat: add feature\n  <<<COMMIT_MESSAGE_END>>>';
+ * const clean2 = cleanCommitMessageMarkers(withSpacing);
+ * // => "feat: add feature"
+ * ```
+ */
+export function cleanCommitMessageMarkers(output: string): string {
+  let cleaned = output;
+
+  // Remove start marker with optional trailing whitespace
+  cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
+
+  // Remove end marker with optional leading whitespace
+  cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
+
+  return cleaned;
+}
+
+/**
+ * Remove common AI preambles from response
+ *
+ * Removes phrases like:
+ * - "here is the commit message:"
+ * - "here's a commit message:"
+ * - "commit message:"
+ * - Case-insensitive matching
+ *
+ * This is a pure function with no side effects.
+ *
+ * @param output - Raw output from AI agent that may contain preambles
+ * @returns Output with all AI preambles removed
+ *
+ * @example
+ * ```typescript
+ * const raw = 'Here is the commit message:\nfeat: add feature';
+ * const clean = cleanAIPreambles(raw);
+ * // => "feat: add feature"
+ *
+ * const raw2 = 'Commit message:\nfeat: add feature';
+ * const clean2 = cleanAIPreambles(raw2);
+ * // => "feat: add feature"
+ * ```
+ */
+export function cleanAIPreambles(output: string): string {
+  let cleaned = output;
+
+  // Remove "here is/here's the/a commit message:" patterns (case-insensitive)
+  cleaned = cleaned.replace(/^(here is|here's) (the|a) commit message:?\s*/i, '');
+
+  // Remove standalone "commit message:" pattern (case-insensitive)
+  cleaned = cleaned.replace(/^commit message:?\s*/i, '');
+
+  return cleaned;
+}
+
+/**
  * Clean AI-generated response by removing common artifacts
  *
- * Removes:
- * - Markdown code blocks (```...```)
- * - Thinking tags (<thinking>...</thinking> and plain "thinking" prefixes)
- * - Excessive newlines (more than 2 consecutive)
- * - Leading/trailing whitespace
+ * Removes (in order):
+ * 1. Commit message markers (<<<COMMIT_MESSAGE_START>>>, <<<COMMIT_MESSAGE_END>>>)
+ * 2. AI preambles ("here is the commit message:", etc.)
+ * 3. Markdown code blocks (```...```)
+ * 4. Thinking tags (<thinking>...</thinking> and plain "thinking" prefixes)
+ * 5. Excessive newlines (more than 2 consecutive)
+ * 6. Leading/trailing whitespace
  *
  * This is a pure function with no side effects. It does not modify the input string.
  *
@@ -61,20 +136,26 @@
 export function cleanAIResponse(output: string): string {
   let cleaned = output;
 
-  // Remove markdown code block delimiters but keep content
+  // Step 1: Remove commit message markers (must be first to avoid interfering with other patterns)
+  cleaned = cleanCommitMessageMarkers(cleaned);
+
+  // Step 2: Remove AI preambles (do this before code block removal)
+  cleaned = cleanAIPreambles(cleaned);
+
+  // Step 3: Remove markdown code block delimiters but keep content
   // Matches code blocks with optional language specifier
   // Replace with content inside (captured group 2)
   cleaned = cleaned.replace(/```[\w]*\n?([\s\S]*?)```/g, '$1');
 
-  // Remove thinking tags and content
+  // Step 4: Remove thinking tags and content
   // Matches both <thinking>...</thinking> and "thinking:" prefix patterns
   cleaned = cleaned.replace(/^(thinking|<thinking>)[\s\S]*?(<\/thinking>|$)/gim, '');
 
-  // Remove excessive newlines (more than 2 consecutive)
+  // Step 5: Remove excessive newlines (more than 2 consecutive)
   // Normalize to maximum 2 newlines for proper paragraph spacing
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
 
-  // Trim leading and trailing whitespace
+  // Step 6: Trim leading and trailing whitespace
   cleaned = cleaned.trim();
 
   return cleaned;
