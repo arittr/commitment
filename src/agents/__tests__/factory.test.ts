@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import { ClaudeAgent } from '../claude';
 import { CodexAgent } from '../codex';
 import { createAgent } from '../factory';
+import { GeminiAgent } from '../gemini';
 
 describe('createAgent', () => {
   it('should create ClaudeAgent for "claude"', () => {
@@ -19,10 +20,11 @@ describe('createAgent', () => {
     expect(agent.name).toBe('codex');
   });
 
-  it('should throw helpful error for "gemini" (not yet implemented)', () => {
-    expect(() => createAgent('gemini')).toThrow(
-      'Gemini agent not yet implemented. This will be available in the next version.'
-    );
+  it('should create GeminiAgent for "gemini"', () => {
+    const agent = createAgent('gemini');
+
+    expect(agent).toBeInstanceOf(GeminiAgent);
+    expect(agent.name).toBe('gemini');
   });
 
   it('should create different instances each time', () => {
@@ -43,14 +45,9 @@ describe('createAgent', () => {
     const agentNames: Array<'claude' | 'codex' | 'gemini'> = ['claude', 'codex', 'gemini'];
 
     for (const name of agentNames) {
-      if (name === 'gemini') {
-        // Gemini not yet implemented
-        expect(() => createAgent(name)).toThrow();
-      } else {
-        const agent = createAgent(name);
-        expect(agent).toBeDefined();
-        expect(agent.name).toBe(name);
-      }
+      const agent = createAgent(name);
+      expect(agent).toBeDefined();
+      expect(agent.name).toBe(name);
     }
   });
 });
