@@ -101,10 +101,10 @@ export class CodexAgent extends BaseAgent {
    * Clean AI artifacts from Codex response
    *
    * Overrides BaseAgent.cleanResponse() to add Codex-specific cleaning.
-   * First applies base cleaning (code fences, thinking tags, etc.), then removes:
+   * First applies base cleaning (commit message markers, AI preambles, code fences, thinking tags),
+   * then removes Codex-specific artifacts:
    * - Codex activity logs (timestamps, workdir info, etc.)
    * - Codex metadata fields (model, provider, approval, etc.)
-   * - Commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
    *
    * @param response - Raw response from Codex CLI
    * @returns Cleaned commit message with all artifacts removed
@@ -114,9 +114,7 @@ export class CodexAgent extends BaseAgent {
    * // Input:
    * // [2025-10-22T00:50:28] OpenAI Codex v0.42.0
    * // workdir: /path/to/repo
-   * // <<<COMMIT_MESSAGE_START>>>
    * // feat: add feature
-   * // <<<COMMIT_MESSAGE_END>>>
    * //
    * // Output:
    * // feat: add feature
@@ -124,6 +122,7 @@ export class CodexAgent extends BaseAgent {
    */
   protected override cleanResponse(response: string): string {
     // First apply base cleaning (from BaseAgent)
+    // This removes: commit message markers, AI preambles, code fences, thinking tags
     let cleaned = super.cleanResponse(response);
 
     // Remove Codex activity logs (lines starting with timestamps, workdir, etc.)
@@ -145,14 +144,6 @@ export class CodexAgent extends BaseAgent {
     for (const field of metadataFields) {
       cleaned = cleaned.replaceAll(new RegExp(`^${field}:.*$`, 'gmi'), '');
     }
-
-    // Remove commit message markers (<<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>>)
-    cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
-    cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
-
-    // Remove common AI artifacts (not covered by base cleanAIResponse)
-    cleaned = cleaned.replace(/^(here is|here's) (the|a) commit message:?\s*/i, '');
-    cleaned = cleaned.replace(/^commit message:?\s*/i, '');
 
     // Trim whitespace and remove extra blank lines
     cleaned = cleaned.trim();

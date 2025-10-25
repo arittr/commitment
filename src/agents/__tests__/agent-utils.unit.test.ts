@@ -1,5 +1,209 @@
 import { describe, expect, it } from 'bun:test';
-import { cleanAIResponse, isCLINotFoundError, validateConventionalCommit } from '../agent-utils.js';
+import {
+  cleanAIPreambles,
+  cleanAIResponse,
+  cleanCommitMessageMarkers,
+  isCLINotFoundError,
+  validateConventionalCommit,
+} from '../agent-utils.js';
+
+describe('cleanCommitMessageMarkers', () => {
+  describe('basic marker removal', () => {
+    it('should remove start and end markers', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove markers with content between them', () => {
+      const input = `<<<COMMIT_MESSAGE_START>>>
+feat: add feature
+
+Detailed description here
+<<<COMMIT_MESSAGE_END>>>`;
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature\n\nDetailed description here');
+    });
+
+    it('should remove start marker with trailing whitespace', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>>   \nfeat: add feature';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove end marker with leading whitespace', () => {
+      const input = 'feat: add feature\n   <<<COMMIT_MESSAGE_END>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should handle markers with extra spacing', () => {
+      const input = `<<<COMMIT_MESSAGE_START>>>
+
+feat: add feature
+
+<<<COMMIT_MESSAGE_END>>>`;
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+  });
+
+  describe('multiple markers', () => {
+    it('should remove multiple start markers', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>><<<COMMIT_MESSAGE_START>>>feat: add feature';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove multiple end markers', () => {
+      const input = 'feat: add feature<<<COMMIT_MESSAGE_END>>><<<COMMIT_MESSAGE_END>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty string', () => {
+      const result = cleanCommitMessageMarkers('');
+      expect(result).toBe('');
+    });
+
+    it('should handle string without markers', () => {
+      const input = 'feat: add feature\n\nNo markers here';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe(input);
+    });
+
+    it('should handle only start marker', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>>feat: add feature';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should handle only end marker', () => {
+      const input = 'feat: add feature<<<COMMIT_MESSAGE_END>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should be case-sensitive (not remove lowercase)', () => {
+      const input = '<<<commit_message_start>>>\nfeat: add feature\n<<<commit_message_end>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe(input);
+    });
+  });
+});
+
+describe('cleanAIPreambles', () => {
+  describe("here is/here's patterns", () => {
+    it('should remove "here is the commit message:"', () => {
+      const input = 'here is the commit message:\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove "here is a commit message:"', () => {
+      const input = 'here is a commit message:\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove "here\'s the commit message:"', () => {
+      const input = "here's the commit message:\nfeat: add feature";
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove "here\'s a commit message:"', () => {
+      const input = "here's a commit message:\nfeat: add feature";
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it("should be case-insensitive for here is/here's", () => {
+      const inputs = [
+        'Here is the commit message:\nfeat: add feature',
+        'HERE IS THE COMMIT MESSAGE:\nfeat: add feature',
+        "Here's a commit message:\nfeat: add feature",
+        "HERE'S A COMMIT MESSAGE:\nfeat: add feature",
+      ];
+
+      for (const input of inputs) {
+        const result = cleanAIPreambles(input);
+        expect(result).toBe('feat: add feature');
+      }
+    });
+
+    it('should handle preamble without colon', () => {
+      const input = 'here is the commit message\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+  });
+
+  describe('commit message: pattern', () => {
+    it('should remove "commit message:"', () => {
+      const input = 'commit message:\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove "Commit message:"', () => {
+      const input = 'Commit message:\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should remove "COMMIT MESSAGE:"', () => {
+      const input = 'COMMIT MESSAGE:\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should handle commit message without colon', () => {
+      const input = 'commit message\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+
+    it('should handle commit message with extra whitespace', () => {
+      const input = 'commit message:   \nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('feat: add feature');
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty string', () => {
+      const result = cleanAIPreambles('');
+      expect(result).toBe('');
+    });
+
+    it('should handle string without preambles', () => {
+      const input = 'feat: add feature\n\nNo preambles here';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe(input);
+    });
+
+    it('should only match at start of string', () => {
+      const input = 'feat: add feature\nhere is the commit message: not removed';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe(input);
+    });
+
+    it('should handle preamble with no content after', () => {
+      const input = 'here is the commit message:';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe('');
+    });
+
+    it('should not remove "here is" when not followed by commit message', () => {
+      const input = 'here is some other text\nfeat: add feature';
+      const result = cleanAIPreambles(input);
+      expect(result).toBe(input);
+    });
+  });
+});
 
 describe('cleanAIResponse', () => {
   describe('markdown code blocks', () => {
@@ -134,6 +338,33 @@ with proper description
       expect(result).toBe(
         'feat: add feature\n\nThis adds a new feature\n\nwith proper description'
       );
+    });
+
+    it('should clean commit message markers and AI preambles', () => {
+      const input = `<<<COMMIT_MESSAGE_START>>>
+here is the commit message:
+feat: add feature
+
+Description here
+<<<COMMIT_MESSAGE_END>>>`;
+      const result = cleanAIResponse(input);
+      expect(result).toBe('feat: add feature\n\nDescription here');
+    });
+
+    it('should apply all cleaning utilities in correct order', () => {
+      const input = `<<<COMMIT_MESSAGE_START>>>
+Commit message:
+\`\`\`typescript
+feat: add dark mode
+
+- Add theme toggle
+- Update components
+
+
+\`\`\`
+<<<COMMIT_MESSAGE_END>>>`;
+      const result = cleanAIResponse(input);
+      expect(result).toBe('feat: add dark mode\n\n- Add theme toggle\n- Update components');
     });
 
     it('should handle real-world AI response', () => {
