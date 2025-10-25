@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
+
+// CRITICAL: Clean up any mocks from agent unit tests that run before this file
+// The agent unit tests use mock.module() which persists globally.
+// We must restore mocks BEFORE importing the shell module to ensure we get the real implementation.
+mock.restore();
+
 import { exec } from '../shell';
 
 /**
