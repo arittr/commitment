@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 
 // Mock the shell module BEFORE importing CodexAgent
 const mockExec = mock(() => Promise.resolve({ exitCode: 0, stderr: '', stdout: '' }));
@@ -17,8 +17,14 @@ describe('CodexAgent', () => {
     mockExec.mockClear();
   });
 
+  afterEach(() => {
+    // Reset mock after each test to clear any pending mock implementations
+    mockExec.mockClear();
+  });
+
   afterAll(() => {
-    // Clean up module mocks after this test suite
+    // CRITICAL: Restore module mocks immediately after this test suite completes
+    // to prevent pollution to integration tests or other test files
     mock.restore();
   });
 
