@@ -61,10 +61,15 @@ export type Agent = {
  * This defines the valid agent identifiers that can be used in configuration.
  * Each agent name corresponds to a concrete Agent implementation.
  *
+ * Supported agents:
+ * - claude: Claude CLI agent
+ * - codex: Codex CLI agent
+ * - gemini: Gemini CLI agent
+ *
  * Note: ChatGPTAgent is not included here as it's evaluation-only (not for generation).
  * ChatGPTAgent is exported separately for use by the evaluation system.
  */
-const SUPPORTED_AGENTS = ['claude', 'codex'] as const;
+const SUPPORTED_AGENTS = ['claude', 'codex', 'gemini'] as const;
 
 /**
  * Type representing a valid agent name

@@ -26,10 +26,10 @@ import { z } from 'zod';
  */
 export const cliOptionsSchema = z.object({
   /**
-   * AI agent to use (claude or codex)
+   * AI agent to use (claude, codex, or gemini)
    * Defaults to 'claude' if not specified
    */
-  agent: z.enum(['claude', 'codex']).optional(),
+  agent: z.enum(['claude', 'codex', 'gemini']).optional(),
 
   /**
    * Enable/disable AI generation (default: true)
