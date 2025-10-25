@@ -53,10 +53,18 @@ export async function createCommit(message: string, cwd: string): Promise<void> 
  * Display staged changes to user
  *
  * @param gitStatus - Git status with staged files
- * @param silent - If true, suppress output
+ * @param messageOnly - If true, write to stderr instead of stdout (for hooks)
  */
-export function displayStagedChanges(gitStatus: GitStatus, silent: boolean): void {
-  if (silent) {
+export function displayStagedChanges(gitStatus: GitStatus, messageOnly: boolean): void {
+  if (messageOnly) {
+    // In message-only mode, write to stderr so it appears in terminal while stdout goes to commit file
+    console.error(chalk.cyan('📝 Staged changes:'));
+    for (const line of gitStatus.statusLines) {
+      const status = line.slice(0, 2);
+      const file = line.slice(3);
+      console.error(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
+    }
+    console.error('');
     return;
   }
 
@@ -74,10 +82,20 @@ export function displayStagedChanges(gitStatus: GitStatus, silent: boolean): voi
  *
  * @param agentName - Name of the agent being used
  * @param useAI - Whether AI generation is enabled
- * @param silent - If true, suppress output
+ * @param messageOnly - If true, write to stderr instead of stdout (for hooks)
  */
-export function displayGenerationStatus(agentName: string, useAI: boolean, silent: boolean): void {
-  if (silent) {
+export function displayGenerationStatus(
+  agentName: string,
+  useAI: boolean,
+  messageOnly: boolean
+): void {
+  if (messageOnly) {
+    // In message-only mode, write to stderr so it appears in terminal while stdout goes to commit file
+    if (useAI) {
+      console.error(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
+    } else {
+      console.error(chalk.cyan('📝 Generating commit message with rules...'));
+    }
     return;
   }
 
