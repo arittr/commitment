@@ -76,5 +76,5 @@
     "test:unit:watch": "bun test .unit. --watch"
   },
   "type": "module",
-  "version": "0.14.0"
+  "version": "0.15.0"
 }
