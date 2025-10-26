@@ -6,7 +6,7 @@ import { z } from 'zod';
  * Only includes agents that can generate commit messages.
  * ChatGPTAgent is excluded as it's evaluation-only.
  */
-export const agentNameSchema = z.enum(['claude', 'codex']);
+export const agentNameSchema = z.enum(['claude', 'codex', 'gemini']);
 
 /**
  * Schema for commit task validation
