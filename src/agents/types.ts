@@ -58,8 +58,8 @@ export type Agent = {
 /**
  * Supported AI agent names for commit message generation
  *
- * This defines the valid agent identifiers that can be used in configuration.
- * Each agent name corresponds to a concrete Agent implementation.
+ * This is the SINGLE SOURCE OF TRUTH for all supported agents.
+ * The agentNameSchema in types/schemas.ts derives from this.
  *
  * Supported agents:
  * - claude: Claude CLI agent
@@ -68,8 +68,19 @@ export type Agent = {
  *
  * Note: ChatGPTAgent is not included here as it's evaluation-only (not for generation).
  * ChatGPTAgent is exported separately for use by the evaluation system.
+ *
+ * @example
+ * ```typescript
+ * import { SUPPORTED_AGENTS } from './agents/types.js';
+ *
+ * // Use for validation
+ * const isValid = SUPPORTED_AGENTS.includes(userInput);
+ *
+ * // Use for schemas
+ * const schema = z.enum(SUPPORTED_AGENTS);
+ * ```
  */
-const SUPPORTED_AGENTS = ['claude', 'codex', 'gemini'] as const;
+export const SUPPORTED_AGENTS = ['claude', 'codex', 'gemini'] as const;
 
 /**
  * Type representing a valid agent name
