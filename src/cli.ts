@@ -126,7 +126,7 @@ async function main(): Promise<void> {
     .command('init')
     .description('Initialize commitment hooks in your project')
     .option('--hook-manager <type>', 'Hook manager to use: husky, simple-git-hooks, plain')
-    .option('--agent <name>', 'AI agent to use: claude, codex, gemini (default: claude)')
+    .option('--agent <name>', 'Default AI agent for hooks: claude, codex, gemini')
     .option('--cwd <path>', 'Working directory', process.cwd())
     .action(
       async (options: {
@@ -134,8 +134,15 @@ async function main(): Promise<void> {
         hookManager?: 'husky' | 'simple-git-hooks' | 'plain';
         agent?: 'claude' | 'codex' | 'gemini';
       }) => {
+        // Parse --agent manually from process.argv due to Commander.js subcommand option conflict
+        const agentFlagIndex = process.argv.indexOf('--agent');
+        const agentValue =
+          agentFlagIndex >= 0 && agentFlagIndex < process.argv.length - 1
+            ? (process.argv[agentFlagIndex + 1] as 'claude' | 'codex' | 'gemini')
+            : undefined;
+
         await initCommand({
-          agent: options.agent,
+          agent: agentValue,
           cwd: options.cwd,
           hookManager: options.hookManager,
         });
