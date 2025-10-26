@@ -91,7 +91,7 @@ Violating these boundaries breaks the architecture and makes the system unmainta
 **Responsibility:** Coordinate commit message generation with AI or fallback.
 
 **Allowed:**
-- Instantiate agents directly (no factory)
+- Instantiate agents via factory (simple pattern)
 - Decide AI vs fallback
 - Construct prompts
 - Parse git output
@@ -111,7 +111,7 @@ Violating these boundaries breaks the architecture and makes the system unmainta
 **Simplification from v1:**
 - No provider chains - just one agent at a time
 - No auto-detection - explicit `--agent` flag
-- Direct agent instantiation with simple if/else
+- Simple factory for agent instantiation (replaces v2's if/else, v1's complex factory)
 
 ### Agent Module (`src/agents/`)
 
@@ -124,36 +124,42 @@ Violating these boundaries breaks the architecture and makes the system unmainta
 - Use pure utility functions from agent-utils
 - Handle agent-specific errors
 - Check CLI availability
+- Simple factories (see "Simple Factories" section below)
 
 **Forbidden:**
 - Business logic (message generation logic)
 - CLI concerns (argument parsing)
 - Git operations (delegate to utilities)
 - Complex inheritance (>3 extension points)
-- Factories or provider chains
+- Complex factories (chains, auto-detection, state)
 
 **Sub-components:**
 - `types.ts` - Agent interface and type definitions
 - `base-agent.ts` - Abstract base class with template pattern (~80 LOC)
 - `agent-utils.ts` - Pure utility functions (~100 LOC)
+- `factory.ts` - Simple agent factory with ts-pattern (~30 LOC)
 - `claude.ts` - Claude agent implementation (~40 LOC)
 - `codex.ts` - Codex agent implementation (~60 LOC)
-- `chatgpt.ts` - ChatGPT agent implementation (~50 LOC)
+- `gemini.ts` - Gemini agent implementation (~50 LOC)
 - `index.ts` - Agent exports
 
 **Evolution in v3:**
 - ✅ Simple base class allowed (BaseAgent with ≤3 extension points)
 - ✅ Pure utility functions allowed (stateless helpers in agent-utils)
 - ✅ Template method pattern for standard flow
-- ❌ Still banned: factories, provider chains, complex inheritance
+- ✅ Simple factories allowed (single responsibility, pure function, exhaustiveness checking)
+- ❌ Still banned: complex factories, provider chains, complex inheritance
 - **Why**: Eliminates 70% duplication while keeping agents readable (~40-60 LOC each)
 
 **Preserved from v2:**
-- No factories (`provider-factory.ts`)
+- No complex factories (v1's `provider-factory.ts` pattern)
 - No provider chains
 - No auto-detection
-- Direct agent instantiation with simple if/else
 - Agent interface unchanged: `{ name, generate() }`
+
+**Evolution from v2:**
+- v2: if/else for agent selection
+- v3: Simple factory with ts-pattern for type-safe exhaustiveness
 
 ### Types Module (`src/types/`)
 
@@ -287,7 +293,7 @@ const generator = new CommitMessageGenerator({
 3. Implement `executeCommand()` extension point
 4. Override `cleanResponse()` or `validateResponse()` if needed (optional)
 5. Add to `AgentName` type in `src/agents/types.ts`
-6. Update generator's if/else chain in `generateWithAI()`
+6. Update factory in `src/agents/factory.ts` (add new `.with()` case)
 7. Export from `src/agents/index.ts`
 8. Add tests in `src/agents/__tests__/<agent-name>.test.ts`
 
@@ -318,14 +324,15 @@ export class MyAgent extends BaseAgent {
 }
 ```
 
-**Architecture preserved:** Agent interface unchanged, minimal changes to generator.
+**Architecture preserved:** Agent interface unchanged, minimal changes to factory.
 
 **v3 Pattern:**
 - ✅ Extend BaseAgent (simple template pattern)
 - ✅ Implement only executeCommand() (~20-40 LOC)
 - ✅ Inherit availability check, cleaning, validation, error handling
 - ✅ Override cleanResponse/validateResponse only if needed
-- ❌ No factories, no chains, no complex inheritance
+- ✅ Update factory with new `.with()` case (type-safe exhaustiveness)
+- ❌ No complex factories, no chains, no complex inheritance
 
 ### Adding a New CLI Command
 
@@ -349,6 +356,61 @@ program
 ```
 
 **Architecture preserved:** Commands are isolated, testable modules.
+
+## Simple Factories
+
+**commitment allows simple factories that meet three criteria.**
+
+### The Three Criteria
+
+A factory is allowed if and only if it meets ALL three:
+
+1. **Single responsibility** - Only instantiation based on discriminator (like AgentName). No chains, no auto-detection, no complex decision trees, no configuration transformation
+2. **Pure function** - No state, no side effects. Takes discriminator and optional config, returns instance
+3. **Exhaustiveness checking** - Uses ts-pattern or TypeScript discriminated unions to ensure compile-time errors if a case is missing
+
+### Allowed Pattern
+
+```typescript
+// src/agents/factory.ts
+import { match } from 'ts-pattern';
+import type { Agent, AgentName } from './types';
+
+export function createAgent(name: AgentName): Agent {
+  return match(name)
+    .with('claude', () => new ClaudeAgent())
+    .with('codex', () => new CodexAgent())
+    .with('gemini', () => new GeminiAgent())
+    .exhaustive(); // ✅ TypeScript error if AgentName updated but case missing
+}
+```
+
+**Why each criterion matters:**
+- Single responsibility → No mixing concerns (instantiation vs configuration vs detection)
+- Pure function → Testable, predictable, no hidden state
+- Exhaustiveness → Compiler catches missing cases when types evolve
+
+**Reasonable config pass-through is allowed:**
+```typescript
+export function createAgent(name: AgentName, options?: AgentOptions): Agent {
+  return match(name)
+    .with('claude', () => new ClaudeAgent(options))
+    .with('codex', () => new CodexAgent(options))
+    .with('gemini', () => new GeminiAgent(options))
+    .exhaustive();
+}
+// ✅ Just forwarding config to constructors
+```
+
+**Complex config logic belongs elsewhere:**
+```typescript
+// ❌ Validation/transformation in factory
+export function createAgent(name: AgentName, rawConfig: unknown): Agent {
+  const validated = validateConfig(rawConfig); // ❌ Belongs in caller
+  const timeout = calculateTimeout(validated); // ❌ Too much logic
+  // ...
+}
+```
 
 ## Anti-Patterns
 
@@ -476,6 +538,56 @@ export function isCLINotFoundError(error: unknown): boolean {
 ```
 
 **The key distinction**: Stateless pure functions (allowed in v3). Stateful utility classes (still banned).
+
+### ❌ Complex Factories (v1 anti-pattern - still banned in v3)
+
+**Never:**
+```typescript
+// v1 pattern - Factory chains, still banned
+class ProviderFactory {
+  create(config: ProviderConfig): Provider {
+    const primary = this.createPrimary(config);
+    const fallback = this.createFallback(config);
+    return new ProviderChain([primary, fallback]); // ❌ Chaining logic
+  }
+}
+```
+
+```typescript
+// Auto-detection factories - still banned
+export function createAgent(config?: AgentConfig): Agent {
+  // Detect which CLI is available
+  if (await isClaudeAvailable()) return new ClaudeAgent();
+  if (await isCodexAvailable()) return new CodexAgent();
+  throw new Error('No agent available'); // ❌ Detection logic
+}
+```
+
+```typescript
+// Stateful factories - still banned
+class AgentFactory {
+  private lastCreated?: Agent; // ❌ State
+
+  create(name: AgentName): Agent {
+    this.lastCreated = match(name)... // ❌ Side effect
+    return this.lastCreated;
+  }
+}
+```
+
+**v3 allows simple factories:**
+```typescript
+// v3 pattern - Simple, focused factory
+export function createAgent(name: AgentName): Agent {
+  return match(name)
+    .with('claude', () => new ClaudeAgent())
+    .with('codex', () => new CodexAgent())
+    .with('gemini', () => new GeminiAgent())
+    .exhaustive(); // ✅ Type-safe, single responsibility, pure function
+}
+```
+
+**The key distinction**: Simple instantiation based on discriminator (allowed in v3). Complex logic, chains, or state (still banned).
 
 ## Testing Architecture
 
