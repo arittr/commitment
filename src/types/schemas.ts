@@ -1,12 +1,17 @@
 import { z } from 'zod';
 
+import { SUPPORTED_AGENTS } from '../agents/types.js';
+
 /**
  * Schema for agent names used in commit message generation
  *
+ * Derives from SUPPORTED_AGENTS (single source of truth).
  * Only includes agents that can generate commit messages.
  * ChatGPTAgent is excluded as it's evaluation-only.
+ *
+ * @see {@link SUPPORTED_AGENTS} in src/agents/types.ts for the canonical list
  */
-export const agentNameSchema = z.enum(['claude', 'codex', 'gemini']);
+export const agentNameSchema = z.enum(SUPPORTED_AGENTS);
 
 /**
  * Schema for commit task validation
@@ -142,8 +147,10 @@ export const commitMessageGeneratorConfigSchema = z.object({
 
 /**
  * TypeScript types inferred from Zod schemas
+ *
+ * Note: AgentName is NOT exported from here - import from '../agents/types.js' instead.
+ * This ensures SUPPORTED_AGENTS remains the single source of truth.
  */
-export type AgentName = z.infer<typeof agentNameSchema>;
 export type CommitTask = z.infer<typeof commitTaskSchema>;
 export type CommitMessageOptions = z.infer<typeof commitMessageOptionsSchema>;
 export type CommitMessageGeneratorConfig = z.infer<typeof commitMessageGeneratorConfigSchema>;
