@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from 'bun:test';
 import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas';
-import { commitTaskSchema } from '../schemas';
+import { commitTaskSchema, safeValidateGeneratorConfig } from '../schemas';
 
 describe('Core Schemas', () => {
   describe('Type Inference', () => {
@@ -76,6 +76,59 @@ describe('Core Schemas', () => {
 
       expect(config.enableAI).toBe(false);
       expect(config.agent).toBeUndefined();
+    });
+
+    it('should accept gemini as a valid agent', () => {
+      const config: CommitMessageGeneratorConfig = {
+        agent: 'gemini',
+        enableAI: true,
+      };
+
+      expect(config.agent).toBe('gemini');
+    });
+  });
+
+  describe('Runtime Validation', () => {
+    it('should validate gemini agent configuration', () => {
+      const config = {
+        agent: 'gemini',
+        enableAI: true,
+      };
+
+      const result = safeValidateGeneratorConfig(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.agent).toBe('gemini');
+      }
+    });
+
+    it('should validate claude agent configuration', () => {
+      const config = {
+        agent: 'claude',
+        enableAI: true,
+      };
+
+      const result = safeValidateGeneratorConfig(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.agent).toBe('claude');
+      }
+    });
+
+    it('should validate codex agent configuration', () => {
+      const config = {
+        agent: 'codex',
+        enableAI: true,
+      };
+
+      const result = safeValidateGeneratorConfig(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.agent).toBe('codex');
+      }
     });
   });
 });
