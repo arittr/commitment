@@ -1,6 +1,6 @@
 # commitment
 
-> AI-powered commit message generator
+> AI coding assistant-powered commit message generator
 
 <img width="500" height="304" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
 
@@ -10,18 +10,18 @@
 
 We all know we should write better commit messages. But we don't.
 
-**commitment** analyzes your git diffs using AI and generates professional, conventional commit messages automatically.
+**commitment** analyzes your git diffs using your favorite AI coding assistant and generates professional, conventional commit messages automatically.
 
 ## Why commitment?
 
-- **No API Keys**: Uses your local AI CLI (e.g. Claude or Codex) to generate commit messages
+- **No API Keys**: Uses your local AI CLI (Claude, Codex, or Gemini) to generate commit messages
 - **Consistency**: Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
 - **Context-aware**: AI understands your changes and adds helpful context
 - **Frictionless**: Just add the hook and stop committing `wip2` and `formatting`
 
 ## Features
 
-- 🤖 **AI-powered generation** using your local AI CLI (e.g. Claude or Codex) for accurate, context-aware messages - no extra API keys required!
+- 🤖 **AI-powered generation** using your local AI CLI (Claude, Codex, or Gemini) for accurate, context-aware messages - no extra API keys required!
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
 - ✨ **Conventional Commits** for a standard format (feat:, fix:, docs:, etc.)
 - 🚀 **One-command setup** with `commitment init` for automatic hook installation
@@ -68,6 +68,7 @@ bun add -D @arittr/commitment
 - **AI CLI** (one of):
   - [Claude CLI](https://docs.claude.com/en/docs/claude-code/overview) (recommended) - Install with `npm install -g @anthropic-ai/claude-code`
   - [Codex CLI](https://developers.openai.com/codex/cli) - Install with `npm install -g @openai/codex`
+  - [Gemini CLI](https://geminicli.com/docs/) - Install with `npm install -g @google/gemini-cli`
 
 >[!IMPORTANT]
 >commitment requires an AI CLI to function.
@@ -102,6 +103,8 @@ Use a specific AI agent:
 
 ```bash
 npx commitment --agent codex
+# or
+npx commitment --agent gemini
 ```
 
 ## How It Works
@@ -138,7 +141,7 @@ test: update test naming conventions and mock patterns
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--agent <name>` | AI agent to use (`claude` or `codex`) | `claude` |
+| `--agent <name>` | AI agent to use (`claude`, `codex`, or `gemini`) | `claude` |
 | `--dry-run` | Generate message without creating commit | `false` |
 | `--message-only` | Output only the commit message | `false` |
 | `--cwd <path>` | Working directory | current directory |
@@ -213,9 +216,9 @@ If hooks override your messages, please [file an issue](https://github.com/aritt
 
 | Platform | CLI Usage | Hooks | AI Agents |
 |----------|-----------|-------|-----------|
-| macOS    | ✅ | ✅ | ✅ Claude, Codex |
-| Linux    | ✅ | ✅ | ✅ Claude, Codex |
-| Windows  | ✅ | ⚠️ Git Bash/WSL | ✅ Claude, Codex |
+| macOS    | ✅ | ✅ | ✅ Claude, Codex, Gemini |
+| Linux    | ✅ | ✅ | ✅ Claude, Codex, Gemini |
+| Windows  | ✅ | ⚠️ Git Bash/WSL | ✅ Claude, Codex, Gemini |
 
 > **Note**: Windows users should use Git Bash or WSL for best hook compatibility.
 
