@@ -21,6 +21,7 @@
  * ```
  */
 
+import type { AgentName } from '../../agents/types.js';
 import { CommitMessageGenerator } from '../../generator.js';
 import { MockGitProvider } from '../../utils/git-provider.js';
 import type { AttemptOutcome } from '../core/types.js';
@@ -58,7 +59,7 @@ export class AttemptRunner {
     private readonly evaluator: SingleAttemptEvaluator,
     private readonly reporter: CLIReporter,
     private readonly generatorFactory?: (
-      agentName: 'claude' | 'codex',
+      agentName: AgentName,
       fixture: Fixture
     ) => CommitMessageGenerator
   ) {}
@@ -77,7 +78,7 @@ export class AttemptRunner {
    *
    * **Critical:** All 3 attempts ALWAYS complete. No early returns.
    *
-   * @param agentName - Name of agent to use ('claude' | 'codex')
+   * @param agentName - Name of agent to use
    * @param fixture - Fixture to evaluate
    * @returns Array of exactly 3 attempt outcomes
    *
@@ -102,7 +103,7 @@ export class AttemptRunner {
    * });
    * ```
    */
-  async runAttempts(agentName: string, fixture: Fixture): Promise<AttemptOutcome[]> {
+  async runAttempts(agentName: AgentName, fixture: Fixture): Promise<AttemptOutcome[]> {
     const outcomes: AttemptOutcome[] = [];
 
     // Execute exactly 3 attempts (no early returns!)
@@ -155,7 +156,7 @@ export class AttemptRunner {
         outcomes.push(failureOutcome);
 
         // Report failure
-        this.reporter.reportAttemptFailure(attemptNumber, failureType, responseTimeMs);
+        this.reporter.reportAttemptFailure(attemptNumber, failureType, responseTimeMs, failureReason);
       }
     }
 
@@ -168,16 +169,16 @@ export class AttemptRunner {
    *
    * Creates a task from fixture metadata and calls generator with mocked git data.
    *
-   * @param agentName - Agent to use for generation ('claude' | 'codex')
+   * @param agentName - Agent to use for generation
    * @param fixture - Fixture to generate message for
    * @returns Generated commit message
    * @throws {Error} If generation fails
    */
-  private async _generateMessage(agentName: string, fixture: Fixture): Promise<string> {
+  private async _generateMessage(agentName: AgentName, fixture: Fixture): Promise<string> {
     // Use factory if provided (for testing), otherwise create default generator
     const generator = this.generatorFactory
-      ? this.generatorFactory(agentName as 'claude' | 'codex', fixture)
-      : this._createDefaultGenerator(agentName as 'claude' | 'codex', fixture);
+      ? this.generatorFactory(agentName, fixture)
+      : this._createDefaultGenerator(agentName, fixture);
 
     // Create task from fixture
     const task = {
@@ -202,10 +203,7 @@ export class AttemptRunner {
    * @param fixture - Fixture data
    * @returns CommitMessageGenerator instance
    */
-  private _createDefaultGenerator(
-    agentName: 'claude' | 'codex',
-    fixture: Fixture
-  ): CommitMessageGenerator {
+  private _createDefaultGenerator(agentName: AgentName, fixture: Fixture): CommitMessageGenerator {
     const mockGit = new MockGitProvider({
       diff: fixture.diff,
       status: fixture.status,

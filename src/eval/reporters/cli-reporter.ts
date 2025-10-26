@@ -78,21 +78,34 @@ export class CLIReporter {
    * @param attemptNumber - Attempt number (1, 2, or 3)
    * @param failureType - Type of failure
    * @param responseTimeMs - Time taken before failure (milliseconds)
+   * @param failureReason - Optional error message explaining the failure
    *
    * @example
    * ```typescript
-   * reporter.reportAttemptFailure(2, 'validation', 567);
-   * // Output: "✗ Attempt 2: Failed (validation, 567ms)"
+   * reporter.reportAttemptFailure(2, 'validation', 567, 'Invalid conventional commit format');
+   * // Output:
+   * // "✗ Attempt 2: Failed (validation, 567ms)"
+   * // "  Error: Invalid conventional commit format"
    * ```
    */
   reportAttemptFailure(
     attemptNumber: number,
     failureType: FailureType,
-    responseTimeMs: number
+    responseTimeMs: number,
+    failureReason?: string
   ): void {
     console.log(
       chalk.red(`  ✗ Attempt ${attemptNumber}: Failed (${failureType}, ${responseTimeMs}ms)`)
     );
+    if (failureReason) {
+      // Show error message indented, truncate if too long
+      const maxLength = 120;
+      const message =
+        failureReason.length > maxLength
+          ? `${failureReason.slice(0, maxLength)}...`
+          : failureReason;
+      console.log(chalk.gray(`    ${message}`));
+    }
   }
 
   /**

@@ -32,6 +32,7 @@ import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { AgentName } from '../../agents/types.js';
 import { EvaluationError } from '../core/errors.js';
 import type { AttemptOutcome, EvalComparison, EvalResult } from '../core/types.js';
 import { isSuccessOutcome } from '../core/types.js';
@@ -130,11 +131,11 @@ export class EvalRunner {
    * 2. Meta-evaluate via MetaEvaluator (with fallback)
    * 3. Store results via JSONReporter
    *
-   * @param agentName - Agent to evaluate ('claude' | 'codex')
+   * @param agentName - Agent to evaluate
    * @param fixture - Fixture to evaluate
    * @returns Evaluation result with finalScore
    */
-  private async _evaluateAgent(agentName: string, fixture: Fixture): Promise<EvalResult> {
+  private async _evaluateAgent(agentName: AgentName, fixture: Fixture): Promise<EvalResult> {
     // Step 1: Run 3 attempts
     const attempts = await this.attemptRunner.runAttempts(agentName, fixture);
 
@@ -303,7 +304,7 @@ export class EvalRunner {
    * Convenience method that wraps run() for single fixture.
    *
    * @param fixture - Fixture to evaluate
-   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
+   * @param agent - Optional agent filter. If undefined, runs both claude and codex for comparison.
    * @returns Evaluation comparison
    * @throws {EvaluationError} If evaluation fails
    *
@@ -314,29 +315,19 @@ export class EvalRunner {
    * console.log(comparison.winner); // 'claude' | 'codex' | 'tie'
    * ```
    */
-  async runFixture(fixture: Fixture, agent?: 'claude' | 'codex'): Promise<EvalComparison> {
+  async runFixture(fixture: Fixture, agent?: AgentName): Promise<EvalComparison> {
     // If agent specified, evaluate only that agent
-    if (agent === 'claude') {
-      const claudeResult = await this._evaluateAgent('claude', fixture);
+    if (agent) {
+      const result = await this._evaluateAgent(agent, fixture);
       return {
-        claudeResult,
-        codexResult: undefined,
+        claudeResult: agent === 'claude' ? result : undefined,
+        codexResult: agent === 'codex' ? result : undefined,
         fixture: fixture.name,
         winner: undefined,
       };
     }
 
-    if (agent === 'codex') {
-      const codexResult = await this._evaluateAgent('codex', fixture);
-      return {
-        claudeResult: undefined,
-        codexResult,
-        fixture: fixture.name,
-        winner: undefined,
-      };
-    }
-
-    // Both agents
+    // No agent specified: run both claude and codex for comparison
     return this.run([fixture]);
   }
 
@@ -346,7 +337,7 @@ export class EvalRunner {
    * Loads all fixtures in the specified mode and evaluates them.
    *
    * @param mode - Loading mode ('mocked' or 'live')
-   * @param agent - Optional agent filter ('claude' or 'codex'). If undefined, runs both.
+   * @param agent - Optional agent filter. If undefined, runs both claude and codex for comparison.
    * @returns Array of evaluation comparisons
    * @throws {EvaluationError} If any evaluation fails
    *
@@ -357,10 +348,7 @@ export class EvalRunner {
    * console.log(comparisons[0].winner); // 'claude' | 'codex' | 'tie'
    * ```
    */
-  async runAll(
-    mode: 'live' | 'mocked' = 'mocked',
-    agent?: 'claude' | 'codex'
-  ): Promise<EvalComparison[]> {
+  async runAll(mode: 'live' | 'mocked' = 'mocked', agent?: AgentName): Promise<EvalComparison[]> {
     // Load all fixtures
     const fixturesDir = join(process.cwd(), 'src/eval/fixtures');
     const allEntries = readdirSync(fixturesDir);
