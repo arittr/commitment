@@ -547,7 +547,7 @@ const baseProviderSchema = z.object({
 // CLI-specific schema extends base
 export const cliProviderSchema = baseProviderSchema.extend({
   type: z.literal('cli'),
-  provider: z.enum(['claude', 'codex', 'cursor']),
+  provider: z.enum(['claude', 'codex', 'gemini']),
   command: z.string().optional(),
   args: z.array(z.string()).optional(),
 });

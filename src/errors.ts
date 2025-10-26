@@ -652,7 +652,7 @@ Then run evaluation tests again.`,
    *
    * Includes installation instructions for the specific agent.
    *
-   * @param name - Name of the agent (claude, codex, cursor)
+   * @param name - Name of the agent (claude, codex, gemini)
    * @returns EvaluationError with installation instructions
    *
    * @example
