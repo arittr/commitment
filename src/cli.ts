@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
-import { program } from 'commander';
+import sade from 'sade';
 import { ZodError } from 'zod';
 
 import { initCommand } from './cli/commands/init';
@@ -113,70 +113,64 @@ async function checkGitStatusOrExit(cwd: string): Promise<GitStatus> {
 }
 
 /**
- * Main CLI function
+ * Main CLI setup
  */
-async function main(): Promise<void> {
-  program
-    .name('commitment')
-    .description('AI-powered commit message generator using Claude or Codex')
-    .version(version);
+const prog = sade('commitment');
 
-  // Init command - setup git hooks
-  program
-    .command('init')
-    .description('Initialize commitment hooks in your project')
-    .option('--hook-manager <type>', 'Hook manager to use: husky, simple-git-hooks, plain')
-    .option('--agent <name>', 'Default AI agent for hooks: claude, codex, gemini')
-    .option('--cwd <path>', 'Working directory', process.cwd())
-    .action(
-      async (options: {
-        cwd: string;
-        hookManager?: 'husky' | 'simple-git-hooks' | 'plain';
-        agent?: 'claude' | 'codex' | 'gemini';
-      }) => {
-        // Parse --agent manually from process.argv due to Commander.js subcommand option conflict
-        const agentFlagIndex = process.argv.indexOf('--agent');
-        const agentValue =
-          agentFlagIndex >= 0 && agentFlagIndex < process.argv.length - 1
-            ? (process.argv[agentFlagIndex + 1] as 'claude' | 'codex' | 'gemini')
-            : undefined;
+prog.version(version);
 
-        await initCommand({
-          agent: agentValue,
-          cwd: options.cwd,
-          hookManager: options.hookManager,
-        });
-      }
-    );
+// Init command - setup git hooks
+prog
+  .command('init')
+  .describe('Initialize commitment hooks in your project')
+  .option('--hook-manager', 'Hook manager to use: husky, simple-git-hooks, plain')
+  .option('--agent', 'Default AI agent for hooks: claude, codex, gemini')
+  .option('--cwd', 'Working directory', process.cwd())
+  .action(
+    async (options: {
+      cwd: string;
+      'hook-manager'?: 'husky' | 'simple-git-hooks' | 'plain';
+      agent?: 'claude' | 'codex' | 'gemini';
+    }) => {
+      await initCommand({
+        agent: options.agent,
+        cwd: options.cwd,
+        hookManager: options['hook-manager'],
+      });
+    }
+  );
 
-  // Default command - generate commit message
-  program
-    .description(
-      'Generate commit message and create commit\n\n' +
-        'Available agents:\n' +
-        '  claude    - Claude CLI (default)\n' +
-        '  codex     - OpenAI Codex CLI\n' +
-        '  gemini    - Google Gemini CLI\n\n' +
-        'Example: commitment --agent claude --dry-run'
-    )
-    .option('--agent <name>', 'AI agent to use (claude, codex, gemini)', 'claude')
-    .option('--dry-run', 'Generate message without creating commit')
-    .option('--message-only', 'Output only the commit message (no commit)')
-    .option('--cwd <path>', 'Working directory', process.cwd())
-    .action(
-      async (options: {
-        agent?: string;
-        ai: boolean;
-        cwd: string;
-        dryRun?: boolean;
-        messageOnly?: boolean;
-      }) => {
-        await generateCommitCommand(options);
-      }
-    );
+// Default command - generate commit message
+prog
+  .command('generate', '', { default: true })
+  .describe(
+    'Generate commit message and create commit\n\n' +
+      'Available agents:\n' +
+      '  claude    - Claude CLI (default)\n' +
+      '  codex     - OpenAI Codex CLI\n' +
+      '  gemini    - Google Gemini CLI\n\n' +
+      'Example: commitment --agent claude --dry-run'
+  )
+  .option('--agent', 'AI agent to use (claude, codex, gemini)', 'claude')
+  .option('--dry-run', 'Generate message without creating commit')
+  .option('--message-only', 'Output only the commit message (no commit)')
+  .option('--cwd', 'Working directory', process.cwd())
+  .action(
+    async (options: {
+      agent?: string;
+      ai: boolean;
+      cwd: string;
+      'dry-run'?: boolean;
+      'message-only'?: boolean;
+    }) => {
+      await generateCommitCommand({
+        agent: options.agent,
+        ai: options.ai,
+        cwd: options.cwd,
+        dryRun: options['dry-run'],
+        messageOnly: options['message-only'],
+      });
+    }
+  );
 
-  await program.parseAsync();
-}
-
-// Run CLI
-await main();
+prog.parse(process.argv);
