@@ -18,8 +18,10 @@
  */
 
 import { describe, expect, it } from 'bun:test';
+
+import { SUPPORTED_AGENTS } from '../../agents/types.js';
 import type { CommitMessageGeneratorConfig, CommitMessageOptions, CommitTask } from '../schemas';
-import { commitTaskSchema, safeValidateGeneratorConfig } from '../schemas';
+import { agentNameSchema, commitTaskSchema, safeValidateGeneratorConfig } from '../schemas';
 
 describe('Core Schemas', () => {
   describe('Type Inference', () => {
@@ -85,6 +87,29 @@ describe('Core Schemas', () => {
       };
 
       expect(config.agent).toBe('gemini');
+    });
+  });
+
+  describe('Single Source of Truth', () => {
+    it('should derive agentNameSchema from SUPPORTED_AGENTS', () => {
+      // Test that schema accepts all agents from SUPPORTED_AGENTS
+      const schemaOptions = agentNameSchema.options;
+
+      // Verify schema options match SUPPORTED_AGENTS exactly
+      expect(schemaOptions).toEqual([...SUPPORTED_AGENTS]);
+    });
+
+    it('should accept all agents from SUPPORTED_AGENTS', () => {
+      // Dynamic test - if we add a new agent to SUPPORTED_AGENTS, this test automatically covers it
+      for (const agentName of SUPPORTED_AGENTS) {
+        const config = { agent: agentName, enableAI: true };
+        const result = safeValidateGeneratorConfig(config);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.agent).toBe(agentName);
+        }
+      }
     });
   });
 

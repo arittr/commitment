@@ -156,7 +156,12 @@ export class AttemptRunner {
         outcomes.push(failureOutcome);
 
         // Report failure
-        this.reporter.reportAttemptFailure(attemptNumber, failureType, responseTimeMs, failureReason);
+        this.reporter.reportAttemptFailure(
+          attemptNumber,
+          failureType,
+          responseTimeMs,
+          failureReason
+        );
       }
     }
 
