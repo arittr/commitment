@@ -97,6 +97,27 @@ describe('CLIReporter', () => {
       expect(call).toContain('Attempt 1');
       expect(call).toContain('api_error');
     });
+
+    it('should report failure with error message', () => {
+      reporter.reportAttemptFailure(1, 'generation', 100, 'Command not found: gemini');
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+      const call1 = consoleLogSpy.mock.calls[0]?.[0] as string;
+      const call2 = consoleLogSpy.mock.calls[1]?.[0] as string;
+      expect(call1).toContain('Attempt 1');
+      expect(call1).toContain('generation');
+      expect(call2).toContain('Command not found: gemini');
+    });
+
+    it('should truncate long error messages', () => {
+      const longError = 'x'.repeat(150);
+      reporter.reportAttemptFailure(1, 'generation', 100, longError);
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+      const call2 = consoleLogSpy.mock.calls[1]?.[0] as string;
+      expect(call2).toContain('...');
+      expect(call2.length).toBeLessThan(150);
+    });
   });
 
   describe('reportSummary', () => {

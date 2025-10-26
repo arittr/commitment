@@ -9,12 +9,15 @@
  *   bun run eval:live             # Run with live git (both agents)
  *   bun run eval:claude           # Run all fixtures with Claude only
  *   bun run eval:codex            # Run all fixtures with Codex only
+ *   bun run eval:gemini           # Run all fixtures with Gemini only
  */
 
 import { existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 import chalk from 'chalk';
+
+import type { AgentName } from '../agents/types.js';
 
 import { MetaEvaluator } from './evaluators/meta-evaluator.js';
 import { SingleAttemptEvaluator } from './evaluators/single-attempt.js';
@@ -36,12 +39,18 @@ const { values } = parseArgs({
   },
 });
 
+const SUPPORTED_AGENTS: readonly AgentName[] = ['claude', 'codex', 'gemini'];
+
+/**
+ * Type guard to check if a value is a valid AgentName
+ */
+function isAgentName(value: unknown): value is AgentName {
+  return typeof value === 'string' && SUPPORTED_AGENTS.includes(value as AgentName);
+}
+
 const mode = (values.mode === 'live' ? 'live' : 'mocked') as 'live' | 'mocked';
 const fixtureName = values.fixture as string | undefined;
-const agent = (values.agent === 'claude' || values.agent === 'codex' ? values.agent : undefined) as
-  | 'claude'
-  | 'codex'
-  | undefined;
+const agent = isAgentName(values.agent) ? values.agent : undefined;
 
 // Check API key
 if (!process.env.OPENAI_API_KEY?.trim()) {

@@ -62,6 +62,7 @@
     "eval:claude": "bun run src/eval/run-eval.ts --agent claude",
     "eval:codex": "bun run src/eval/run-eval.ts --agent codex",
     "eval:fixture": "bun run src/eval/run-eval.ts --fixture",
+    "eval:gemini": "bun run src/eval/run-eval.ts --agent gemini",
     "eval:live": "bun run src/eval/run-eval.ts --mode live",
     "lint": "bun check-types && biome check --write",
     "lint:check": "biome check",
