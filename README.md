@@ -38,6 +38,9 @@ npm install -D @arittr/commitment
 # 2. Set up git hooks (automatic)
 npx commitment init
 
+# Or configure with a specific AI agent
+npx commitment init --agent gemini
+
 # 3. Make changes and commit
 git add .
 git commit  # Message generated automatically!
@@ -158,6 +161,12 @@ commitment supports multiple hook managers:
 | **Husky** | `npx commitment init --hook-manager husky` | Teams with existing husky setup |
 | **simple-git-hooks** | `npx commitment init --hook-manager simple-git-hooks` | Lightweight alternative to husky |
 | **Plain Git Hooks** | `npx commitment init --hook-manager plain` | No dependencies |
+
+**Configure default agent:**
+```bash
+npx commitment init --agent gemini  # Use Gemini by default
+npx commitment init --agent codex   # Use Codex by default
+```
 
 See [docs/HOOKS.md](./docs/HOOKS.md) for detailed hook integration guide.
 
