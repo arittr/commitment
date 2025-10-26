@@ -392,7 +392,7 @@ npx commitment --message-only > "$1"  # ❌ Overrides user messages!
 
 ```typescript
 ❌ V1 Pattern (removed):
-const chain = [claude, codex, cursor];  // Fallback chain
+const chain = [claude, codex, gemini];  // Fallback chain
 for (const provider of chain) {
   if (await provider.isAvailable()) {
     return await provider.generate(prompt);
@@ -749,8 +749,8 @@ class CommitMessageGenerator {
 
 ```typescript
 ✅ Correct:
-const SUPPORTED_PROVIDERS = ['claude', 'codex', 'cursor'] as const;
-type Provider = typeof SUPPORTED_PROVIDERS[number];  // 'claude' | 'codex' | 'cursor'
+const SUPPORTED_PROVIDERS = ['claude', 'codex', 'gemini'] as const;
+type Provider = typeof SUPPORTED_PROVIDERS[number];  // 'claude' | 'codex' | 'gemini'
 
 const config = {
   timeout: 120000,

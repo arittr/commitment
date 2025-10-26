@@ -257,7 +257,7 @@ const result = match(provider)
 
 **Detection:** Check for `claude` in PATH
 
-### Codex CLI (from Cursor)
+### Codex CLI
 
 **Purpose:** Secondary AI provider (fallback)
 **Status:** ✅ APPROVED
