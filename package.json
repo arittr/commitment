@@ -56,7 +56,7 @@
   "scripts": {
     "build": "bun run build.ts",
     "check-types": "bun tsc --noEmit",
-    "clean": "rm -r dist node_modules",
+    "clean": "rm -r dist",
     "dev": "bun --watch build.ts",
     "eval": "bun run src/eval/run-eval.ts",
     "eval:claude": "bun run src/eval/run-eval.ts --agent claude",
