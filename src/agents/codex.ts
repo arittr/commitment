@@ -46,10 +46,15 @@ export class CodexAgent extends BaseAgent {
 
     try {
       // Execute Codex CLI in non-interactive mode
-      const result = await exec('codex', ['exec', '--output-last-message', tmpFile, prompt], {
-        cwd: workdir,
-        timeout: 120_000, // 2 minutes
-      });
+      // --skip-git-repo-check allows running in non-git directories (needed for eval system using /tmp)
+      const result = await exec(
+        'codex',
+        ['exec', '--skip-git-repo-check', '--output-last-message', tmpFile, prompt],
+        {
+          cwd: workdir,
+          timeout: 120_000, // 2 minutes
+        }
+      );
 
       // Read output from temp file or fallback to stdout
       return await this._readOutput(tmpFile, result.stdout);
