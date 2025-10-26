@@ -277,6 +277,9 @@ export async function initCommand(options: InitOptions): Promise<void> {
     // Print next steps
     console.log('');
     console.log(chalk.green('🎉 Setup complete!'));
+    if (options.agent !== undefined) {
+      console.log(chalk.cyan(`   Default agent: ${options.agent}`));
+    }
     console.log('');
     console.log(chalk.cyan('Next steps:'));
     console.log(chalk.white('  1. Stage your changes: ') + chalk.gray('git add .'));
