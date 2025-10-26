@@ -73,6 +73,7 @@ describe('CodexAgent', () => {
         'codex',
         [
           'exec',
+          '--skip-git-repo-check',
           '--output-last-message',
           expect.stringMatching(/\/tmp\/codex-output-\d+\.txt/),
           prompt,
