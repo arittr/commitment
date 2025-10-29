@@ -112,7 +112,7 @@ bun test --coverage
 bun test --watch
 
 # Type checking
-bun run type-check   # or bun tsc --noEmit
+bun run check-types   # or bun tsc --noEmit
 
 # Linting
 bun run lint

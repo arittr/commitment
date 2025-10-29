@@ -620,7 +620,7 @@ describe('Performance', () => {
 
 ```bash
 bun run lint      # Must pass
-bun run type-check # Must pass
+bun run check-types # Must pass
 bun test          # Must pass
 ```
 

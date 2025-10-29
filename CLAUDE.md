@@ -28,7 +28,7 @@ bun run clean
 ### Code Quality
 
 ```bash
-# Run linting (type-check + format-check + biome)
+# Run linting (check-types + format-check + biome)
 bun run lint
 
 # Fix linting issues automatically
@@ -41,7 +41,7 @@ bun run format
 bun run format:check
 
 # Type checking
-bun run type-check
+bun run check-types
 ```
 
 ### Testing
