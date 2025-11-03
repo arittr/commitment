@@ -1,3 +1,4 @@
+import type { Logger } from '../utils/logger';
 import { exec } from '../utils/shell.js';
 import { cleanAIResponse, validateConventionalCommit } from './agent-utils';
 import type { Agent } from './types';
@@ -66,6 +67,11 @@ import type { Agent } from './types';
  */
 export abstract class BaseAgent implements Agent {
   /**
+   * Optional logger for debugging and diagnostics
+   */
+  logger?: Logger;
+
+  /**
    * Human-readable name of the agent
    *
    * Subclasses must provide this value.
@@ -73,6 +79,15 @@ export abstract class BaseAgent implements Agent {
    * @example 'claude', 'codex', 'chatgpt'
    */
   abstract readonly name: string;
+
+  /**
+   * Constructor accepting optional logger
+   *
+   * @param logger - Optional logger for debugging
+   */
+  constructor(logger?: Logger) {
+    this.logger = logger;
+  }
 
   /**
    * Template method for generating commit messages
@@ -92,17 +107,27 @@ export abstract class BaseAgent implements Agent {
    * @throws {Error} If CLI not found, execution fails, or validation fails
    */
   async generate(prompt: string, workdir: string): Promise<string> {
+    this.logger?.debug(`[${this.name}] Starting commit message generation`);
+
     // Step 1: Check CLI availability
+    this.logger?.debug(`[${this.name}] Checking CLI availability`);
     await this.checkAvailability(this.name, workdir);
+    this.logger?.debug(`[${this.name}] CLI is available`);
 
     // Step 2: Execute agent-specific command
+    this.logger?.debug(`[${this.name}] Executing command`);
     const rawOutput = await this.executeCommand(prompt, workdir);
+    this.logger?.debug(`[${this.name}] Command executed, output length: ${rawOutput.length}`);
 
     // Step 3: Clean response (remove artifacts, normalize whitespace)
+    this.logger?.debug(`[${this.name}] Cleaning response`);
     const cleanedOutput = this.cleanResponse(rawOutput);
+    this.logger?.debug(`[${this.name}] Response cleaned, length: ${cleanedOutput.length}`);
 
     // Step 4: Validate response (check conventional commit format)
+    this.logger?.debug(`[${this.name}] Validating response format`);
     this.validateResponse(cleanedOutput);
+    this.logger?.debug(`[${this.name}] Response validated successfully`);
 
     return cleanedOutput;
   }

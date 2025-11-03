@@ -80,8 +80,13 @@ export const commitMessageOptionsSchema = z.object({
 
 /**
  * Schema for logger configuration
+ *
+ * Logger must implement the Logger interface with debug, info, warn, and error methods.
  */
 const loggerSchema = z.object({
+  debug: z.function(),
+  error: z.function(),
+  info: z.function(),
   warn: z.function(),
 });
 
