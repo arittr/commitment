@@ -81,29 +81,16 @@ export function displayStagedChanges(gitStatus: GitStatus, messageOnly: boolean)
  * Display generation status to user
  *
  * @param agentName - Name of the agent being used
- * @param useAI - Whether AI generation is enabled
- * @param messageOnly - If true, write to stderr instead of stdout (for hooks)
+ * @param quiet - If true, suppress output
  */
-export function displayGenerationStatus(
-  agentName: string,
-  useAI: boolean,
-  messageOnly: boolean
-): void {
-  if (messageOnly) {
-    // In message-only mode, write to stderr so it appears in terminal while stdout goes to commit file
-    if (useAI) {
-      console.error(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
-    } else {
-      console.error(chalk.cyan('📝 Generating commit message with rules...'));
-    }
+export function displayGenerationStatus(agentName: string, quiet: boolean): void {
+  // Suppress output if quiet mode is enabled
+  if (quiet) {
     return;
   }
 
-  if (useAI) {
-    console.log(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
-  } else {
-    console.log(chalk.cyan('📝 Generating commit message with rules...'));
-  }
+  // Always show AI generation message (manual mode removed)
+  console.error(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
 }
 
 /**

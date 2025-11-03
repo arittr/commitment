@@ -6,19 +6,19 @@ import { z } from 'zod';
  * Validates all CLI flags and options passed to the commitment CLI tool.
  * Maps directly to the commander program.opts() output.
  *
- * Simplified to exactly 5 flags for clarity and usability:
- * - --agent: Choose AI agent (claude or codex)
- * - --no-ai: Disable AI generation
+ * Core flags for clarity and usability:
+ * - --agent: Choose AI agent (claude, codex, or gemini)
  * - --dry-run: Generate message without committing
  * - --message-only: Output only the message
+ * - --quiet: Suppress progress messages
  * - --cwd: Working directory
  *
  * @example
  * ```typescript
  * const options = {
- *   ai: true,
  *   cwd: '/path/to/project',
- *   agent: 'claude'
+ *   agent: 'claude',
+ *   quiet: false
  * };
  *
  * const validated = validateCliOptions(options);
@@ -30,12 +30,6 @@ export const cliOptionsSchema = z.object({
    * Defaults to 'claude' if not specified
    */
   agent: z.enum(['claude', 'codex', 'gemini']).optional(),
-
-  /**
-   * Enable/disable AI generation (default: true)
-   * Negated by --no-ai flag
-   */
-  ai: z.boolean().default(true),
 
   /**
    * Working directory for git operations
@@ -51,6 +45,11 @@ export const cliOptionsSchema = z.object({
    * Output only the commit message (no commit)
    */
   messageOnly: z.boolean().optional(),
+
+  /**
+   * Suppress progress messages (useful for scripting)
+   */
+  quiet: z.boolean().default(false),
 });
 
 /**
