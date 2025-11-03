@@ -29,12 +29,12 @@ describe('CodexAgent', () => {
   });
 
   /**
-   * Helper to mock successful which + codex command
+   * Helper to mock successful command -v + codex command
    */
   const mockSuccessfulGeneration = (output: string): void => {
     mockExec
       .mockResolvedValueOnce({
-        // First call: which codex
+        // First call: command -v codex
         exitCode: 0,
         stderr: '',
         stdout: '/usr/bin/codex',
@@ -60,7 +60,7 @@ describe('CodexAgent', () => {
       );
 
       const prompt = 'Generate commit message for adding dark mode';
-      const workdir = '/test/repo';
+      const workdir = '/tmp/test-repo';
 
       const message = await agent.generate(prompt, workdir);
 
@@ -68,29 +68,20 @@ describe('CodexAgent', () => {
       expect(mockExec).toHaveBeenNthCalledWith(1, '/bin/sh', ['-c', 'command -v codex'], {
         cwd: '/tmp',
       });
-      expect(mockExec).toHaveBeenNthCalledWith(
-        2,
-        'codex',
-        [
-          'exec',
-          '--skip-git-repo-check',
-          '--output-last-message',
-          expect.stringMatching(/\/tmp\/codex-output-\d+\.txt/),
-          prompt,
-        ],
-        expect.objectContaining({
-          cwd: workdir,
-        })
-      );
+      expect(mockExec).toHaveBeenNthCalledWith(2, 'codex', ['exec', '--skip-git-repo-check'], {
+        cwd: workdir,
+        input: prompt,
+        timeout: 120000,
+      });
     });
 
     it('should clean AI artifacts from response', async () => {
-      mockSuccessfulGeneration('```\nfeat: add feature\n\nImplement new feature\n```');
+      mockSuccessfulGeneration('```\nfeat: add feature\n\nDetails here\n```');
 
-      const message = await agent.generate('test prompt', '/test/repo');
+      const message = await agent.generate('prompt', '/tmp');
 
-      // Should remove code fences
-      expect(message).toBe('feat: add feature\n\nImplement new feature');
+      // Should clean markdown code blocks (via BaseAgent.cleanResponse)
+      expect(message).toBe('feat: add feature\n\nDetails here');
     });
 
     it('should clean AI prefix artifacts from response', async () => {
@@ -98,45 +89,40 @@ describe('CodexAgent', () => {
         'Here is the commit message:\nfeat: add feature\n\nImplement new feature'
       );
 
-      const message = await agent.generate('test prompt', '/test/repo');
+      const message = await agent.generate('prompt', '/tmp');
 
       // Should remove AI prefix (handled by BaseAgent.cleanResponse)
       expect(message).toBe('feat: add feature\n\nImplement new feature');
     });
 
     it('should throw error when CLI is not found', async () => {
-      // Mock ENOENT error for which command
-      const error = new Error('Command "which" not found');
+      // Mock command -v to fail (CLI not found)
+      const error = new Error('Command "command" not found');
       mockExec.mockRejectedValue(error);
 
-      await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
-        /Command "which" not found/
-      );
+      expect(agent.generate('test prompt', '/tmp')).rejects.toThrow(/Command "command" not found/);
     });
 
     it('should throw error when response is empty', async () => {
       mockSuccessfulGeneration('');
 
-      // Empty response fails validation in BaseAgent
-      await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
 
-    it('should throw error when response is only whitespace', async () => {
-      mockSuccessfulGeneration('   \n\n   ');
+    it('should throw error when response is whitespace only', async () => {
+      mockSuccessfulGeneration('   \n\n  ');
 
-      // Whitespace-only response fails validation in BaseAgent
-      await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
 
     it('should throw error when response is malformed', async () => {
-      mockSuccessfulGeneration('This is not a conventional commit message at all');
+      mockSuccessfulGeneration('Not a valid commit message format');
 
-      // Malformed response fails validation in BaseAgent
-      await expect(agent.generate('test prompt', '/test/repo')).rejects.toThrow(
+      expect(agent.generate('prompt', '/tmp')).rejects.toThrow(
         /Invalid conventional commit format/
       );
     });
@@ -144,39 +130,49 @@ describe('CodexAgent', () => {
     it('should accept valid conventional commit types', async () => {
       const validTypes = [
         'feat: add feature',
-        'fix: resolve bug',
-        'docs: update readme',
+        'fix: fix bug',
+        'docs: update docs',
         'style: format code',
-        'refactor: restructure module',
-        'test: add tests',
-        'chore: update dependencies',
+        'refactor: refactor code',
         'perf: improve performance',
+        'test: add tests',
+        'chore: update tooling',
+        'build: update build',
+        'ci: update ci',
       ];
 
-      for (const commitMessage of validTypes) {
-        mockSuccessfulGeneration(commitMessage);
+      for (const message of validTypes) {
+        mockSuccessfulGeneration(message);
 
-        const message = await agent.generate('test prompt', '/test/repo');
-        expect(message).toBe(commitMessage);
+        const result = await agent.generate('prompt', '/tmp');
+        expect(result).toBe(message);
       }
     });
 
-    it('should accept commit messages with scope', async () => {
-      mockSuccessfulGeneration('feat(auth): add OAuth support');
+    it('should clean multiple types of AI artifacts', async () => {
+      mockSuccessfulGeneration('```typescript\nfeat: add feature\n```');
 
-      const message = await agent.generate('test prompt', '/test/repo');
-      expect(message).toBe('feat(auth): add OAuth support');
+      const message = await agent.generate('prompt', '/tmp');
+      expect(message).toBe('feat: add feature');
     });
 
     it('should clean COMMIT_MESSAGE markers from response', async () => {
       mockSuccessfulGeneration(`<<<COMMIT_MESSAGE_START>>>
-feat: add feature
+feat: add codex integration
 
-- Implement new functionality
+- Add CodexAgent implementation
+- Update CLI to support codex agent
 <<<COMMIT_MESSAGE_END>>>`);
 
-      const message = await agent.generate('test prompt', '/test/repo');
-      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+      const message = await agent.generate('prompt', '/tmp');
+
+      // Should clean markers via BaseAgent.cleanResponse
+      expect(message).toBe(
+        `feat: add codex integration
+
+- Add CodexAgent implementation
+- Update CLI to support codex agent`
+      );
     });
 
     it('should clean COMMIT_MESSAGE markers with extra whitespace', async () => {
@@ -189,8 +185,12 @@ feat: add feature
 <<<COMMIT_MESSAGE_END>>>
 `);
 
-      const message = await agent.generate('test prompt', '/test/repo');
-      expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+      const message = await agent.generate('prompt', '/tmp');
+
+      // Should clean markers and trim whitespace
+      expect(message).toBe(`feat: add feature
+
+- Implement new functionality`);
     });
 
     it('should clean Codex activity logs from response', async () => {
@@ -202,7 +202,7 @@ feat: add feature
 
 - Implement new functionality`);
 
-      const message = await agent.generate('test prompt', '/test/repo');
+      const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
 
@@ -217,8 +217,24 @@ feat: add feature
 
 - Implement new functionality`);
 
-      const message = await agent.generate('test prompt', '/test/repo');
+      const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
+    });
+
+    it('should handle codex-specific timeout of 120 seconds', async () => {
+      mockSuccessfulGeneration('feat: add feature');
+
+      await agent.generate('prompt', '/tmp');
+
+      // Verify timeout is set to 120 seconds (120000 ms)
+      expect(mockExec).toHaveBeenNthCalledWith(
+        2,
+        'codex',
+        ['exec', '--skip-git-repo-check'],
+        expect.objectContaining({
+          timeout: 120000,
+        })
+      );
     });
   });
 });
