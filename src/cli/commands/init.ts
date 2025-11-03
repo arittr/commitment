@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 
 import type { AgentName } from '../../agents/types';
+import type { Logger } from '../../utils/logger';
 import { exec } from '../../utils/shell';
 
 type HookManager = 'husky' | 'simple-git-hooks' | 'lefthook' | 'plain';
@@ -122,7 +123,11 @@ async function detectHookManager(cwd: string): Promise<HookManager | null> {
 /**
  * Install husky hook
  */
-async function installHuskyHook(cwd: string, agent?: AgentName): Promise<void> {
+async function installHuskyHook(
+  cwd: string,
+  agent: AgentName | undefined,
+  logger: Logger
+): Promise<void> {
   const huskyDir = path.join(cwd, '.husky');
   const hookPath = path.join(huskyDir, 'prepare-commit-msg');
 
@@ -143,14 +148,18 @@ async function installHuskyHook(cwd: string, agent?: AgentName): Promise<void> {
     await fs.chmod(hookPath, 0o755);
   }
 
-  console.log(chalk.green('✅ Installed prepare-commit-msg hook with husky'));
-  console.log(chalk.gray(`   Location: ${hookPath}`));
+  logger.info(chalk.green('✅ Installed prepare-commit-msg hook with husky'));
+  logger.info(chalk.gray(`   Location: ${hookPath}`));
 }
 
 /**
  * Install simple-git-hooks configuration
  */
-async function installSimpleGitHooks(cwd: string, agent?: AgentName): Promise<void> {
+async function installSimpleGitHooks(
+  cwd: string,
+  agent: AgentName | undefined,
+  logger: Logger
+): Promise<void> {
   const packageJsonPath = path.join(cwd, 'package.json');
 
   try {
@@ -182,10 +191,10 @@ async function installSimpleGitHooks(cwd: string, agent?: AgentName): Promise<vo
     // Write updated package.json
     await fs.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
 
-    console.log(chalk.green('✅ Configured simple-git-hooks in package.json'));
-    console.log(chalk.yellow('\n⚠️  Run the following to activate hooks:'));
-    console.log(chalk.cyan('   npm install'));
-    console.log(chalk.cyan('   npm run prepare'));
+    logger.info(chalk.green('✅ Configured simple-git-hooks in package.json'));
+    logger.warn('\n⚠️  Run the following to activate hooks:');
+    logger.info(chalk.cyan('   npm install'));
+    logger.info(chalk.cyan('   npm run prepare'));
   } catch (error) {
     throw new Error(
       `Failed to configure simple-git-hooks: ${error instanceof Error ? error.message : String(error)}`
@@ -196,7 +205,11 @@ async function installSimpleGitHooks(cwd: string, agent?: AgentName): Promise<vo
 /**
  * Install plain git hook
  */
-async function installPlainGitHook(cwd: string, agent?: AgentName): Promise<void> {
+async function installPlainGitHook(
+  cwd: string,
+  agent: AgentName | undefined,
+  logger: Logger
+): Promise<void> {
   // Find .git directory
   let gitDir = path.join(cwd, '.git');
 
@@ -235,14 +248,18 @@ async function installPlainGitHook(cwd: string, agent?: AgentName): Promise<void
     await fs.chmod(hookPath, 0o755);
   }
 
-  console.log(chalk.green('✅ Installed prepare-commit-msg hook'));
-  console.log(chalk.gray(`   Location: ${hookPath}`));
+  logger.info(chalk.green('✅ Installed prepare-commit-msg hook'));
+  logger.info(chalk.gray(`   Location: ${hookPath}`));
 }
 
 /**
  * Install lefthook configuration
  */
-async function installLefthookConfig(cwd: string, agent?: AgentName): Promise<void> {
+async function installLefthookConfig(
+  cwd: string,
+  agent: AgentName | undefined,
+  logger: Logger
+): Promise<void> {
   const lefthookConfigPath = path.join(cwd, 'lefthook.yml');
 
   // Check if lefthook.yml already exists
@@ -263,33 +280,33 @@ async function installLefthookConfig(cwd: string, agent?: AgentName): Promise<vo
   if (existingConfig !== '') {
     // File exists, check if it has prepare-commit-msg hook
     if (existingConfig.includes('prepare-commit-msg:')) {
-      console.log(chalk.yellow('⚠️  lefthook.yml already has prepare-commit-msg hook'));
-      console.log(chalk.gray('   Skipping configuration'));
+      logger.warn('⚠️  lefthook.yml already has prepare-commit-msg hook');
+      logger.info(chalk.gray('   Skipping configuration'));
       return;
     }
 
     // Append to existing config
     const updatedConfig = `${existingConfig.trimEnd()}\n\n${prepareCommitMsgConfig}`;
     await fs.writeFile(lefthookConfigPath, updatedConfig, 'utf8');
-    console.log(chalk.green('✅ Added commitment hook to existing lefthook.yml'));
+    logger.info(chalk.green('✅ Added commitment hook to existing lefthook.yml'));
   } else {
     // Create new file
     const newConfig = `# Lefthook configuration for commitment\n\n${prepareCommitMsgConfig}`;
     await fs.writeFile(lefthookConfigPath, newConfig, 'utf8');
-    console.log(chalk.green('✅ Created lefthook.yml with commitment hook'));
+    logger.info(chalk.green('✅ Created lefthook.yml with commitment hook'));
   }
 
-  console.log(chalk.gray(`   Location: ${lefthookConfigPath}`));
-  console.log('');
-  console.log(chalk.yellow('⚠️  Run the following to activate hooks:'));
-  console.log(chalk.cyan('   npx lefthook install'));
-  console.log(chalk.gray('   (or add "prepare": "lefthook install" to package.json scripts)'));
+  logger.info(chalk.gray(`   Location: ${lefthookConfigPath}`));
+  logger.info('');
+  logger.warn('⚠️  Run the following to activate hooks:');
+  logger.info(chalk.cyan('   npx lefthook install'));
+  logger.info(chalk.gray('   (or add "prepare": "lefthook install" to package.json scripts)'));
 }
 
 /**
  * Initialize commitment hooks
  */
-export async function initCommand(options: InitOptions): Promise<void> {
+export async function initCommand(options: InitOptions, logger: Logger): Promise<void> {
   const { hookManager: specifiedManager, cwd } = options;
 
   try {
@@ -297,8 +314,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
     try {
       await exec('git', ['rev-parse', '--git-dir'], { cwd });
     } catch {
-      console.error(chalk.red('❌ Not a git repository'));
-      console.log(chalk.gray('   Run `git init` first'));
+      logger.error('❌ Not a git repository');
+      logger.info(chalk.gray('   Run `git init` first'));
       process.exit(1);
     }
 
@@ -312,52 +329,53 @@ export async function initCommand(options: InitOptions): Promise<void> {
       const detected = await detectHookManager(cwd);
       if (detected !== null) {
         hookManager = detected;
-        console.log(chalk.cyan(`🔍 Detected ${detected} hook manager`));
+        logger.info(chalk.cyan(`🔍 Detected ${detected} hook manager`));
       } else {
         // Default to plain git hooks if nothing detected
         hookManager = 'plain';
-        console.log(chalk.cyan('📝 No hook manager detected, using plain git hooks'));
+        logger.info(chalk.cyan('📝 No hook manager detected, using plain git hooks'));
       }
     }
 
-    console.log('');
+    logger.info('');
 
     // Install appropriate hook
     switch (hookManager) {
       case 'lefthook': {
-        await installLefthookConfig(cwd, options.agent);
+        await installLefthookConfig(cwd, options.agent, logger);
         break;
       }
       case 'husky': {
-        await installHuskyHook(cwd, options.agent);
+        await installHuskyHook(cwd, options.agent, logger);
         break;
       }
       case 'simple-git-hooks': {
-        await installSimpleGitHooks(cwd, options.agent);
+        await installSimpleGitHooks(cwd, options.agent, logger);
         break;
       }
       case 'plain': {
-        await installPlainGitHook(cwd, options.agent);
+        await installPlainGitHook(cwd, options.agent, logger);
         break;
       }
     }
 
     // Print next steps
-    console.log('');
-    console.log(chalk.green('🎉 Setup complete!'));
+    logger.info('');
+    logger.info(chalk.green('🎉 Setup complete!'));
     if (options.agent !== undefined) {
-      console.log(chalk.cyan(`   Default agent: ${options.agent}`));
+      logger.info(chalk.cyan(`   Default agent: ${options.agent}`));
     }
-    console.log('');
-    console.log(chalk.cyan('Next steps:'));
-    console.log(chalk.white('  1. Stage your changes: ') + chalk.gray('git add .'));
-    console.log(chalk.white('  2. Create a commit:    ') + chalk.gray('git commit'));
-    console.log('');
-    console.log(chalk.gray('The commit message will be generated automatically!'));
+    logger.info('');
+    logger.info(chalk.cyan('Next steps:'));
+    logger.info(chalk.white('  1. Stage your changes: ') + chalk.gray('git add .'));
+    logger.info(chalk.white('  2. Create a commit:    ') + chalk.gray('git commit'));
+    logger.info('');
+    logger.info(chalk.gray('The commit message will be generated automatically!'));
   } catch (error) {
-    console.error(
-      chalk.red('❌ Failed to initialize hooks:'),
-      error instanceof Error ? error.message : String(error)
+    logger.error(
+      chalk.red('❌ Failed to initialize hooks:') +
+        ' ' +
+        (error instanceof Error ? error.message : String(error))
     );
     process.exit(1);
   }
