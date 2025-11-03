@@ -1,11 +1,18 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { beforeAll, describe, expect, it, mock } from 'bun:test';
 
-// CRITICAL: Clean up any mocks from agent unit tests that run before this file
-// The agent unit tests use mock.module() which persists globally.
-// We must restore mocks BEFORE importing the shell module to ensure we get the real implementation.
-mock.restore();
+// Don't import exec at module level - we'll do it dynamically after clearing mocks
+let exec: any;
 
-import { exec } from '../shell';
+beforeAll(async () => {
+  // Force clear all mocks before this test suite
+  mock.restore();
+
+  // Dynamically import the shell module AFTER clearing mocks with cache busting
+  // Add timestamp to force fresh import and bypass Bun's module cache
+  const cacheBuster = `?t=${Date.now()}`;
+  const shellModule = await import(`../shell.js${cacheBuster}`);
+  exec = shellModule.exec;
+});
 
 /**
  * Integration tests for shell execution adapter
