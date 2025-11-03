@@ -34,7 +34,7 @@ export class CodexAgent extends BaseAgent {
    * Execute Codex CLI command to generate commit message
    *
    * Overrides BaseAgent.executeCommand() to implement Codex-specific CLI invocation.
-   * Uses temp file for output and handles file I/O with fallback to stdout.
+   * Uses stdin to pass the prompt directly to the Codex CLI.
    *
    * @param prompt - The prompt to send to Codex
    * @param workdir - Working directory for command execution
@@ -42,64 +42,15 @@ export class CodexAgent extends BaseAgent {
    * @throws {Error} If command execution fails
    */
   protected async executeCommand(prompt: string, workdir: string): Promise<string> {
-    const tmpFile = `/tmp/codex-output-${Date.now()}.txt`;
+    // Execute Codex CLI with stdin for prompt
+    // --skip-git-repo-check allows running in non-git directories (needed for eval system using /tmp)
+    const result = await exec('codex', ['exec', '--skip-git-repo-check'], {
+      cwd: workdir,
+      input: prompt,
+      timeout: 120_000, // 2 minutes
+    });
 
-    try {
-      // Execute Codex CLI in non-interactive mode
-      // --skip-git-repo-check allows running in non-git directories (needed for eval system using /tmp)
-      const result = await exec(
-        'codex',
-        ['exec', '--skip-git-repo-check', '--output-last-message', tmpFile, prompt],
-        {
-          cwd: workdir,
-          timeout: 120_000, // 2 minutes
-        }
-      );
-
-      // Read output from temp file or fallback to stdout
-      return await this._readOutput(tmpFile, result.stdout);
-    } catch (error) {
-      await this._cleanupTempFile(tmpFile);
-      throw error;
-    }
-  }
-
-  /**
-   * Read output from temp file with fallback to stdout
-   *
-   * @param tmpFile - Path to temporary output file
-   * @param fallbackOutput - Fallback output (stdout) if file doesn't exist
-   * @returns Output content
-   */
-  private async _readOutput(tmpFile: string, fallbackOutput: string): Promise<string> {
-    try {
-      const { readFileSync, unlinkSync, existsSync } = await import('node:fs');
-      if (existsSync(tmpFile)) {
-        const output = readFileSync(tmpFile, 'utf8');
-        unlinkSync(tmpFile);
-        return output;
-      }
-      return fallbackOutput;
-    } catch {
-      // If file operations fail, use stdout (for mocked tests)
-      return fallbackOutput;
-    }
-  }
-
-  /**
-   * Clean up temporary file (best effort)
-   *
-   * @param tmpFile - Path to temporary file
-   */
-  private async _cleanupTempFile(tmpFile: string): Promise<void> {
-    try {
-      const { unlinkSync, existsSync } = await import('node:fs');
-      if (existsSync(tmpFile)) {
-        unlinkSync(tmpFile);
-      }
-    } catch {
-      // Ignore cleanup errors
-    }
+    return result.stdout;
   }
 
   /**
