@@ -8,6 +8,7 @@
 import { describe, expect, it, mock } from 'bun:test';
 
 import type { CommitMessageGenerator } from '../../../generator.js';
+import { SilentLogger } from '../../../utils/logger.js';
 import type { SingleAttemptEvaluator } from '../../evaluators/single-attempt.js';
 import type { CLIReporter } from '../../reporters/cli-reporter.js';
 import { AttemptRunner } from '../attempt-runner.js';
@@ -47,7 +48,12 @@ describe('AttemptRunner', () => {
       // Generator factory that returns our mock
       const generatorFactory = () => mockGenerator;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
+      const runner = new AttemptRunner(
+        mockEvaluator,
+        mockReporter,
+        generatorFactory,
+        new SilentLogger()
+      );
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -110,7 +116,12 @@ describe('AttemptRunner', () => {
 
       const generatorFactory = () => mockGenerator;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
+      const runner = new AttemptRunner(
+        mockEvaluator,
+        mockReporter,
+        generatorFactory,
+        new SilentLogger()
+      );
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -185,7 +196,12 @@ describe('AttemptRunner', () => {
 
       const generatorFactory = () => mockGenerator;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
+      const runner = new AttemptRunner(
+        mockEvaluator,
+        mockReporter,
+        generatorFactory,
+        new SilentLogger()
+      );
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -320,7 +336,12 @@ describe('AttemptRunner', () => {
 
       const generatorFactory = () => mockGenerator;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
+      const runner = new AttemptRunner(
+        mockEvaluator,
+        mockReporter,
+        generatorFactory,
+        new SilentLogger()
+      );
 
       const fixture = {
         diff: 'diff --git a/file.ts...',
@@ -390,7 +411,12 @@ describe('AttemptRunner', () => {
 
       const generatorFactory = () => mockGenerator;
 
-      const runner = new AttemptRunner(mockEvaluator, mockReporter, generatorFactory);
+      const runner = new AttemptRunner(
+        mockEvaluator,
+        mockReporter,
+        generatorFactory,
+        new SilentLogger()
+      );
 
       const fixture = {
         diff: 'diff --git a/src/file.ts...',

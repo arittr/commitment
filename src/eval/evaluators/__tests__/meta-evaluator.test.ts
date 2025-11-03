@@ -9,6 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { SilentLogger } from '../../../utils/logger.js';
 import type { AttemptOutcome } from '../../core/types.js';
 import { MetaEvaluator } from '../meta-evaluator.js';
 
@@ -18,6 +19,8 @@ const mockEvaluate = mock();
 mock.module('../chatgpt-agent.js', () => ({
   // biome-ignore lint/style/useNamingConvention: Mock needs to match exported class name
   ChatGPTAgent: class MockChatGPTAgent {
+    // biome-ignore lint/complexity/noUselessConstructor: Mock needs constructor for logger parameter
+    constructor(_logger: any) {} // Accept logger parameter
     evaluate = mockEvaluate;
   },
 }));
@@ -28,7 +31,7 @@ describe('MetaEvaluator', () => {
   });
   describe('evaluate() - 3/3 success', () => {
     it('should evaluate all 3 successful attempts', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -73,7 +76,7 @@ describe('MetaEvaluator', () => {
     });
 
     it('should have high consistency for similar scores', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -118,7 +121,7 @@ describe('MetaEvaluator', () => {
 
   describe('evaluate() - 2/3 success', () => {
     it('should penalize failures in finalScore', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -164,7 +167,7 @@ describe('MetaEvaluator', () => {
     });
 
     it('should identify best attempt among successes', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -208,7 +211,7 @@ describe('MetaEvaluator', () => {
 
   describe('evaluate() - 1/3 success', () => {
     it('should heavily penalize 2 failures', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -251,7 +254,7 @@ describe('MetaEvaluator', () => {
     });
 
     it('should set consistency to 0 with only 1 success', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -294,7 +297,7 @@ describe('MetaEvaluator', () => {
 
   describe('evaluate() - 0/3 success', () => {
     it('should provide reasoning even with all failures', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -338,7 +341,7 @@ describe('MetaEvaluator', () => {
     });
 
     it('should set bestAttempt to undefined', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -380,7 +383,7 @@ describe('MetaEvaluator', () => {
 
   describe('validate inputs', () => {
     it('should throw on invalid attempt count', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -405,7 +408,7 @@ describe('MetaEvaluator', () => {
     });
 
     it('should handle ChatGPT API errors', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
@@ -441,7 +444,7 @@ describe('MetaEvaluator', () => {
 
   describe('build comprehensive prompt', () => {
     it('should include all attempts in prompt', async () => {
-      const evaluator = new MetaEvaluator();
+      const evaluator = new MetaEvaluator(new SilentLogger());
       const attempts: AttemptOutcome[] = [
         {
           attemptNumber: 1,
