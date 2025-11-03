@@ -9,6 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { SilentLogger } from '../../../utils/logger.js';
 import { SingleAttemptEvaluator } from '../single-attempt.js';
 
 // Mock ChatGPTAgent
@@ -17,6 +18,8 @@ const mockEvaluate = mock();
 mock.module('../chatgpt-agent.js', () => ({
   // biome-ignore lint/style/useNamingConvention: Mock needs to match exported class name
   ChatGPTAgent: class MockChatGPTAgent {
+    // biome-ignore lint/complexity/noUselessConstructor: Mock needs constructor for logger parameter
+    constructor(_logger: any) {} // Accept logger parameter
     evaluate = mockEvaluate;
   },
 }));
@@ -27,7 +30,7 @@ describe('SingleAttemptEvaluator', () => {
   });
   describe('evaluate()', () => {
     it('should evaluate commit message with 4 metrics', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
       const mockMetrics = {
         clarity: 9,
         conventionalFormat: 10,
@@ -47,7 +50,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should calculate overall score as average of metrics', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
       const mockMetrics = {
         clarity: 8,
         conventionalFormat: 9,
@@ -64,7 +67,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should pass commit message to ChatGPT', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
       const commitMessage = 'feat(api): add user endpoint';
 
       mockEvaluate.mockResolvedValue({
@@ -83,7 +86,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should include diff in evaluation context', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
       const diff = 'diff --git a/src/api.ts b/src/api.ts\n+new code';
 
       mockEvaluate.mockResolvedValue({
@@ -102,7 +105,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should include fixture name in context', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
       const fixtureName = 'complex-refactoring';
 
       mockEvaluate.mockResolvedValue({
@@ -121,7 +124,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should validate metrics are in 0-10 range', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
 
       // Simulate ChatGPT returning invalid metrics that fail schema validation
       mockEvaluate.mockRejectedValue(
@@ -132,7 +135,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should handle ChatGPT evaluation errors', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
 
       mockEvaluate.mockRejectedValue(new Error('API timeout'));
 
@@ -140,7 +143,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should handle edge case: all metrics are 10', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
 
       mockEvaluate.mockResolvedValue({
         clarity: 10,
@@ -155,7 +158,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should handle edge case: all metrics are 0', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
 
       mockEvaluate.mockResolvedValue({
         clarity: 0,
@@ -170,7 +173,7 @@ describe('SingleAttemptEvaluator', () => {
     });
 
     it('should round overall score to 1 decimal place', async () => {
-      const evaluator = new SingleAttemptEvaluator();
+      const evaluator = new SingleAttemptEvaluator(new SilentLogger());
 
       mockEvaluate.mockResolvedValue({
         clarity: 7,

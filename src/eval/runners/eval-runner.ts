@@ -33,6 +33,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { AgentName } from '../../agents/types.js';
+import type { Logger } from '../../utils/logger.js';
 import { EvaluationError } from '../core/errors.js';
 import type { AttemptOutcome, EvalComparison, EvalResult } from '../core/types.js';
 import { isSuccessOutcome } from '../core/types.js';
@@ -54,13 +55,18 @@ export class EvalRunner {
    * @param metaEvaluator - Meta-evaluator for analyzing 3 attempts
    * @param jsonReporter - JSON reporter for storing results
    * @param markdownReporter - Markdown reporter for human-readable reports
+   * @param _logger - Logger for progress messages (reserved for future use)
    */
   constructor(
     private readonly attemptRunner: AttemptRunner,
     private readonly metaEvaluator: MetaEvaluator,
     private readonly jsonReporter: JSONReporter,
-    private readonly markdownReporter: MarkdownReporter
-  ) {}
+    private readonly markdownReporter: MarkdownReporter,
+    _logger: Logger
+  ) {
+    // Logger reserved for future use
+    void _logger;
+  }
 
   /**
    * Run complete evaluation pipeline
