@@ -16,3 +16,4 @@ prepare-commit-msg:
     - rebase
   jobs:
     - run: ./dist/cli.js --message-only > {1}
+      interactive: true
