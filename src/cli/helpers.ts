@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-
 import { type GitStatus, parseGitStatus } from '../utils/git-schemas';
+import type { Logger } from '../utils/logger';
 import { exec } from '../utils/shell';
 
 /**
@@ -54,8 +54,13 @@ export async function createCommit(message: string, cwd: string): Promise<void> 
  *
  * @param gitStatus - Git status with staged files
  * @param messageOnly - If true, write to stderr instead of stdout (for hooks)
+ * @param logger - Logger instance for output
  */
-export function displayStagedChanges(gitStatus: GitStatus, messageOnly: boolean): void {
+export function displayStagedChanges(
+  gitStatus: GitStatus,
+  messageOnly: boolean,
+  logger: Logger
+): void {
   if (messageOnly) {
     // In message-only mode, write to stderr so it appears in terminal while stdout goes to commit file
     console.error(chalk.cyan('📝 Staged changes:'));
@@ -68,29 +73,25 @@ export function displayStagedChanges(gitStatus: GitStatus, messageOnly: boolean)
     return;
   }
 
-  console.log(chalk.cyan('📝 Staged changes:'));
+  logger.info(chalk.cyan('📝 Staged changes:'));
   for (const line of gitStatus.statusLines) {
     const status = line.slice(0, 2);
     const file = line.slice(3);
-    console.log(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
+    logger.info(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
   }
-  console.log('');
+  logger.info('');
 }
 
 /**
  * Display generation status to user
  *
  * @param agentName - Name of the agent being used
- * @param quiet - If true, suppress output
+ * @param logger - Logger instance for output
  */
-export function displayGenerationStatus(agentName: string, quiet: boolean): void {
-  // Suppress output if quiet mode is enabled
-  if (quiet) {
-    return;
-  }
-
+export function displayGenerationStatus(agentName: string, logger: Logger): void {
+  // Logger respects quiet mode internally
   // Always show AI generation message (manual mode removed)
-  console.error(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
+  logger.info(chalk.cyan(`🤖 Generating commit message with ${agentName}...`));
 }
 
 /**
@@ -98,21 +99,22 @@ export function displayGenerationStatus(agentName: string, quiet: boolean): void
  *
  * @param message - Commit message to display
  * @param messageOnly - If true, output only the message (for hooks)
+ * @param logger - Logger instance for output
  */
-export function displayCommitMessage(message: string, messageOnly: boolean): void {
+export function displayCommitMessage(message: string, messageOnly: boolean, logger: Logger): void {
   if (messageOnly) {
-    // Just output the message for hooks
+    // Just output the message for hooks - use console.log directly (critical stdout output)
     console.log(message);
     return;
   }
 
-  console.log(chalk.green('✅ Generated commit message'));
-  console.log(chalk.green('\n💬 Commit message:'));
+  logger.info(chalk.green('✅ Generated commit message'));
+  logger.info(chalk.green('\n💬 Commit message:'));
   const lines = message.split('\n');
   for (const line of lines) {
-    console.log(chalk.white(`   ${line}`));
+    logger.info(chalk.white(`   ${line}`));
   }
-  console.log('');
+  logger.info('');
 }
 
 /**
@@ -122,22 +124,24 @@ export function displayCommitMessage(message: string, messageOnly: boolean): voi
  * @param cwd - Working directory
  * @param dryRun - If true, don't create commit
  * @param messageOnly - If true, skip commit creation
+ * @param logger - Logger instance for output
  */
 export async function executeCommit(
   message: string,
   cwd: string,
   dryRun: boolean,
-  messageOnly: boolean
+  messageOnly: boolean,
+  logger: Logger
 ): Promise<void> {
   if (messageOnly) {
     return;
   }
 
   if (dryRun) {
-    console.log(chalk.blue('🚀 DRY RUN - No commit created'));
-    console.log(chalk.gray('   Remove --dry-run to create the commit'));
+    logger.info(chalk.blue('🚀 DRY RUN - No commit created'));
+    logger.info(chalk.gray('   Remove --dry-run to create the commit'));
   } else {
     await createCommit(message, cwd);
-    console.log(chalk.green('✅ Commit created successfully'));
+    logger.info(chalk.green('✅ Commit created successfully'));
   }
 }
