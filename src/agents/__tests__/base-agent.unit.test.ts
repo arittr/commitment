@@ -7,6 +7,7 @@ mock.module('../../utils/shell.js', () => ({
   exec: mockExec,
 }));
 
+import { SilentLogger } from '../../utils/logger';
 import { BaseAgent } from '../base-agent.js';
 import type { Agent } from '../types.js';
 
@@ -21,6 +22,10 @@ class TestAgent extends BaseAgent {
 
   // Track calls to verify execution order
   public callOrder: string[] = [];
+
+  constructor() {
+    super(new SilentLogger());
+  }
 
   // Make executeCommand public for testing (override access modifier)
   public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
@@ -52,6 +57,10 @@ class TestAgent extends BaseAgent {
 class CustomCleanAgent extends BaseAgent {
   readonly name = 'CustomCleanAgent';
 
+  constructor() {
+    super(new SilentLogger());
+  }
+
   // Make executeCommand public for testing
   public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
     return '[CUSTOM]feat: test\n\nDescription';
@@ -70,6 +79,10 @@ class CustomCleanAgent extends BaseAgent {
  */
 class CustomValidateAgent extends BaseAgent {
   readonly name = 'CustomValidateAgent';
+
+  constructor() {
+    super(new SilentLogger());
+  }
 
   // Make executeCommand public for testing
   public async executeCommand(_prompt: string, _workdir: string): Promise<string> {
