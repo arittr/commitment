@@ -160,6 +160,16 @@
       }
     },
     {
+      "includes": ["src/utils/logger.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": [
         "src/**/__tests__/**",
         "src/**/__mocks__/**",
