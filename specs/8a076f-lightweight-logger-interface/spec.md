@@ -35,6 +35,7 @@ Need lightweight Logger interface (~50 LOC) that extends existing pattern from `
 - FR4: CLI creates logger based on `--quiet` flag (SilentLogger if quiet, ConsoleLogger otherwise)
 - FR5: Logger injected via constructors/parameters to all components (Generator, CLI helpers, Agents, Eval system)
 - FR6: Backward compatible migration path for existing `{ warn }` pattern
+- FR7: Fix hook bug: Respect user-provided commit messages (git commit -m, merge commits, etc.)
 
 ### Non-Functional Requirements
 
@@ -66,6 +67,7 @@ Need lightweight Logger interface (~50 LOC) that extends existing pattern from `
 - `src/eval/runners/attempt-runner.ts` - Accept logger in constructor
 - `src/eval/evaluators/*` - Accept logger in constructors
 - All agent implementations (claude.ts, codex.ts, gemini.ts) - Inherit logger from BaseAgent
+- `lefthook.yml` - Fix hook to check `{2}` parameter before running (prevents overwriting git commit -m messages)
 
 ### Logger Interface Design
 
@@ -119,12 +121,36 @@ BaseAgent accepts optional logger in constructor, passes to all subclass instanc
 **Eval System:**
 Runner/evaluator components accept logger in constructor.
 
+### Hook Bug Fix (FR7)
+
+**Problem**: Current lefthook.yml always runs commitment, even when user provides message via `git commit -m "message"`.
+
+**Root Cause**: Missing check for `{2}` parameter (commit source) in lefthook.yml:18
+```yaml
+# Current (buggy):
+- run: ./dist/cli.js --message-only > {1}
+```
+
+**Fix**: Add conditional check using `{2}` parameter
+```yaml
+# Fixed:
+run: '[ -z "{2}" ] && ./dist/cli.js --message-only > {1} || true'
+```
+
+**Parameter Behavior**:
+- `{2}` empty → `git commit` (should generate message) ✅
+- `{2}` = "message" → `git commit -m "..."` (should preserve message) ✅
+- `{2}` = "merge" → merge commit (should preserve message) ✅
+
+**Note**: Plain git hooks, husky, and simple-git-hooks already have correct logic. Only lefthook.yml in project root needs fixing.
+
 ### Integration Points
 
 - **CLI**: `--quiet` flag controls logger type (existing flag, new behavior)
 - **Testing**: Pass SilentLogger to suppress output in unit tests
 - **Architecture**: Follows existing logger injection pattern in Generator (@docs/constitutions/current/architecture.md:275-285)
 - **Patterns**: Pure utility functions, dependency injection (@docs/constitutions/current/patterns.md:720)
+- **Hook Fix**: Follows pattern from architecture.md:Hook Preservation Logic and init.ts:260
 
 ### Dependencies
 
@@ -153,6 +179,7 @@ Runner/evaluator components accept logger in constructor.
 - [ ] Eval system uses logger
 - [ ] All direct console.* calls replaced in library code
 - [ ] CLI files keep console.* for critical output (stdout commit messages)
+- [ ] lefthook.yml fixed to check `{2}` parameter before running commitment
 
 **Verification:**
 - [ ] All tests pass with SilentLogger
@@ -160,6 +187,9 @@ Runner/evaluator components accept logger in constructor.
 - [ ] Linting passes (no eslint-disable needed for library code)
 - [ ] No breaking changes to public API
 - [ ] Implementation ≤50 LOC
+- [ ] `git commit` generates message (hook runs)
+- [ ] `git commit -m "test"` preserves message (hook skips)
+- [ ] Merge commits preserve messages (hook skips)
 
 ## Migration Strategy
 
@@ -172,10 +202,16 @@ Runner/evaluator components accept logger in constructor.
 - Final status messages
 - Progress/informational output uses logger (respects --quiet)
 
+**Hook Fix:**
+- Update lefthook.yml prepare-commit-msg to check `{2}` parameter
+- Change from `run: ./dist/cli.js --message-only > {1}`
+- To: `run: '[ -z "{2}" ] && ./dist/cli.js --message-only > {1} || true'`
+
 **Backward Compatibility:**
 - Generator config type changes from `{ warn }` to `Logger`
 - Existing code calling `logger.warn()` continues to work
 - Tests can gradually adopt SilentLogger
+- Hook fix is non-breaking (only improves behavior)
 
 ## Open Questions
 
