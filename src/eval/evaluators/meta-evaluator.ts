@@ -28,6 +28,7 @@
  * ```
  */
 
+import type { Logger } from '../../utils/logger.js';
 import { EvaluationError } from '../core/errors.js';
 import { metaEvaluationOutputSchema } from '../core/schemas.js';
 import type { AttemptOutcome, EvalResult } from '../core/types.js';
@@ -44,9 +45,11 @@ export class MetaEvaluator {
 
   /**
    * Create a new meta-evaluator
+   *
+   * @param logger - Logger for progress messages (reserved for future use)
    */
-  constructor() {
-    this.chatgpt = new ChatGPTAgent();
+  constructor(logger: Logger) {
+    this.chatgpt = new ChatGPTAgent(logger);
   }
 
   /**
