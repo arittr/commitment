@@ -11,7 +11,8 @@ import {
 } from './types/schemas';
 import type { GitProvider } from './utils/git-provider';
 import { RealGitProvider } from './utils/git-provider';
-import { hasContent, isDefined, isString } from './utils/guards';
+import { hasContent, isString } from './utils/guards';
+import type { Logger } from './utils/logger';
 
 /**
  * Minimal task interface for commit message generation
@@ -31,10 +32,8 @@ export type CommitMessageGeneratorConfig = {
   agent?: AgentName;
   /** Custom git provider (default: RealGitProvider) */
   gitProvider?: GitProvider;
-  /** Custom logger function */
-  logger?: {
-    warn: (message: string) => void;
-  };
+  /** Custom logger for debugging and diagnostics */
+  logger?: Logger;
   /** Custom signature to append to commits */
   signature?: string;
 };
@@ -74,9 +73,12 @@ export type CommitMessageOptions = {
  * ```
  */
 export class CommitMessageGenerator {
-  private readonly config: Required<Omit<CommitMessageGeneratorConfig, 'agent' | 'gitProvider'>>;
+  private readonly config: Required<
+    Omit<CommitMessageGeneratorConfig, 'agent' | 'gitProvider' | 'logger'>
+  >;
   private readonly agent: Agent;
   private readonly gitProvider: GitProvider;
+  private readonly logger?: Logger;
 
   constructor(config: CommitMessageGeneratorConfig = {}) {
     // Validate configuration at construction boundary
@@ -94,16 +96,19 @@ export class CommitMessageGenerator {
         suggestedAction: `Please provide valid configuration with:
   - agent: 'claude' | 'codex' | 'gemini' (optional, default: 'claude')
   - signature: string (optional)
-  - logger: { warn: (msg: string) => void } (optional)`,
+  - logger: Logger (optional)`,
       });
     }
 
     // Use validated config (now fully type-safe)
     const validatedConfig = validationResult.data;
 
-    // Instantiate agent using factory (defaults to Claude)
+    // Store logger for internal use
+    this.logger = validatedConfig.logger;
+
+    // Instantiate agent using factory (defaults to Claude) and pass logger
     const agentName = validatedConfig.agent ?? 'claude';
-    this.agent = createAgent(agentName);
+    this.agent = createAgent(agentName, this.logger);
 
     // Generate default signature based on the agent being used
     const defaultSignature = match<AgentName, string>(agentName)
@@ -113,10 +118,6 @@ export class CommitMessageGenerator {
       .exhaustive();
 
     this.config = {
-      logger:
-        isDefined(validatedConfig.logger) && validatedConfig.logger.warn
-          ? { warn: validatedConfig.logger.warn as (message: string) => void }
-          : { warn: () => {} },
       signature: validatedConfig.signature ?? defaultSignature,
     };
 

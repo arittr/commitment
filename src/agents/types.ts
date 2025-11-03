@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Logger } from '../utils/logger';
 
 /**
  * Core Agent interface for AI-powered commit message generation
@@ -48,6 +49,11 @@ export type Agent = {
    * ```
    */
   generate(prompt: string, workdir: string): Promise<string>;
+
+  /**
+   * Optional logger for debugging and diagnostics
+   */
+  logger?: Logger;
 
   /**
    * Human-readable name of the agent (e.g., "Claude CLI", "Codex CLI")
