@@ -216,7 +216,6 @@ export class AttemptRunner {
 
     return new CommitMessageGenerator({
       agent: agentName,
-      enableAI: true,
       gitProvider: mockGit,
     });
   }

@@ -11,7 +11,6 @@ import {
 } from './types/schemas';
 import type { GitProvider } from './utils/git-provider';
 import { RealGitProvider } from './utils/git-provider';
-import { categorizeFiles } from './utils/git-schemas';
 import { hasContent, isDefined, isString } from './utils/guards';
 
 /**
@@ -30,8 +29,6 @@ export type CommitTask = {
 export type CommitMessageGeneratorConfig = {
   /** AI agent to use ('claude' | 'codex' | 'gemini', default: 'claude') */
   agent?: AgentName;
-  /** Enable/disable AI generation (default: true) */
-  enableAI?: boolean;
   /** Custom git provider (default: RealGitProvider) */
   gitProvider?: GitProvider;
   /** Custom logger function */
@@ -95,8 +92,7 @@ export class CommitMessageGenerator {
       throw new GeneratorError('Invalid CommitMessageGenerator configuration', {
         context: { validationErrors: errorMessages },
         suggestedAction: `Please provide valid configuration with:
-  - agent: 'claude' | 'codex' (optional, default: 'claude')
-  - enableAI: boolean (optional, default: true)
+  - agent: 'claude' | 'codex' | 'gemini' (optional, default: 'claude')
   - signature: string (optional)
   - logger: { warn: (msg: string) => void } (optional)`,
       });
@@ -117,10 +113,10 @@ export class CommitMessageGenerator {
       .exhaustive();
 
     this.config = {
-      enableAI: validatedConfig.enableAI ?? true,
-      logger: isDefined(validatedConfig.logger)
-        ? { warn: validatedConfig.logger.warn as (message: string) => void }
-        : { warn: () => {} },
+      logger:
+        isDefined(validatedConfig.logger) && validatedConfig.logger.warn
+          ? { warn: validatedConfig.logger.warn as (message: string) => void }
+          : { warn: () => {} },
       signature: validatedConfig.signature ?? defaultSignature,
     };
 
@@ -130,6 +126,9 @@ export class CommitMessageGenerator {
 
   /**
    * Generate intelligent commit message based on task and changes
+   *
+   * Always uses AI generation. Manual fallback mode has been removed.
+   * If AI generation fails, throws an error with installation instructions.
    */
   async generateCommitMessage(task: CommitTask, options: CommitMessageOptions): Promise<string> {
     // Validate task parameter
@@ -158,22 +157,22 @@ export class CommitMessageGenerator {
     const validatedTask = taskValidation.data;
     const validatedOptions = optionsValidation.data;
 
-    // Try AI-powered generation first if enabled
-    if (this.config.enableAI) {
-      const aiMessage = await this._generateAICommitMessage(validatedTask, validatedOptions);
-      if (this._isValidMessage(aiMessage)) {
-        return this._addSignature(aiMessage);
-      }
-      // If AI message is invalid, throw error instead of falling back
-      throw new GeneratorError('AI generation produced invalid commit message', {
-        context: { message: aiMessage },
-        suggestedAction: 'Check AI agent output format and conventional commit compliance',
-      });
+    // Always use AI generation (manual mode removed)
+    const aiMessage = await this._generateAICommitMessage(validatedTask, validatedOptions);
+    if (this._isValidMessage(aiMessage)) {
+      return this._addSignature(aiMessage);
     }
 
-    // Fallback to intelligent rule-based generation (only when AI is disabled)
-    const ruleBasedMessage = this._generateRuleBasedCommitMessage(validatedTask, validatedOptions);
-    return this._addSignature(ruleBasedMessage);
+    // If AI message is invalid, throw error with helpful instructions
+    throw new GeneratorError('AI generation produced invalid commit message', {
+      context: { message: aiMessage },
+      suggestedAction: `Check AI agent output format and conventional commit compliance.
+
+To install the ${this.agent.name} CLI:
+  - Claude: Visit https://claude.ai/download
+  - Codex: Visit https://github.com/openai/codex-cli
+  - Gemini: Visit https://ai.google.dev/gemini-api/docs/get-started/tutorial`,
+    });
   }
 
   /**
@@ -224,165 +223,6 @@ export class CommitMessageGenerator {
       const wrappedError = error instanceof Error ? error : new Error(String(error));
       throw GeneratorError.aiGenerationFailed(this.agent.name, wrappedError);
     }
-  }
-
-  /**
-   * Generate commit message using rule-based analysis
-   */
-  private _generateRuleBasedCommitMessage(task: CommitTask, options: CommitMessageOptions): string {
-    const files = isDefined(options.files) ? options.files : [];
-    const categories = this._categorizeFiles(files);
-    const bulletPoints = this._createBulletPoints(categories, files);
-    const { prefix, title } = this._determineCommitType(categories, task);
-
-    return this._formatCommitMessage(prefix, title, bulletPoints, task.description);
-  }
-
-  /**
-   * Create bullet points from file categories
-   */
-  private _createBulletPoints(
-    categories: ReturnType<typeof this._categorizeFiles>,
-    files: string[]
-  ): string[] {
-    const bulletPoints: string[] = [];
-
-    if (categories.components.length > 0) {
-      bulletPoints.push(
-        this._createFileBulletPoint(
-          'Add',
-          'component',
-          categories.components.length,
-          categories.components
-        )
-      );
-    }
-
-    if (categories.apis.length > 0) {
-      bulletPoints.push(
-        this._createFileBulletPoint(
-          'Implement',
-          'API endpoint',
-          categories.apis.length,
-          categories.apis
-        )
-      );
-    }
-
-    if (categories.tests.length > 0) {
-      bulletPoints.push(
-        `- Add ${categories.tests.length} test file${categories.tests.length > 1 ? 's' : ''} for comprehensive coverage`
-      );
-    }
-
-    if (categories.configs.length > 0) {
-      bulletPoints.push(
-        `- Update ${categories.configs.length} configuration file${categories.configs.length > 1 ? 's' : ''}`
-      );
-    }
-
-    if (categories.docs.length > 0) {
-      bulletPoints.push(`- Update documentation and README files`);
-    }
-
-    // Add uncategorized files summary
-    const categorizedCount =
-      categories.components.length +
-      categories.apis.length +
-      categories.tests.length +
-      categories.configs.length +
-      categories.docs.length;
-    const uncategorizedCount = files.length - categorizedCount;
-
-    if (uncategorizedCount > 0) {
-      bulletPoints.push(
-        `- Modify ${uncategorizedCount} additional file${uncategorizedCount > 1 ? 's' : ''}`
-      );
-    }
-
-    return bulletPoints;
-  }
-
-  /**
-   * Create a bullet point for a file category
-   */
-  private _createFileBulletPoint(
-    verb: string,
-    type: string,
-    count: number,
-    fileList: string[]
-  ): string {
-    const plural = count > 1 ? 's' : '';
-    const preview = fileList.slice(0, 3).join(', ');
-    const ellipsis = fileList.length > 3 ? '...' : '';
-    return `- ${verb} ${count} ${type}${plural}: ${preview}${ellipsis}`;
-  }
-
-  /**
-   * Determine commit type prefix and title based on file categories
-   */
-  private _determineCommitType(
-    categories: ReturnType<typeof this._categorizeFiles>,
-    task: CommitTask
-  ): { prefix: string; title: string } {
-    const isTestDominant =
-      categories.tests.length > categories.components.length + categories.apis.length;
-
-    if (isTestDominant) {
-      return { prefix: 'test', title: `add test coverage for ${task.title.toLowerCase()}` };
-    }
-
-    if (categories.components.length > 0) {
-      return { prefix: 'feat', title: `add ${task.title.toLowerCase()}` };
-    }
-
-    if (categories.apis.length > 0) {
-      return { prefix: 'feat', title: `implement ${task.title.toLowerCase()}` };
-    }
-
-    if (categories.docs.length > 0) {
-      return { prefix: 'docs', title: `update ${task.title.toLowerCase()}` };
-    }
-
-    if (categories.configs.length > 0) {
-      return { prefix: 'chore', title: `update ${task.title.toLowerCase()}` };
-    }
-
-    return {
-      prefix: task.produces.length > 0 ? 'feat' : 'chore',
-      title: task.title.toLowerCase(),
-    };
-  }
-
-  /**
-   * Format the final commit message
-   */
-  private _formatCommitMessage(
-    prefix: string,
-    title: string,
-    bulletPoints: string[],
-    fallbackDescription: string
-  ): string {
-    const commitTitle = `${prefix}: ${title}`;
-
-    if (bulletPoints.length > 0) {
-      return `${commitTitle}\n\n${bulletPoints.join('\n')}`;
-    }
-
-    return `${commitTitle}\n\n- ${fallbackDescription}`;
-  }
-
-  private _categorizeFiles(files: string[]): {
-    apis: string[];
-    components: string[];
-    configs: string[];
-    docs: string[];
-    tests: string[];
-    types: string[];
-  } {
-    // Use validated categorizeFiles from git-schemas
-    // This provides runtime validation and consistent categorization logic
-    return categorizeFiles(files);
   }
 
   /**

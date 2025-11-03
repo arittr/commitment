@@ -51,11 +51,11 @@ describe('Core Schemas', () => {
 
     it('should infer correct CommitMessageGeneratorConfig type', () => {
       const config: CommitMessageGeneratorConfig = {
-        enableAI: true,
+        agent: 'claude',
         signature: 'test',
       };
 
-      expect(config.enableAI).toBe(true);
+      expect(config.agent).toBe('claude');
       expect(config.signature).toBe('test');
     });
 
@@ -73,17 +73,16 @@ describe('Core Schemas', () => {
 
     it('should allow partial config with only some fields', () => {
       const config: CommitMessageGeneratorConfig = {
-        enableAI: false,
+        signature: 'Custom signature',
       };
 
-      expect(config.enableAI).toBe(false);
+      expect(config.signature).toBe('Custom signature');
       expect(config.agent).toBeUndefined();
     });
 
     it('should accept gemini as a valid agent', () => {
       const config: CommitMessageGeneratorConfig = {
         agent: 'gemini',
-        enableAI: true,
       };
 
       expect(config.agent).toBe('gemini');

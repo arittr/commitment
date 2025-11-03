@@ -44,8 +44,8 @@ describe('CLI Schemas', () => {
     it('should format multiple issue error', () => {
       const options = {
         agent: 'invalid',
-        ai: 'not-boolean',
         cwd: '',
+        quiet: 'not-boolean',
       };
 
       try {
@@ -56,7 +56,7 @@ describe('CLI Schemas', () => {
         const formatted = formatValidationError(error as ZodError);
         expect(formatted).toContain('Validation failed');
         expect(formatted).toContain('cwd');
-        expect(formatted).toContain('ai');
+        expect(formatted).toContain('quiet');
       }
     });
 
@@ -77,22 +77,23 @@ describe('CLI Schemas', () => {
   describe('Type Inference', () => {
     it('should infer correct CliOptions type', () => {
       const options: CliOptions = {
-        ai: true,
         cwd: '/path',
+        quiet: false,
       };
 
-      expect(options.ai).toBe(true);
+      expect(options.quiet).toBe(false);
       expect(options.cwd).toBe('/path');
     });
 
     it('should allow optional fields in CliOptions', () => {
       const options: CliOptions = {
         agent: 'claude',
-        ai: true,
         cwd: '/path',
+        quiet: true,
       };
 
       expect(options.agent).toBe('claude');
+      expect(options.quiet).toBe(true);
       expect(options.dryRun).toBeUndefined();
     });
 
@@ -100,8 +101,8 @@ describe('CLI Schemas', () => {
       // This test demonstrates type safety at compile time
 
       const options: CliOptions = {
-        ai: true,
         cwd: '/custom',
+        quiet: false,
       };
 
       expect(options.cwd).toBeDefined();
@@ -109,12 +110,18 @@ describe('CLI Schemas', () => {
 
     it('should only allow valid agent values', () => {
       const options: CliOptions = {
-        agent: 'claude', // Only 'claude' or 'codex' allowed
-        ai: true,
+        agent: 'claude', // 'claude', 'codex', or 'gemini' allowed
         cwd: '/path',
+        quiet: false,
       };
 
       expect(options.agent).toBe('claude');
+    });
+
+    it('should default quiet to false', () => {
+      const parsed = cliOptionsSchema.parse({ cwd: '/path' });
+
+      expect(parsed.quiet).toBe(false);
     });
   });
 });
