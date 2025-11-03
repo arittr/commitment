@@ -1,7 +1,7 @@
 {
   "description": "Example simple-git-hooks configuration for commitment",
   "devDependencies": {
-    "commitment": "^0.1.0",
+    "@arittr/commitment": "latest",
     "simple-git-hooks": "^2.11.1"
   },
   "name": "commitment-simple-git-hooks-example",

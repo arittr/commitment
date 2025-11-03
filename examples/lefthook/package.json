@@ -1,0 +1,13 @@
+{
+  "description": "Example project using commitment with lefthook",
+  "devDependencies": {
+    "@arittr/commitment": "latest",
+    "@evilmartians/lefthook": "^2.0.0"
+  },
+  "name": "commitment-lefthook-example",
+  "private": true,
+  "scripts": {
+    "prepare": "lefthook install"
+  },
+  "version": "1.0.0"
+}

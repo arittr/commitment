@@ -16,10 +16,10 @@
   "description": "AI-powered commit message generator using Claude or Codex",
   "devDependencies": {
     "@biomejs/biome": "^2.2.7",
+    "@evilmartians/lefthook": "^2.0.2",
     "@openai/agents": "^0.1.11",
     "@types/node": "^24.3.0",
     "bun-types": "latest",
-    "husky": "^9.1.7",
     "typescript": "^5.9.2"
   },
   "engines": {
@@ -43,6 +43,7 @@
     "commit-message",
     "conventional-commits",
     "precommit",
+    "lefthook",
     "husky",
     "lint-staged"
   ],
@@ -66,7 +67,7 @@
     "eval:live": "bun run src/eval/run-eval.ts --mode live",
     "lint": "bun check-types && biome check --write",
     "lint:check": "biome check",
-    "prepare": "bun run build && husky",
+    "prepare": "bun run build && lefthook install",
     "prepublishOnly": "bun run clean && bun run build",
     "test": "bun run test:unit && bun run test:integration",
     "test:coverage": "bun test --coverage",

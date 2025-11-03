@@ -1,0 +1,22 @@
+# Example lefthook configuration for commitment
+# Place this file in your project root
+
+prepare-commit-msg:
+  commands:
+    commitment:
+      # Only run for regular commits (not merge, squash, etc.)
+      # {1} is the commit message file, {2} is the commit source
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+
+# Optional: Add pre-commit hooks for linting
+# pre-commit:
+#   parallel: true
+#   commands:
+#     lint:
+#       glob: "*.{js,ts,jsx,tsx}"
+#       run: npm run lint -- --fix {staged_files}
+#       stage_fixed: true
+#     format:
+#       glob: "*.{js,ts,jsx,tsx,json,md}"
+#       run: npm run format -- {staged_files}
+#       stage_fixed: true

@@ -1,0 +1,15 @@
+# Example lefthook configuration for commitment with lint-staged
+# Place this file in your project root
+
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
+
+prepare-commit-msg:
+  commands:
+    commitment:
+      # Only run for regular commits (not merge, squash, etc.)
+      # {1} is the commit message file, {2} is the commit source
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
