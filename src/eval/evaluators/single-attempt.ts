@@ -25,6 +25,7 @@
  * ```
  */
 
+import type { Logger } from '../../utils/logger.js';
 import { attemptMetricsSchema } from '../core/schemas.js';
 import type { AttemptMetrics } from '../core/types.js';
 import { ChatGPTAgent } from './chatgpt-agent.js';
@@ -54,9 +55,11 @@ export class SingleAttemptEvaluator {
 
   /**
    * Create a new single-attempt evaluator
+   *
+   * @param logger - Logger for progress messages (reserved for future use)
    */
-  constructor() {
-    this.chatgpt = new ChatGPTAgent();
+  constructor(logger: Logger) {
+    this.chatgpt = new ChatGPTAgent(logger);
   }
 
   /**

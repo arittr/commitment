@@ -18,6 +18,7 @@ import { parseArgs } from 'node:util';
 import chalk from 'chalk';
 
 import type { AgentName } from '../agents/types.js';
+import { ConsoleLogger } from '../utils/logger.js';
 
 import { MetaEvaluator } from './evaluators/meta-evaluator.js';
 import { SingleAttemptEvaluator } from './evaluators/single-attempt.js';
@@ -69,18 +70,21 @@ console.log(chalk.gray('Results:'), RESULTS_DIR);
 console.log(chalk.gray('Attempts:'), '3 per agent per fixture');
 console.log('');
 
+// Create logger (always ConsoleLogger for eval - it's a standalone script)
+const logger = new ConsoleLogger();
+
 // Instantiate dependencies
-const singleAttemptEvaluator = new SingleAttemptEvaluator();
-const metaEvaluator = new MetaEvaluator();
+const singleAttemptEvaluator = new SingleAttemptEvaluator(logger);
+const metaEvaluator = new MetaEvaluator(logger);
 const cliReporter = new CLIReporter();
 const jsonReporter = new JSONReporter(RESULTS_DIR);
 const markdownReporter = new MarkdownReporter(RESULTS_DIR);
 
 // Create attempt runner (creates its own generator with mock git provider)
-const attemptRunner = new AttemptRunner(singleAttemptEvaluator, cliReporter);
+const attemptRunner = new AttemptRunner(singleAttemptEvaluator, cliReporter, undefined, logger);
 
 // Create eval runner with all dependencies
-const runner = new EvalRunner(attemptRunner, metaEvaluator, jsonReporter, markdownReporter);
+const runner = new EvalRunner(attemptRunner, metaEvaluator, jsonReporter, markdownReporter, logger);
 
 try {
   if (fixtureName) {

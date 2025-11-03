@@ -9,6 +9,7 @@
 
 import { describe, expect, it, mock } from 'bun:test';
 
+import { SilentLogger } from '../../../utils/logger.js';
 import type { AttemptOutcome, EvalResult } from '../../core/types.js';
 import type { MetaEvaluator } from '../../evaluators/meta-evaluator.js';
 import type { JSONReporter } from '../../reporters/json-reporter.js';
@@ -82,7 +83,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
@@ -223,7 +225,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
@@ -300,7 +303,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
@@ -378,7 +382,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
@@ -454,7 +459,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
@@ -521,7 +527,8 @@ describe('EvalRunner', () => {
         mockAttemptRunner,
         mockMetaEvaluator,
         mockJSONReporter,
-        mockMarkdownReporter
+        mockMarkdownReporter,
+        new SilentLogger()
       );
 
       const fixtures = [
