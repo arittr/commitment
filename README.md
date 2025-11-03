@@ -28,6 +28,7 @@ We all know we should write better commit messages. But we don't.
 - 🪝 **Hook integration** with husky, simple-git-hooks, or plain git hooks
 - 🌍 **Cross-platform** support for macOS, Linux, and Windows
 - 📦 **Zero config** works out of the box with sensible defaults
+- 🔕 **Quiet mode** for suppressing progress messages in scripts
 
 ## Quick Start
 
@@ -74,7 +75,7 @@ bun add -D @arittr/commitment
   - [Gemini CLI](https://geminicli.com/docs/) - Install with `npm install -g @google/gemini-cli`
 
 >[!IMPORTANT]
->commitment requires an AI CLI to function.
+>commitment is AI-only and requires an AI CLI to function. If you need commit message generation without AI, consider using a traditional commit template instead.
 
 ## Usage
 
@@ -147,7 +148,21 @@ test: update test naming conventions and mock patterns
 | `--agent <name>` | AI agent to use (`claude`, `codex`, or `gemini`) | `claude` |
 | `--dry-run` | Generate message without creating commit | `false` |
 | `--message-only` | Output only the commit message | `false` |
+| `--quiet` | Suppress progress messages (useful for scripting) | `false` |
 | `--cwd <path>` | Working directory | current directory |
+
+**Examples:**
+
+```bash
+# Use Gemini agent
+npx commitment --agent gemini
+
+# Preview message without committing
+npx commitment --dry-run
+
+# Suppress progress messages (for scripts)
+npx commitment --quiet
+```
 
 See [docs/CLI.md](./docs/CLI.md) for complete CLI reference.
 
