@@ -98,17 +98,7 @@ git commit  # Opens editor with AI-generated message
 ```json
 {
   "simple-git-hooks": {
-    "prepare-commit-msg": "npx commitment --agent codex --message-only > $1"
-  }
-}
-```
-
-### Disable AI (rule-based only)
-
-```json
-{
-  "simple-git-hooks": {
-    "prepare-commit-msg": "npx commitment --no-ai --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --agent codex --message-only > $1"
   }
 }
 ```

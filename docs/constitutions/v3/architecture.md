@@ -608,7 +608,7 @@ See `testing.md` for detailed requirements.
 ```gitattributes
 # Ensure hook files use LF line endings on all platforms
 examples/**/*.sh text eol=lf
-.husky/* text eol=lf
+lefthook.yml text eol=lf
 *.hook text eol=lf
 ```
 
@@ -618,7 +618,7 @@ examples/**/*.sh text eol=lf
 
 **Init Command Workflow:**
 1. Detect git repository
-2. Auto-detect existing hook manager (husky, simple-git-hooks)
+2. Auto-detect existing hook manager (lefthook, husky, simple-git-hooks)
 3. Install appropriate hooks based on detection or `--hook-manager` flag
 4. Configure hooks to check `$2` parameter (preserve user messages)
 

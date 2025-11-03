@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import type { AgentName } from '../../agents/types';
 import { exec } from '../../utils/shell';
 
-type HookManager = 'husky' | 'simple-git-hooks' | 'plain';
+type HookManager = 'husky' | 'simple-git-hooks' | 'lefthook' | 'plain';
 
 type InitOptions = {
   cwd: string;
@@ -58,6 +58,23 @@ fi
  */
 async function detectHookManager(cwd: string): Promise<HookManager | null> {
   try {
+    // Check for lefthook
+    const lefthookConfigFiles = [
+      'lefthook.yml',
+      '.lefthook.yml',
+      'lefthook.yaml',
+      '.lefthook.yaml',
+    ];
+    for (const configFile of lefthookConfigFiles) {
+      try {
+        const configPath = path.join(cwd, configFile);
+        await fs.access(configPath);
+        return 'lefthook';
+      } catch {
+        // Config file doesn't exist, continue checking
+      }
+    }
+
     // Check for husky
     const huskyDir = path.join(cwd, '.husky');
     try {
@@ -223,6 +240,53 @@ async function installPlainGitHook(cwd: string, agent?: AgentName): Promise<void
 }
 
 /**
+ * Install lefthook configuration
+ */
+async function installLefthookConfig(cwd: string, agent?: AgentName): Promise<void> {
+  const lefthookConfigPath = path.join(cwd, 'lefthook.yml');
+
+  // Check if lefthook.yml already exists
+  let existingConfig = '';
+  try {
+    existingConfig = await fs.readFile(lefthookConfigPath, 'utf8');
+  } catch {
+    // File doesn't exist, we'll create it
+  }
+
+  const agentFlag = agent ? ` --agent ${agent}` : '';
+  const prepareCommitMsgConfig = `prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment${agentFlag} --message-only > {1} || true'
+`;
+
+  if (existingConfig !== '') {
+    // File exists, check if it has prepare-commit-msg hook
+    if (existingConfig.includes('prepare-commit-msg:')) {
+      console.log(chalk.yellow('⚠️  lefthook.yml already has prepare-commit-msg hook'));
+      console.log(chalk.gray('   Skipping configuration'));
+      return;
+    }
+
+    // Append to existing config
+    const updatedConfig = `${existingConfig.trimEnd()}\n\n${prepareCommitMsgConfig}`;
+    await fs.writeFile(lefthookConfigPath, updatedConfig, 'utf8');
+    console.log(chalk.green('✅ Added commitment hook to existing lefthook.yml'));
+  } else {
+    // Create new file
+    const newConfig = `# Lefthook configuration for commitment\n\n${prepareCommitMsgConfig}`;
+    await fs.writeFile(lefthookConfigPath, newConfig, 'utf8');
+    console.log(chalk.green('✅ Created lefthook.yml with commitment hook'));
+  }
+
+  console.log(chalk.gray(`   Location: ${lefthookConfigPath}`));
+  console.log('');
+  console.log(chalk.yellow('⚠️  Run the following to activate hooks:'));
+  console.log(chalk.cyan('   npx lefthook install'));
+  console.log(chalk.gray('   (or add "prepare": "lefthook install" to package.json scripts)'));
+}
+
+/**
  * Initialize commitment hooks
  */
 export async function initCommand(options: InitOptions): Promise<void> {
@@ -260,6 +324,10 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
     // Install appropriate hook
     switch (hookManager) {
+      case 'lefthook': {
+        await installLefthookConfig(cwd, options.agent);
+        break;
+      }
       case 'husky': {
         await installHuskyHook(cwd, options.agent);
         break;

@@ -25,7 +25,7 @@ We all know we should write better commit messages. But we don't.
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
 - ✨ **Conventional Commits** for a standard format (feat:, fix:, docs:, etc.)
 - 🚀 **One-command setup** with `commitment init` for automatic hook installation
-- 🪝 **Hook integration** with husky, simple-git-hooks, or plain git hooks
+- 🪝 **Hook integration** with lefthook, husky, simple-git-hooks, or plain git hooks
 - 🌍 **Cross-platform** support for macOS, Linux, and Windows
 - 📦 **Zero config** works out of the box with sensible defaults
 - 🔕 **Quiet mode** for suppressing progress messages in scripts
@@ -173,8 +173,9 @@ commitment supports multiple hook managers:
 | Manager | Command | Best For |
 |---------|---------|----------|
 | **Auto-detect** | `npx commitment init` | Most projects |
+| **Lefthook** | `npx commitment init --hook-manager lefthook` | Fast, parallel execution, YAML config (recommended) |
 | **Husky** | `npx commitment init --hook-manager husky` | Teams with existing husky setup |
-| **simple-git-hooks** | `npx commitment init --hook-manager simple-git-hooks` | Lightweight alternative to husky |
+| **simple-git-hooks** | `npx commitment init --hook-manager simple-git-hooks` | Lightweight alternative |
 | **Plain Git Hooks** | `npx commitment init --hook-manager plain` | No dependencies |
 
 **Configure default agent:**
@@ -191,6 +192,9 @@ See [docs/HOOKS.md](./docs/HOOKS.md) for detailed hook integration guide.
 
 **Check installation:**
 ```bash
+# For lefthook
+cat lefthook.yml
+
 # For husky
 ls -la .husky/prepare-commit-msg
 
@@ -205,8 +209,13 @@ npx commitment init
 
 **Check permissions (Unix-like systems):**
 ```bash
+# For lefthook, run:
+npx lefthook install
+
+# For husky
 chmod +x .husky/prepare-commit-msg
-# or
+
+# For plain git hooks
 chmod +x .git/hooks/prepare-commit-msg
 ```
 

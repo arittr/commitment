@@ -6,26 +6,15 @@ This example shows how to integrate `commitment` with lint-staged for automatic 
 
 ```bash
 # Install dependencies
-npm install -D husky lint-staged commitment
-# or: yarn add -D husky lint-staged commitment
-# or: bun add -D husky lint-staged commitment
-
-# Initialize husky
-npx husky init
+npm install -D @evilmartians/lefthook lint-staged @arittr/commitment
+# or: yarn add -D @evilmartians/lefthook lint-staged @arittr/commitment
+# or: bun add -D @evilmartians/lefthook lint-staged @arittr/commitment
 
 # Set up commitment hooks (uses Claude by default)
-npx commitment init --hook-manager husky
+npx commitment init --hook-manager lefthook
 
 # Or specify a different agent
-npx commitment init --hook-manager husky --agent codex
-
-# Create pre-commit hook for lint-staged
-cat > .husky/pre-commit << 'EOF'
-#!/bin/sh
-npx lint-staged
-EOF
-
-chmod +x .husky/pre-commit
+npx commitment init --hook-manager lefthook --agent codex
 ```
 
 Add lint-staged configuration to `package.json`:
@@ -33,12 +22,27 @@ Add lint-staged configuration to `package.json`:
 ```json
 {
   "scripts": {
-    "prepare": "husky"
+    "prepare": "lefthook install"
   },
   "lint-staged": {
-    "*": ["prettier --write", "eslint --fix"]
+    "*.{js,ts,jsx,tsx}": ["prettier --write", "eslint --fix"]
   }
 }
+```
+
+Create `lefthook.yml` in your project root:
+
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
+
+prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
 ```
 
 ## Manual Setup
@@ -47,109 +51,146 @@ Add lint-staged configuration to `package.json`:
 
 ```bash
 # Using npm
-npm install -D husky lint-staged commitment
+npm install -D @evilmartians/lefthook lint-staged @arittr/commitment
 
 # Using yarn
-yarn add -D husky lint-staged commitment
+yarn add -D @evilmartians/lefthook lint-staged @arittr/commitment
 
 # Using bun
-bun add -D husky lint-staged commitment
-```
-
-Initialize husky:
-
-```bash
-npx husky init
+bun add -D @evilmartians/lefthook lint-staged @arittr/commitment
 ```
 
 ### 2. Configure package.json
 
-Add the lint-staged configuration:
+Add the lint-staged configuration and prepare script:
 
 ```json
 {
   "scripts": {
-    "prepare": "husky"
+    "prepare": "lefthook install"
   },
   "lint-staged": {
-    "*": ["prettier --write", "eslint --fix"]
+    "*.{js,ts,jsx,tsx}": ["prettier --write", "eslint --fix"]
   }
 }
 ```
 
-### 3. Create Pre-commit Hook
+### 3. Create lefthook.yml
 
-Create `.husky/pre-commit`:
-
-```bash
-#!/bin/sh
-npx lint-staged
-```
-
-Make it executable:
-
-```bash
-chmod +x .husky/pre-commit
-```
-
-### 4. Create Prepare-commit-msg Hook
+Create a `lefthook.yml` file in your project root:
 
 **For Claude (default):**
 
-```bash
-cat > .husky/prepare-commit-msg << 'EOF'
-#!/bin/sh
-if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
-fi
-EOF
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
 
-chmod +x .husky/prepare-commit-msg
+prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
 ```
 
 **For Codex:**
 
-```bash
-cat > .husky/prepare-commit-msg << 'EOF'
-#!/bin/sh
-if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --agent codex --message-only > "$1"
-fi
-EOF
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
 
-chmod +x .husky/prepare-commit-msg
+prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --agent codex --message-only > {1} || true'
+```
+
+**For Gemini:**
+
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint-staged:
+      run: npx lint-staged
+
+prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --agent gemini --message-only > {1} || true'
+```
+
+### 4. Install hooks
+
+```bash
+npm install
+# This will run the prepare script and install lefthook hooks
 ```
 
 ## How It Works
 
 1. You run `git commit`
-2. The `pre-commit` hook runs lint-staged (formatting, linting)
-3. The `prepare-commit-msg` hook generates the commit message
-4. Your editor opens with the generated message
-5. You can edit or accept the message
+2. The `pre-commit` hook runs lint-staged (formatting, linting) in parallel
+3. If lint-staged succeeds, modified files are automatically staged (`stage_fixed: true`)
+4. The `prepare-commit-msg` hook generates the commit message
+5. Your editor opens with the generated message
+6. You can edit or accept the message
 
 ## Advanced Configuration
 
-### Run commitment only after successful linting
+### Sequential execution (lint first, then format)
 
-Update `.husky/pre-commit`:
-
-```bash
-#!/bin/sh
-npx lint-staged && npx commitment --message-only > .git/COMMIT_EDITMSG
+```yaml
+pre-commit:
+  parallel: false  # Run commands sequentially
+  commands:
+    lint:
+      glob: "*.{js,ts,jsx,tsx}"
+      run: npm run lint -- --fix {staged_files}
+      stage_fixed: true
+    format:
+      glob: "*.{js,ts,jsx,tsx,json,md}"
+      run: npm run prettier -- --write {staged_files}
+      stage_fixed: true
 ```
 
-### Skip commitment for specific commits
+### Skip commitment for specific branches
 
-```bash
-# Skip for merge commits
-if [ -z "$2" ] && ! git rev-parse -q --verify MERGE_HEAD; then
-  exec < /dev/tty && npx commitment --message-only > "$1"
-fi
+```yaml
+prepare-commit-msg:
+  skip:
+    - run: git rev-parse --abbrev-ref HEAD | grep -q "^main$"
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+```
+
+### Add type checking
+
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    type-check:
+      glob: "*.{ts,tsx}"
+      run: npm run type-check
+    lint-staged:
+      run: npx lint-staged
+
+prepare-commit-msg:
+  commands:
+    commitment:
+      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
 ```
 
 ## Notes
 
 - lint-staged runs before commit message generation
 - This ensures your commit only includes properly formatted code
+- `stage_fixed: true` automatically stages files modified by linters/formatters
+- Parallel execution speeds up pre-commit checks
 - You can combine multiple tools in the pre-commit workflow

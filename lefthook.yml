@@ -1,0 +1,18 @@
+# Lefthook configuration for commitment
+# This config allows commitment to dogfood itself
+
+pre-commit:
+  parallel: false
+  commands:
+    lint:
+      run: bun run lint
+      stage_fixed: true
+    build:
+      run: bun run build
+
+prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
+  jobs:
+    - run: ./dist/cli.js --message-only > {1}

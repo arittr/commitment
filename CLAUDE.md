@@ -990,12 +990,12 @@ Add your agent to the help text in `src/cli.ts`:
 
 ## Self-Dogfooding
 
-commitment uses itself for its own commit messages via git hooks:
+commitment uses itself for its own commit messages via lefthook:
 
-- **pre-commit**: Runs linting and builds dist/
+- **pre-commit**: Runs linting and builds dist/ (configured in `lefthook.yml`)
 - **prepare-commit-msg**: Calls `./dist/cli.js --message-only` to generate commit message
 
-This ensures commitment is battle-tested on itself and provides a real-world example.
+This ensures commitment is battle-tested on itself and provides a real-world example. See `lefthook.yml` in the project root.
 
 ## CLI Architecture
 
@@ -1036,7 +1036,7 @@ npx commitment init [options]
 - `--cwd <path>` - Working directory (default: current directory)
 
 **Init Command Flags:**
-- `--hook-manager <type>` - Hook manager: husky, simple-git-hooks, plain
+- `--hook-manager <type>` - Hook manager: lefthook, husky, simple-git-hooks, plain
 - `--cwd <path>` - Working directory (default: current directory)
 
 ### ESLint Configuration for CLI
@@ -1202,9 +1202,11 @@ src/
 
 examples/
 ├── git-hooks/                  # Plain git hooks examples
-├── husky/                      # Husky integration examples
+├── lefthook/                   # Lefthook integration examples
+├── husky/                      # Husky integration examples (legacy)
 ├── simple-git-hooks/           # simple-git-hooks integration examples
-└── lint-staged/                # lint-staged integration examples
+├── lint-staged/                # lint-staged with lefthook examples
+└── global-install/             # Global install examples for non-TS repos
 
 docs/
 └── constitutions/
