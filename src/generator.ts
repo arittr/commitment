@@ -3,6 +3,7 @@ import { match } from 'ts-pattern';
 import { createAgent } from './agents/factory';
 import type { Agent, AgentName } from './agents/types';
 import { AgentError, GeneratorError } from './errors';
+import { buildCommitMessagePrompt } from './prompts';
 import {
   safeValidateCommitOptions,
   safeValidateCommitTask,
@@ -200,79 +201,15 @@ export class CommitMessageGenerator {
       throw new Error('Git diff output validation failed: expected string output');
     }
 
-    // Truncate diff if too long to avoid token limits
-    const maxDiffLength = 8000; // Reserve tokens for prompt and response
-    const truncatedDiff =
-      gitDiffContent.length > maxDiffLength
-        ? `${gitDiffContent.slice(0, maxDiffLength)}\n... (diff truncated)`
-        : gitDiffContent;
-
-    // Build file list with validation
-    const filesList =
-      isDefined(options.files) && options.files.length > 0
-        ? options.files.join(', ')
-        : 'No files specified';
-
-    const prompt = `Generate a professional commit message based on the actual code changes:
-
-Task Context:
-- Title: ${task.title}
-- Description: ${task.description}
-- Files: ${filesList}
-
-File Changes Summary:
-${gitDiffNameStatus}
-
-Diff Statistics:
-${gitDiffStat}
-
-Actual Code Changes:
-\`\`\`diff
-${truncatedDiff}
-\`\`\`
-
-Task Execution Output:
-${hasContent(options.output) ? options.output : 'No execution output provided'}
-
-Requirements:
-1. ANALYZE THE ACTUAL CODE CHANGES - don't guess based on file names
-2. Clear, descriptive title (50 chars or less) following conventional commits
-3. Be CONCISE - match detail level to scope of changes:
-   - Single file/method: 2-4 bullet points max
-   - Multiple files: 4-6 bullet points max
-   - Major refactor: 6+ bullet points as needed
-4. Use imperative mood ("Add feature" not "Added feature")
-5. Format: Title + blank line + bullet point details
-6. Focus on the most important changes from the diff:
-   - Key functionality added/modified/removed
-   - Significant logic or behavior changes
-   - Important architectural changes
-7. Avoid over-describing implementation details for small changes
-8. DO NOT include preamble like "Looking at the changes"
-9. Start directly with the action ("Add", "Fix", "Update", etc.)
-10. Quality over quantity - fewer, more meaningful bullet points
-
-Example format:
-feat: add user authentication system
-
-- Implement JWT-based authentication flow
-- Add login/logout endpoints in auth routes
-- Create user session management middleware
-- Add password hashing with bcrypt
-- Update frontend to handle auth tokens
-
-Return ONLY the commit message content between these markers:
-<<<COMMIT_MESSAGE_START>>>
-(commit message goes here)
-<<<COMMIT_MESSAGE_END>>>`;
-
-    // Analyze patterns in the actual changes with validated files
-    const filesToAnalyze = isDefined(options.files) ? options.files : [];
-    const changeAnalysis = this._analyzeCodeChanges(truncatedDiff, filesToAnalyze);
-    const enhancedPrompt = `${prompt}
-
-Change Analysis:
-${changeAnalysis}`;
+    // Build prompt using extracted prompt builder
+    const enhancedPrompt = buildCommitMessagePrompt({
+      files: options.files,
+      gitDiffContent,
+      gitDiffNameStatus,
+      gitDiffStat,
+      output: options.output,
+      task,
+    });
 
     try {
       // Use agent to generate commit message
@@ -488,122 +425,5 @@ ${changeAnalysis}`;
         `Git command failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
-  }
-
-  /**
-   * Analyze code changes to provide more accurate context
-   */
-  private _analyzeCodeChanges(diffContent: string, files: string[]): string {
-    if (!isString(diffContent)) {
-      throw new Error('Diff content must be a string');
-    }
-
-    const { addedLines, removedLines } = this._parseDiffLines(diffContent);
-    const patterns = this._detectPatterns(diffContent, addedLines, removedLines);
-
-    const analysis = [
-      ...this._analyzePatterns(patterns),
-      ...this._analyzeFileScope(files.length),
-      ...this._analyzeChangeMagnitude(addedLines.length, removedLines.length),
-    ];
-
-    return analysis.length > 0 ? analysis.join('\n- ') : 'Minor code modifications';
-  }
-
-  /**
-   * Parse diff content into added and removed lines
-   */
-  private _parseDiffLines(diffContent: string): { addedLines: string[]; removedLines: string[] } {
-    const lines = diffContent.split('\n');
-    return {
-      addedLines: lines.filter((line) => line.startsWith('+') && !line.startsWith('++')),
-      removedLines: lines.filter((line) => line.startsWith('-') && !line.startsWith('---')),
-    };
-  }
-
-  /**
-   * Detect code patterns in diff
-   */
-  private _detectPatterns(diffContent: string, addedLines: string[], removedLines: string[]) {
-    return {
-      mockChanges:
-        diffContent.includes('vi.mock') ||
-        diffContent.includes('jest.mock') ||
-        diffContent.includes('mock'),
-      newFunctions: addedLines.filter((line) =>
-        /\+.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line)
-      ).length,
-      newTests: addedLines.filter((line) => /\+.*(test|it|describe)\s*\(/.test(line)).length,
-      removedFunctions: removedLines.filter((line) =>
-        /-.*(?:function|const\s+\w+\s*=|class\s+\w+)/.test(line)
-      ).length,
-      removedTests: removedLines.filter((line) => /-.*(test|it|describe)\s*\(/.test(line)).length,
-      typeChanges:
-        diffContent.includes('interface') ||
-        diffContent.includes('type ') ||
-        diffContent.includes('.d.ts'),
-    };
-  }
-
-  /**
-   * Analyze patterns and generate insights
-   */
-  private _analyzePatterns(patterns: ReturnType<typeof this._detectPatterns>): string[] {
-    const analysis: string[] = [];
-
-    // Function changes
-    if (patterns.newFunctions > patterns.removedFunctions + 1) {
-      analysis.push(`Added ${patterns.newFunctions} new functions/methods`);
-    } else if (patterns.removedFunctions > patterns.newFunctions + 1) {
-      analysis.push(`Removed ${patterns.removedFunctions} functions/methods`);
-    } else if (patterns.newFunctions > 0 || patterns.removedFunctions > 0) {
-      analysis.push('Modified function definitions');
-    }
-
-    // Test changes
-    if (patterns.newTests > 0) {
-      analysis.push(`Added ${patterns.newTests} test cases`);
-    } else if (patterns.removedTests > 0) {
-      analysis.push(`Removed ${patterns.removedTests} test cases`);
-    }
-
-    // Other changes
-    if (patterns.mockChanges) {
-      analysis.push('Modified mocking/test patterns');
-    }
-
-    if (patterns.typeChanges) {
-      analysis.push('Updated TypeScript definitions');
-    }
-
-    return analysis;
-  }
-
-  /**
-   * Analyze file scope
-   */
-  private _analyzeFileScope(fileCount: number): string[] {
-    if (fileCount === 1) {
-      return ['Single file modification'];
-    }
-    if (fileCount > 5) {
-      return [`Broad changes across ${fileCount} files`];
-    }
-    return [];
-  }
-
-  /**
-   * Analyze change magnitude
-   */
-  private _analyzeChangeMagnitude(addedCount: number, removedCount: number): string[] {
-    const totalChanges = addedCount + removedCount;
-
-    if (totalChanges > 100) {
-      return [`Substantial changes: ${addedCount}+ ${removedCount}- lines`];
-    }
-    if (totalChanges > 20) {
-      return ['Moderate code changes'];
-    }
-    return [];
   }
 }
