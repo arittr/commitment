@@ -16,7 +16,7 @@ import {
 import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import type { GitStatus } from './utils/git-schemas';
-import { ConsoleLogger } from './utils/logger';
+import { ConsoleLogger, SilentLogger } from './utils/logger';
 
 // Read version from package.json
 const Filename = fileURLToPath(import.meta.url);
@@ -38,10 +38,13 @@ async function generateCommitCommand(rawOptions: {
   const agentName = options.agent ?? 'claude';
   const quiet = options.quiet === true;
 
+  // Create logger based on --quiet flag
+  const logger = quiet ? new SilentLogger() : new ConsoleLogger();
+
   try {
-    const gitStatus = await checkGitStatusOrExit(options.cwd);
-    displayStagedChanges(gitStatus, options.messageOnly === true);
-    displayGenerationStatus(agentName, quiet);
+    const gitStatus = await checkGitStatusOrExit(options.cwd, logger);
+    displayStagedChanges(gitStatus, options.messageOnly === true, logger);
+    displayGenerationStatus(agentName, logger);
 
     const task = {
       description: 'Analyze git diff to generate appropriate commit message',
@@ -49,9 +52,10 @@ async function generateCommitCommand(rawOptions: {
       title: 'Code changes',
     };
 
+    // Pass logger to Generator via config
     const generator = new CommitMessageGenerator({
       agent: agentName,
-      logger: new ConsoleLogger(),
+      logger,
     });
 
     const message = await generator.generateCommitMessage(task, {
@@ -59,12 +63,13 @@ async function generateCommitCommand(rawOptions: {
       workdir: options.cwd,
     });
 
-    displayCommitMessage(message, options.messageOnly === true);
+    displayCommitMessage(message, options.messageOnly === true, logger);
     await executeCommit(
       message,
       options.cwd,
       options.dryRun === true,
-      options.messageOnly === true
+      options.messageOnly === true,
+      logger
     );
   } catch (error) {
     console.error(chalk.red('❌ Error:'), error instanceof Error ? error.message : String(error));
@@ -96,12 +101,15 @@ function validateOptionsOrExit(
  *
  * Returns a simplified GitStatus-like object with just the fields we need
  */
-async function checkGitStatusOrExit(cwd: string): Promise<GitStatus> {
+async function checkGitStatusOrExit(
+  cwd: string,
+  logger: ConsoleLogger | SilentLogger
+): Promise<GitStatus> {
   const gitStatus = await getGitStatus(cwd);
 
   if (!gitStatus.hasChanges) {
-    console.log(chalk.yellow('No staged changes to commit'));
-    console.log(chalk.gray('Run `git add` to stage changes first'));
+    logger.warn('No staged changes to commit');
+    logger.info('Run `git add` to stage changes first');
     process.exit(1);
   }
 
@@ -129,11 +137,16 @@ prog
       'hook-manager'?: 'husky' | 'simple-git-hooks' | 'plain';
       agent?: 'claude' | 'codex' | 'gemini';
     }) => {
-      await initCommand({
-        agent: options.agent,
-        cwd: options.cwd,
-        hookManager: options['hook-manager'],
-      });
+      // Init command always uses console logger (never quiet)
+      const logger = new ConsoleLogger();
+      await initCommand(
+        {
+          agent: options.agent,
+          cwd: options.cwd,
+          hookManager: options['hook-manager'],
+        },
+        logger
+      );
     }
   );
 
