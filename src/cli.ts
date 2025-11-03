@@ -28,18 +28,19 @@ const version = packageJson.version;
  */
 async function generateCommitCommand(rawOptions: {
   agent?: string;
-  ai: boolean;
   cwd: string;
   dryRun?: boolean;
   messageOnly?: boolean;
+  quiet?: boolean;
 }): Promise<void> {
   const options = validateOptionsOrExit(rawOptions);
   const agentName = options.agent ?? 'claude';
+  const quiet = options.quiet === true;
 
   try {
     const gitStatus = await checkGitStatusOrExit(options.cwd);
     displayStagedChanges(gitStatus, options.messageOnly === true);
-    displayGenerationStatus(agentName, options.ai, options.messageOnly === true);
+    displayGenerationStatus(agentName, quiet);
 
     const task = {
       description: 'Analyze git diff to generate appropriate commit message',
@@ -49,7 +50,6 @@ async function generateCommitCommand(rawOptions: {
 
     const generator = new CommitMessageGenerator({
       agent: agentName,
-      enableAI: options.ai,
       logger: {
         warn: (warningMessage: string) => {
           console.error(chalk.yellow(`⚠️  ${warningMessage}`));
@@ -149,26 +149,27 @@ prog
       '  claude    - Claude CLI (default)\n' +
       '  codex     - OpenAI Codex CLI\n' +
       '  gemini    - Google Gemini CLI\n\n' +
-      'Example: commitment --agent claude --dry-run'
+      'Example: commitment --agent claude --dry-run --quiet'
   )
   .option('--agent', 'AI agent to use (claude, codex, gemini)', 'claude')
   .option('--dry-run', 'Generate message without creating commit')
   .option('--message-only', 'Output only the commit message (no commit)')
+  .option('--quiet', 'Suppress progress messages (useful for scripting)')
   .option('--cwd', 'Working directory', process.cwd())
   .action(
     async (options: {
       agent?: string;
-      ai: boolean;
       cwd: string;
       'dry-run'?: boolean;
       'message-only'?: boolean;
+      quiet?: boolean;
     }) => {
       await generateCommitCommand({
         agent: options.agent,
-        ai: options.ai,
         cwd: options.cwd,
         dryRun: options['dry-run'],
         messageOnly: options['message-only'],
+        quiet: options.quiet,
       });
     }
   );

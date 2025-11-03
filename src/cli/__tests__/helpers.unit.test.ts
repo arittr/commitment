@@ -89,33 +89,35 @@ describe('displayStagedChanges', () => {
 
 describe('displayGenerationStatus', () => {
   it('should display AI generation status', () => {
-    displayGenerationStatus('claude', true, false);
+    displayGenerationStatus('claude', false);
 
-    expect(mockConsoleLog).toHaveBeenCalledWith(
+    expect(mockConsoleError).toHaveBeenCalledWith(
       chalk.cyan('🤖 Generating commit message with claude...')
     );
   });
 
-  it('should display rule-based generation status', () => {
-    displayGenerationStatus('claude', false, false);
-
-    expect(mockConsoleLog).toHaveBeenCalledWith(
-      chalk.cyan('📝 Generating commit message with rules...')
-    );
-  });
-
-  it('should not display anything when silent is true', () => {
-    displayGenerationStatus('claude', true, true);
+  it('should not display anything when quiet is true', () => {
+    displayGenerationStatus('claude', true);
 
     expect(mockConsoleLog).not.toHaveBeenCalled();
+    expect(mockConsoleError).not.toHaveBeenCalled();
   });
 
   it('should display different agent names correctly', () => {
-    displayGenerationStatus('codex', true, false);
+    displayGenerationStatus('codex', false);
 
-    expect(mockConsoleLog).toHaveBeenCalledWith(
+    expect(mockConsoleError).toHaveBeenCalledWith(
       chalk.cyan('🤖 Generating commit message with codex...')
     );
+  });
+
+  it('should display to stderr for visibility in hooks', () => {
+    displayGenerationStatus('gemini', false);
+
+    expect(mockConsoleError).toHaveBeenCalledWith(
+      chalk.cyan('🤖 Generating commit message with gemini...')
+    );
+    expect(mockConsoleLog).not.toHaveBeenCalled();
   });
 });
 
