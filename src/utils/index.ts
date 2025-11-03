@@ -9,5 +9,7 @@ export * from './git-schemas';
 
 // Type guards
 export * from './guards';
+// Logger utilities
+export { ConsoleLogger, type Logger, SilentLogger } from './logger';
 // Shell execution adapter
 export { exec, type ShellExecOptions, type ShellExecResult } from './shell';
