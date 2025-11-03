@@ -16,6 +16,7 @@ import {
 import { formatValidationError, validateCliOptions } from './cli/schemas';
 import { CommitMessageGenerator } from './generator';
 import type { GitStatus } from './utils/git-schemas';
+import { ConsoleLogger } from './utils/logger';
 
 // Read version from package.json
 const Filename = fileURLToPath(import.meta.url);
@@ -50,11 +51,7 @@ async function generateCommitCommand(rawOptions: {
 
     const generator = new CommitMessageGenerator({
       agent: agentName,
-      logger: {
-        warn: (warningMessage: string) => {
-          console.error(chalk.yellow(`⚠️  ${warningMessage}`));
-        },
-      },
+      logger: new ConsoleLogger(),
     });
 
     const message = await generator.generateCommitMessage(task, {

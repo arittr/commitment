@@ -1,4 +1,5 @@
 import { match } from 'ts-pattern';
+import type { Logger } from '../utils/logger';
 
 import { ClaudeAgent } from './claude';
 import { CodexAgent } from './codex';
@@ -13,6 +14,7 @@ import type { Agent, AgentName } from './types';
  * to the type but not handled here, TypeScript will error.
  *
  * @param name - The agent name ('claude', 'codex', or 'gemini')
+ * @param logger - Optional logger for debugging
  * @returns Agent instance for the specified name
  *
  * @example
@@ -21,10 +23,17 @@ import type { Agent, AgentName } from './types';
  * const message = await agent.generate(prompt, workdir);
  * ```
  */
-export function createAgent(name: AgentName): Agent {
-  return match(name)
+export function createAgent(name: AgentName, logger?: Logger): Agent {
+  const agent = match(name)
     .with('claude', () => new ClaudeAgent())
     .with('codex', () => new CodexAgent())
     .with('gemini', () => new GeminiAgent())
     .exhaustive();
+
+  // Set logger on agent if provided
+  if (logger) {
+    agent.logger = logger;
+  }
+
+  return agent;
 }
