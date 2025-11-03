@@ -24,6 +24,7 @@
 import type { AgentName } from '../../agents/types.js';
 import { CommitMessageGenerator } from '../../generator.js';
 import { MockGitProvider } from '../../utils/git-provider.js';
+import type { Logger } from '../../utils/logger.js';
 import type { AttemptOutcome } from '../core/types.js';
 import type { SingleAttemptEvaluator } from '../evaluators/single-attempt.js';
 import type { CLIReporter } from '../reporters/cli-reporter.js';
@@ -54,6 +55,7 @@ export class AttemptRunner {
    * @param evaluator - Single-attempt evaluator instance
    * @param reporter - CLI reporter for progress updates
    * @param generatorFactory - Optional factory function to create generators (for testing)
+   * @param _logger - Logger for progress messages (reserved for future use)
    */
   constructor(
     private readonly evaluator: SingleAttemptEvaluator,
@@ -61,8 +63,12 @@ export class AttemptRunner {
     private readonly generatorFactory?: (
       agentName: AgentName,
       fixture: Fixture
-    ) => CommitMessageGenerator
-  ) {}
+    ) => CommitMessageGenerator,
+    _logger?: Logger
+  ) {
+    // Logger reserved for future use
+    void _logger;
+  }
 
   /**
    * Run exactly 3 attempts for an agent on a fixture

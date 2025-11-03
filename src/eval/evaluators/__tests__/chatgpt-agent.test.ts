@@ -10,6 +10,7 @@
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { z } from 'zod';
+import { SilentLogger } from '../../../utils/logger.js';
 import { ChatGPTAgent } from '../chatgpt-agent.js';
 
 // Mock the OpenAI Agents SDK
@@ -30,7 +31,7 @@ describe('ChatGPTAgent', () => {
   describe('evaluate()', () => {
     it('should use gpt-5 model', async () => {
       const schema = z.object({ result: z.string() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       mockRun.mockResolvedValue({
@@ -49,7 +50,7 @@ describe('ChatGPTAgent', () => {
 
     it('should use outputType pattern with Zod schema', async () => {
       const schema = z.object({ score: z.number() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       mockRun.mockResolvedValue({
@@ -68,7 +69,7 @@ describe('ChatGPTAgent', () => {
 
     it('should access data via result.finalOutput', async () => {
       const schema = z.object({ data: z.string() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       mockRun.mockResolvedValue({
@@ -82,7 +83,7 @@ describe('ChatGPTAgent', () => {
 
     it('should pass instructions to Agent', async () => {
       const schema = z.object({ value: z.number() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
       const instructions = 'Evaluate on scale 0-10';
 
       mockAgent.mockReturnValue({});
@@ -101,7 +102,7 @@ describe('ChatGPTAgent', () => {
 
     it('should include agent name in configuration', async () => {
       const schema = z.object({ result: z.boolean() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       mockRun.mockResolvedValue({
@@ -119,7 +120,7 @@ describe('ChatGPTAgent', () => {
 
     it('should throw EvaluationError on API failure', async () => {
       const schema = z.object({ result: z.string() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
       const apiError = new Error('API timeout');
 
       mockAgent.mockReturnValue({});
@@ -132,7 +133,7 @@ describe('ChatGPTAgent', () => {
 
     it('should handle missing finalOutput', async () => {
       const schema = z.object({ result: z.string() });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       mockRun.mockResolvedValue({
@@ -146,7 +147,7 @@ describe('ChatGPTAgent', () => {
       const schema = z.object({
         score: z.number().min(0).max(10),
       });
-      const agent = new ChatGPTAgent();
+      const agent = new ChatGPTAgent(new SilentLogger());
 
       mockAgent.mockReturnValue({});
       // Simulate OpenAI returning invalid data that fails schema validation

@@ -32,6 +32,7 @@
 
 import type { AgentOutputType } from '@openai/agents';
 import { Agent, run } from '@openai/agents';
+import type { Logger } from '../../utils/logger.js';
 import { EvaluationError } from '../core/errors.js';
 
 /**
@@ -41,6 +42,15 @@ import { EvaluationError } from '../core/errors.js';
  * and returns typed results via outputType pattern.
  */
 export class ChatGPTAgent {
+  /**
+   * Create a new ChatGPT agent
+   *
+   * @param _logger - Logger for progress messages (reserved for future use)
+   */
+  constructor(_logger: Logger) {
+    // Logger reserved for future use
+    void _logger;
+  }
   /**
    * Evaluate using ChatGPT with structured output
    *
