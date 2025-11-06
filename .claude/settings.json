@@ -1,0 +1,16 @@
+{
+  "enabledPlugins": {
+    "spectacular@spectacular": true,
+    "superpowers@superpowers-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "spectacular": {
+      "repo": "arittr/spectacular",
+      "source": "github"
+    },
+    "superpowers-marketplace": {
+      "repo": "obra/superpowers-marketplace",
+      "source": "github"
+    }
+  }
+}
