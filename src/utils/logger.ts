@@ -51,11 +51,11 @@ export interface Logger {
  */
 export class ConsoleLogger implements Logger {
   debug(message: string): void {
-    console.log(chalk.gray(message));
+    console.error(chalk.gray(message));
   }
 
   info(message: string): void {
-    console.log(message);
+    console.error(message);
   }
 
   warn(message: string): void {

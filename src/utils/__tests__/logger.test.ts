@@ -34,8 +34,8 @@ describe('Logger', () => {
 
       logger.debug(message);
 
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-      expect(consoleLogSpy).toHaveBeenCalledWith(chalk.gray(message));
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(chalk.gray(message));
     });
 
     it('should log info messages without color', () => {
@@ -44,8 +44,8 @@ describe('Logger', () => {
 
       logger.info(message);
 
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-      expect(consoleLogSpy).toHaveBeenCalledWith(message);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(message);
     });
 
     it('should log warn messages with yellow color', () => {
