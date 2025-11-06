@@ -12,6 +12,22 @@ This file provides guidance to Claude Code and other AI coding agents when worki
 
 ## Development Commands
 
+### Claude Code Web Setup
+
+**Automatic setup:** When opening this repository in Claude Code Web, plugins are installed automatically via SessionStart hook.
+
+The `.claude/settings.json` hook configuration runs `.claude/setup-plugins.sh` which:
+1. Checks if running in Claude Code Web (`CLAUDE_CODE_REMOTE=true`)
+2. Adds custom marketplaces (spectacular, superpowers-marketplace)
+3. Updates marketplaces to latest versions
+4. Installs required plugins:
+   - **spectacular@spectacular** - Spec-anchored development with stacked branches
+   - **superpowers@superpowers-marketplace** - Skills and workflows for Claude Code
+
+**Manual setup (local):** Run `bun run setup:claude-plugins` (note: will skip if not in Claude Code Web)
+
+**Individual commands:** See `.claude/setup-plugins.sh` for the full installation sequence.
+
 ### Building and Development
 
 ```bash

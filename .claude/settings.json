@@ -12,5 +12,18 @@
       "repo": "obra/superpowers-marketplace",
       "source": "github"
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/setup-plugins.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup"
+      }
+    ]
   }
 }

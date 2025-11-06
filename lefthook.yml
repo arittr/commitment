@@ -19,4 +19,3 @@ prepare-commit-msg:
       # Only run for regular commits (not merge, squash, or when message specified)
       # {1} is the commit message file, {2} is the commit source
       run: '[ -z "{2}" ] && ./dist/cli.js --message-only > {1} || true'
-      interactive: true

@@ -10,7 +10,7 @@
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1 || true"
   },
   "version": "1.0.0"
 }

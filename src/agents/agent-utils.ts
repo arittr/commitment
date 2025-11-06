@@ -72,7 +72,12 @@ export function cleanCommitMessageMarkers(output: string): string {
  * - "here is the commit message:"
  * - "here's a commit message:"
  * - "commit message:"
+ * - "Looking at the changes..."
+ * - Any reasoning text before the conventional commit
  * - Case-insensitive matching
+ *
+ * Strategy: Find the first line matching conventional commit format
+ * and discard everything before it.
  *
  * This is a pure function with no side effects.
  *
@@ -85,12 +90,26 @@ export function cleanCommitMessageMarkers(output: string): string {
  * const clean = cleanAIPreambles(raw);
  * // => "feat: add feature"
  *
- * const raw2 = 'Commit message:\nfeat: add feature';
+ * const raw2 = 'Looking at the changes...\n\nfeat: add feature';
  * const clean2 = cleanAIPreambles(raw2);
  * // => "feat: add feature"
  * ```
  */
 export function cleanAIPreambles(output: string): string {
+  // Pattern matches conventional commit format start:
+  // type(scope?): description
+  const conventionalCommitPattern =
+    /^(feat|fix|docs|style|refactor|test|chore|perf|build|ci)(\(.+\))?:\s*\S+/m;
+
+  // Find the first line that matches conventional commit format
+  const match = output.match(conventionalCommitPattern);
+
+  if (match && match.index !== undefined) {
+    // Extract from the start of the commit message onward
+    return output.slice(match.index);
+  }
+
+  // Fallback: Use original simple preamble removal
   let cleaned = output;
 
   // Remove "here is/here's the/a commit message:" patterns (case-insensitive)

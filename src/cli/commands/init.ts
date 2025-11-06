@@ -32,21 +32,21 @@ function generateHookContent(
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
     plain: `#!/bin/sh
 # Git prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1" || exit 1
+  npx commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
     simpleGitHooks: `#!/bin/sh
 # simple-git-hooks prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1" || exit 1
+  npx commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
   };

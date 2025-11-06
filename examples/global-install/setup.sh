@@ -29,7 +29,7 @@ cat > .git/hooks/prepare-commit-msg << EOF
 #!/bin/sh
 # Generate commit message with commitment (global install)
 if [ -z "\$2" ]; then
-  commitment --agent $AGENT --message-only > "\$1" || exit 1
+  commitment --agent $AGENT --message-only > "\$1" || true
 fi
 EOF
 

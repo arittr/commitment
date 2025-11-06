@@ -5,5 +5,8 @@ lefthook.yml text eol=lf
 # Git hooks should always use LF
 *.hook text eol=lf
 
+# Claude Code setup scripts should use LF
+.claude/**/*.sh text eol=lf
+
 # Default to auto line ending conversion for other files
 * text=auto

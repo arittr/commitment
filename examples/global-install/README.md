@@ -62,7 +62,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with commitment (global install)
 if [ -z "$2" ]; then
-  commitment --message-only > "$1" || exit 1
+  commitment --message-only > "$1" || true
 fi
 EOF
 
@@ -76,7 +76,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with commitment (global install)
 if [ -z "$2" ]; then
-  commitment --agent codex --message-only > "$1" || exit 1
+  commitment --agent codex --message-only > "$1" || true
 fi
 EOF
 
@@ -90,7 +90,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with commitment (global install)
 if [ -z "$2" ]; then
-  commitment --agent gemini --message-only > "$1" || exit 1
+  commitment --agent gemini --message-only > "$1" || true
 fi
 EOF
 
@@ -204,7 +204,7 @@ mkdir -p ~/.git-templates/hooks
 cat > ~/.git-templates/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 if [ -z "$2" ]; then
-  commitment --message-only > "$1" || exit 1
+  commitment --message-only > "$1" || true
 fi
 EOF
 
