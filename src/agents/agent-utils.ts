@@ -68,21 +68,20 @@ export function cleanCommitMessageMarkers(output: string): string {
 /**
  * Remove common AI preambles from response
  *
- * Removes phrases like:
+ * Removes specific preamble phrases like:
  * - "here is the commit message:"
  * - "here's a commit message:"
  * - "commit message:"
- * - "Looking at the changes..."
- * - Any reasoning text before the conventional commit
  * - Case-insensitive matching
  *
- * Strategy: Find the first line matching conventional commit format
- * and discard everything before it.
+ * **Only removes recognized preamble patterns, not arbitrary text.**
+ * For example, "here is some other text" will NOT be removed because
+ * it doesn't match the pattern "here is the/a commit message:".
  *
  * This is a pure function with no side effects.
  *
  * @param output - Raw output from AI agent that may contain preambles
- * @returns Output with all AI preambles removed
+ * @returns Output with recognized AI preambles removed
  *
  * @example
  * ```typescript
@@ -90,29 +89,16 @@ export function cleanCommitMessageMarkers(output: string): string {
  * const clean = cleanAIPreambles(raw);
  * // => "feat: add feature"
  *
- * const raw2 = 'Looking at the changes...\n\nfeat: add feature';
+ * const raw2 = 'here is some other text\nfeat: add feature';
  * const clean2 = cleanAIPreambles(raw2);
- * // => "feat: add feature"
+ * // => "here is some other text\nfeat: add feature" (unchanged - not a preamble)
  * ```
  */
 export function cleanAIPreambles(output: string): string {
-  // Pattern matches conventional commit format start:
-  // type(scope?): description
-  const conventionalCommitPattern =
-    /^(feat|fix|docs|style|refactor|test|chore|perf|build|ci)(\(.+\))?:\s*\S+/m;
-
-  // Find the first line that matches conventional commit format
-  const match = output.match(conventionalCommitPattern);
-
-  if (match && match.index !== undefined) {
-    // Extract from the start of the commit message onward
-    return output.slice(match.index);
-  }
-
-  // Fallback: Use original simple preamble removal
   let cleaned = output;
 
   // Remove "here is/here's the/a commit message:" patterns (case-insensitive)
+  // Matches: "here is the commit message:", "here's a commit message:", etc.
   cleaned = cleaned.replace(/^(here is|here's) (the|a) commit message:?\s*/i, '');
 
   // Remove standalone "commit message:" pattern (case-insensitive)
@@ -126,11 +112,15 @@ export function cleanAIPreambles(output: string): string {
  *
  * Removes (in order):
  * 1. Commit message markers (<<<COMMIT_MESSAGE_START>>>, <<<COMMIT_MESSAGE_END>>>)
- * 2. AI preambles ("here is the commit message:", etc.)
- * 3. Markdown code blocks (```...```)
+ * 2. Markdown code blocks (```...```) - MUST be before preambles
+ * 3. AI preambles ("here is the commit message:", etc.)
  * 4. Thinking tags (<thinking>...</thinking> and plain "thinking" prefixes)
  * 5. Excessive newlines (more than 2 consecutive)
  * 6. Leading/trailing whitespace
+ *
+ * **Order matters:** Code blocks must be removed before preambles because preamble
+ * removal slices the string from the first conventional commit pattern, which could
+ * break code block pairs (removing opening ``` while leaving closing ``` orphaned).
  *
  * This is a pure function with no side effects. It does not modify the input string.
  *
@@ -158,13 +148,15 @@ export function cleanAIResponse(output: string): string {
   // Step 1: Remove commit message markers (must be first to avoid interfering with other patterns)
   cleaned = cleanCommitMessageMarkers(cleaned);
 
-  // Step 2: Remove AI preambles (do this before code block removal)
-  cleaned = cleanAIPreambles(cleaned);
-
-  // Step 3: Remove markdown code block delimiters but keep content
+  // Step 2: Remove markdown code block delimiters but keep content
+  // MUST happen before preamble removal to avoid breaking code blocks
   // Matches code blocks with optional language specifier
   // Replace with content inside (captured group 2)
   cleaned = cleaned.replace(/```[\w]*\n?([\s\S]*?)```/g, '$1');
+
+  // Step 3: Remove AI preambles (do this after code block removal)
+  // This step slices the string, so code blocks must be extracted first
+  cleaned = cleanAIPreambles(cleaned);
 
   // Step 4: Remove thinking tags and content
   // Matches both <thinking>...</thinking> and "thinking:" prefix patterns
