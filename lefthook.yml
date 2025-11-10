@@ -14,6 +14,16 @@ prepare-commit-msg:
   skip:
     - merge
     - rebase
-  scripts:
-    "commitment.sh":
-      runner: sh
+  commands:
+    commitment:
+      # Run for regular commits only
+      # {1} is the commit message file path
+      # {2} is commit source: "message" (from -m), "template", "merge", "squash", or "commit"
+      # When no source (regular git commit), lefthook doesn't substitute {2}
+      run: |
+        # Only run if {2} contains curly braces (unsubstituted = regular commit)
+        # Skip if {2} = "message", "template", etc. (user already provided message)
+        case "{2}" in
+          *"{"*) ./dist/cli.js --message-only > "{1}" ;;
+        esac
+      interactive: true
