@@ -329,13 +329,10 @@ describe('CommitMessageGenerator', () => {
     });
   });
 
-  describe.skip('signature handling (requires agent CLI)', () => {
-    // NOTE: These tests require actual agent CLI to be installed
-    // To properly test these, we would need to mock the agent factory
-    // For now, these are covered by integration tests in the eval system
-
+  describe('signature handling', () => {
     it('should add default signature when none provided', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -346,6 +343,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should add custom signature when provided', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
         signature: 'Custom Test Signature',
       });
@@ -357,8 +355,13 @@ describe('CommitMessageGenerator', () => {
     });
 
     it('should use codex signature for codex agent', async () => {
+      const codexAgent: Agent = {
+        generate: mock(async () => 'feat: add feature\n\nImplement new feature'),
+        name: 'codex',
+      };
+
       const generator = new CommitMessageGenerator({
-        agent: 'codex',
+        agent: codexAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -368,8 +371,13 @@ describe('CommitMessageGenerator', () => {
     });
 
     it('should use gemini signature for gemini agent', async () => {
+      const geminiAgent: Agent = {
+        generate: mock(async () => 'feat: add feature\n\nImplement new feature'),
+        name: 'gemini',
+      };
+
       const generator = new CommitMessageGenerator({
-        agent: 'gemini',
+        agent: geminiAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -380,6 +388,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should skip signature when set to empty string', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
         signature: '',
       });
@@ -392,6 +401,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should format signature with double newline separator', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
         signature: 'TEST',
       });
@@ -402,18 +412,17 @@ describe('CommitMessageGenerator', () => {
     });
   });
 
-  describe.skip('message validation (requires agent CLI)', () => {
+  describe('message validation', () => {
     it('should accept valid commit message (>= 5 chars)', async () => {
-      mockAgent.generate = mock(async () => 'feat: test');
+      const testAgent: Agent = {
+        generate: mock(async () => 'feat: test'),
+        name: 'claude',
+      };
 
       const generator = new CommitMessageGenerator({
+        agent: testAgent,
         gitProvider: mockGitProvider,
       });
-
-      // Override private agent for this test - hack via constructor injection
-      // Since we can't directly set private fields, we rely on factory creating real agent
-      // and test will use real agent. To properly test, we'd need to mock the factory.
-      // For now, this tests the validation logic via the actual flow.
 
       const result = await generator.generateCommitMessage(validTask, validOptions);
 
@@ -421,29 +430,26 @@ describe('CommitMessageGenerator', () => {
     });
 
     it('should throw on message less than 5 chars', async () => {
-      // Create a custom mock agent that returns short message
-      const shortMessageGitProvider: GitProvider = {
-        exec: mock(async () => 'diff'),
+      const testAgent: Agent = {
+        generate: mock(async () => 'abc'),
+        name: 'claude',
       };
 
-      // We need to mock the agent factory to return our mock agent
-      // Since that's complex, we'll test via the actual agent which should never return < 5 chars
-      // This is more of an integration test, but validates the behavior
-
       const generator = new CommitMessageGenerator({
-        gitProvider: shortMessageGitProvider,
+        agent: testAgent,
+        gitProvider: mockGitProvider,
       });
 
-      // The real agent will either succeed (>5 chars) or fail with AgentError
-      // If it somehow returns <5 chars, generator should throw
-      await expect(generator.generateCommitMessage(validTask, validOptions)).rejects.toThrow();
+      await expect(generator.generateCommitMessage(validTask, validOptions)).rejects.toThrow(
+        'AI generation produced invalid commit message'
+      );
     });
   });
 
-  describe.skip('git command execution (requires agent CLI)', () => {
-    // NOTE: These tests require actual agent CLI - covered by integration tests
+  describe('git command execution', () => {
     it('should execute git diff --stat command', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -451,36 +457,45 @@ describe('CommitMessageGenerator', () => {
 
       expect(mockGitProvider.exec).toHaveBeenCalled();
       const calls = (mockGitProvider.exec as any).mock.calls;
-      const statCall = calls.find((call: any[]) => call[0].includes('--stat'));
+      const statCall = calls.find((call: any[]) =>
+        call[0].some((arg: string) => arg.includes('--stat'))
+      );
       expect(statCall).toBeDefined();
     });
 
     it('should execute git diff --name-status command', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
       await generator.generateCommitMessage(validTask, validOptions);
 
       const calls = (mockGitProvider.exec as any).mock.calls;
-      const nameStatusCall = calls.find((call: any[]) => call[0].includes('--name-status'));
+      const nameStatusCall = calls.find((call: any[]) =>
+        call[0].some((arg: string) => arg.includes('--name-status'))
+      );
       expect(nameStatusCall).toBeDefined();
     });
 
     it('should execute git diff with unified context', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
       await generator.generateCommitMessage(validTask, validOptions);
 
       const calls = (mockGitProvider.exec as any).mock.calls;
-      const diffCall = calls.find((call: any[]) => call[0].includes('--unified'));
+      const diffCall = calls.find((call: any[]) =>
+        call[0].some((arg: string) => arg.includes('--unified'))
+      );
       expect(diffCall).toBeDefined();
     });
 
     it('should pass workdir to git commands', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -502,6 +517,7 @@ describe('CommitMessageGenerator', () => {
       };
 
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: failingGitProvider,
       });
 
@@ -511,30 +527,32 @@ describe('CommitMessageGenerator', () => {
     });
   });
 
-  describe.skip('error wrapping (requires agent CLI)', () => {
-    it('should wrap AgentError with GeneratorError', async () => {
-      const failingGitProvider: GitProvider = {
-        exec: mock(async () => 'diff output'),
+  describe('error wrapping', () => {
+    it('should throw GeneratorError when agent returns invalid message', async () => {
+      const failingAgent: Agent = {
+        generate: mock(async () => ''),
+        name: 'claude',
       };
 
       const generator = new CommitMessageGenerator({
-        gitProvider: failingGitProvider,
+        agent: failingAgent,
+        gitProvider: mockGitProvider,
       });
 
-      // Real agent will fail with AgentError (CLI not found)
       await expect(generator.generateCommitMessage(validTask, validOptions)).rejects.toThrow(
         GeneratorError
       );
     });
 
     it('should include agent name in error context', async () => {
-      const failingGitProvider: GitProvider = {
-        exec: mock(async () => 'diff output'),
+      const failingAgent: Agent = {
+        generate: mock(async () => ''),
+        name: 'codex',
       };
 
       const generator = new CommitMessageGenerator({
-        agent: 'codex',
-        gitProvider: failingGitProvider,
+        agent: failingAgent,
+        gitProvider: mockGitProvider,
       });
 
       try {
@@ -542,9 +560,9 @@ describe('CommitMessageGenerator', () => {
         throw new Error('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        // Error message should reference the agent
+        // Error message should reference AI generation
         const message = (error as Error).message;
-        expect(message.toLowerCase()).toMatch(/codex|ai generation/i);
+        expect(message.toLowerCase()).toMatch(/ai generation/i);
       }
     });
 
@@ -556,6 +574,7 @@ describe('CommitMessageGenerator', () => {
       };
 
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: failingGitProvider,
       });
 
@@ -570,9 +589,10 @@ describe('CommitMessageGenerator', () => {
     });
   });
 
-  describe.skip('end-to-end generation flow (requires agent CLI)', () => {
+  describe('end-to-end generation flow', () => {
     it('should generate commit from task + git diff', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -597,6 +617,7 @@ describe('CommitMessageGenerator', () => {
       };
 
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: multiFileGitProvider,
       });
 
@@ -617,6 +638,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should include custom signature in output', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
         signature: '✨ Magic signature',
       });
@@ -629,6 +651,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should handle task with output context', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -647,6 +670,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should work with minimal task (no produces)', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 
@@ -664,6 +688,7 @@ describe('CommitMessageGenerator', () => {
 
     it('should work with minimal options (no files)', async () => {
       const generator = new CommitMessageGenerator({
+        agent: mockAgent,
         gitProvider: mockGitProvider,
       });
 

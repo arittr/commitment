@@ -28,8 +28,8 @@ export type CommitTask = {
  * Configuration options for commit message generation
  */
 export type CommitMessageGeneratorConfig = {
-  /** AI agent to use ('claude' | 'codex' | 'gemini', default: 'claude') */
-  agent?: AgentName;
+  /** AI agent to use - either a string name or Agent instance for testing */
+  agent?: Agent | AgentName;
   /** Custom git provider (default: RealGitProvider) */
   gitProvider?: GitProvider;
   /** Custom logger for debugging and diagnostics */
@@ -106,9 +106,35 @@ export class CommitMessageGenerator {
     // Store logger for internal use
     this.logger = validatedConfig.logger;
 
-    // Instantiate agent using factory (defaults to Claude) and pass logger
-    const agentName = validatedConfig.agent ?? 'claude';
-    this.agent = createAgent(agentName, this.logger);
+    // Determine if agent is a string (use factory) or object (inject directly)
+    const agentConfig = validatedConfig.agent ?? 'claude';
+    let agentName: AgentName;
+
+    if (typeof agentConfig === 'string') {
+      // String: use factory to create agent
+      agentName = agentConfig;
+      this.agent = createAgent(agentName, this.logger);
+    } else {
+      // Object: use injected agent directly (for testing)
+      // Type assertion is safe because Zod schema validates the Agent interface
+      this.agent = agentConfig as Agent;
+      // Try to infer agent name from the agent's name property
+      // Default to 'claude' if name doesn't match known agents
+      agentName = match(agentConfig.name.toLowerCase())
+        .when(
+          (name) => name.includes('claude'),
+          () => 'claude' as const
+        )
+        .when(
+          (name) => name.includes('codex'),
+          () => 'codex' as const
+        )
+        .when(
+          (name) => name.includes('gemini'),
+          () => 'gemini' as const
+        )
+        .otherwise(() => 'claude' as const);
+    }
 
     // Generate default signature based on the agent being used
     const defaultSignature = match<AgentName, string>(agentName)

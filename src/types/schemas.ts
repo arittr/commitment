@@ -91,6 +91,17 @@ const loggerSchema = z.object({
 });
 
 /**
+ * Schema for Agent object
+ *
+ * Agent must implement the Agent interface with generate method and name property.
+ */
+const agentSchema = z.object({
+  generate: z.function(),
+  logger: loggerSchema.optional(),
+  name: z.string(),
+});
+
+/**
  * Schema for commit message generator configuration
  *
  * Simplified configuration for the CommitMessageGenerator.
@@ -120,10 +131,12 @@ const loggerSchema = z.object({
 export const commitMessageGeneratorConfigSchema = z.object({
   /**
    * AI agent to use for commit message generation
-   * Valid options: 'claude' | 'codex' | 'gemini'
+   * Can be either:
+   * - A string: 'claude' | 'codex' | 'gemini' (uses factory to create agent)
+   * - An Agent object: for dependency injection in tests (must have generate method and name property)
    * Defaults to 'claude' if not specified
    */
-  agent: agentNameSchema.optional(),
+  agent: z.union([agentNameSchema, agentSchema]).optional(),
 
   /**
    * Custom git provider for dependency injection
