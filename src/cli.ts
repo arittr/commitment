@@ -33,13 +33,15 @@ async function generateCommitCommand(rawOptions: {
   dryRun?: boolean;
   messageOnly?: boolean;
   quiet?: boolean;
+  verbose?: boolean;
 }): Promise<void> {
   const options = validateOptionsOrExit(rawOptions);
   const agentName = options.agent ?? 'claude';
   const quiet = options.quiet === true;
+  const verbose = options.verbose === true;
 
-  // Create logger based on --quiet flag
-  const logger = quiet ? new SilentLogger() : new ConsoleLogger();
+  // Create logger based on --quiet and --verbose flags
+  const logger = quiet ? new SilentLogger() : new ConsoleLogger({ verbose });
 
   try {
     const gitStatus = await checkGitStatusOrExit(options.cwd, logger);
@@ -165,6 +167,7 @@ prog
   .option('--dry-run', 'Generate message without creating commit')
   .option('--message-only', 'Output only the commit message (no commit)')
   .option('--quiet', 'Suppress progress messages (useful for scripting)')
+  .option('--verbose', 'Show detailed debug output')
   .option('--cwd', 'Working directory', process.cwd())
   .action(
     async (options: {
@@ -173,6 +176,7 @@ prog
       'dry-run'?: boolean;
       'message-only'?: boolean;
       quiet?: boolean;
+      verbose?: boolean;
     }) => {
       await generateCommitCommand({
         agent: options.agent,
@@ -180,6 +184,7 @@ prog
         dryRun: options['dry-run'],
         messageOnly: options['message-only'],
         quiet: options.quiet,
+        verbose: options.verbose,
       });
     }
   );

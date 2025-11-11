@@ -11,6 +11,7 @@ import { z } from 'zod';
  * - --dry-run: Generate message without committing
  * - --message-only: Output only the message
  * - --quiet: Suppress progress messages
+ * - --verbose: Show detailed debug output
  * - --cwd: Working directory
  *
  * @example
@@ -50,6 +51,11 @@ export const cliOptionsSchema = z.object({
    * Suppress progress messages (useful for scripting)
    */
   quiet: z.boolean().default(false),
+
+  /**
+   * Show detailed debug output
+   */
+  verbose: z.boolean().optional(),
 });
 
 /**

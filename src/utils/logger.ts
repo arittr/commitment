@@ -45,13 +45,22 @@ export interface Logger {
  *
  * @example
  * ```typescript
- * const logger = new ConsoleLogger();
+ * const logger = new ConsoleLogger({ verbose: false });
  * logger.warn('This will be yellow');
+ * logger.debug('This will not be shown unless verbose is true');
  * ```
  */
 export class ConsoleLogger implements Logger {
+  private readonly verbose: boolean;
+
+  constructor(options: { verbose?: boolean } = {}) {
+    this.verbose = options.verbose ?? false;
+  }
+
   debug(message: string): void {
-    console.error(chalk.gray(message));
+    if (this.verbose) {
+      console.error(chalk.gray(message));
+    }
   }
 
   info(message: string): void {

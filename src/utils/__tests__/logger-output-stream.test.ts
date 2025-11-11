@@ -28,8 +28,8 @@ describe('Logger output streams', () => {
   });
 
   describe('ConsoleLogger', () => {
-    it('should write debug() to stderr, not stdout', () => {
-      const logger = new ConsoleLogger();
+    it('should write debug() to stderr, not stdout (when verbose)', () => {
+      const logger = new ConsoleLogger({ verbose: true });
       const message = 'Debug message';
 
       logger.debug(message);
@@ -76,8 +76,8 @@ describe('Logger output streams', () => {
   });
 
   describe('Real-world scenario: --message-only mode', () => {
-    it('should not pollute stdout when logger is used during message generation', () => {
-      const logger = new ConsoleLogger();
+    it('should not pollute stdout when logger is used during message generation (verbose mode)', () => {
+      const logger = new ConsoleLogger({ verbose: true });
 
       // Simulate BaseAgent.generate() calling logger during generation
       logger.debug('[claude] Starting commit message generation');
@@ -90,7 +90,7 @@ describe('Logger output streams', () => {
       logger.debug('[claude] Validating response format');
       logger.debug('[claude] Response validated successfully');
 
-      // All debug output should go to stderr
+      // All debug output should go to stderr (when verbose)
       expect(consoleErrorSpy).toHaveBeenCalledTimes(9);
 
       // Stdout should be clean for commit message

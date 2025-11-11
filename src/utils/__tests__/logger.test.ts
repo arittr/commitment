@@ -28,8 +28,17 @@ describe('Logger', () => {
       expect(typeof logger.error).toBe('function');
     });
 
-    it('should log debug messages with gray color', () => {
+    it('should not log debug messages by default', () => {
       const logger = new ConsoleLogger();
+      const message = 'Debug message';
+
+      logger.debug(message);
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should log debug messages with gray color when verbose is true', () => {
+      const logger = new ConsoleLogger({ verbose: true });
       const message = 'Debug message';
 
       logger.debug(message);
