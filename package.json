@@ -1,7 +1,7 @@
 {
   "author": "Drew Ritter <drew@ritter.dev>",
   "bin": {
-    "commitment": "./dist/cli.js"
+    "commitment": "dist/cli.js"
   },
   "bugs": {
     "url": "https://github.com/arittr/commitment/issues"
