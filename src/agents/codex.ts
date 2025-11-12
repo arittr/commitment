@@ -81,6 +81,11 @@ export class CodexAgent extends BaseAgent {
     // This removes: commit message markers, AI preambles, code fences, thinking tags
     let cleaned = super.cleanResponse(response);
 
+    // Remove Codex "User instructions:" section (prompt echo)
+    // This appears between "[timestamp] User instructions:" and the next "[timestamp]"
+    // Example: "[2025-11-12T23:18:29] User instructions:\nGenerate a professional commit message..."
+    cleaned = cleaned.replace(/\[[\d:TZ-]+]\s*User instructions:[\s\S]*?(?=\[[\d:TZ-]+]|$)/gi, '');
+
     // Remove Codex activity logs (lines starting with timestamps, workdir, etc.)
     // Example: "[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)"
     cleaned = cleaned.replaceAll(/^\[[\d:TZ-]+].*$/gm, '');
@@ -96,10 +101,16 @@ export class CodexAgent extends BaseAgent {
       'sandbox',
       'reasoning effort',
       'reasoning summaries',
+      'tokens used',
     ];
     for (const field of metadataFields) {
       cleaned = cleaned.replaceAll(new RegExp(`^${field}:.*$`, 'gmi'), '');
     }
+
+    // Remove markdown formatting lines (bold, italic, headings)
+    // Examples: "**Composing commit message**", "*thinking*", "# Header"
+    cleaned = cleaned.replaceAll(/^\*{1,2}[^*\n]+\*{1,2}\s*$/gm, ''); // **bold** or *italic*
+    cleaned = cleaned.replaceAll(/^#{1,6}\s+.+$/gm, ''); // # Headings
 
     // Trim whitespace and remove extra blank lines
     cleaned = cleaned.trim();
