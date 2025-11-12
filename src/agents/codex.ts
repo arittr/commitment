@@ -78,43 +78,14 @@ export class CodexAgent extends BaseAgent {
    */
   protected override cleanResponse(response: string): string {
     // First apply base cleaning (from BaseAgent)
-    // This removes: commit message markers, AI preambles, code fences, thinking tags
-    let cleaned = super.cleanResponse(response);
+    // This extracts content between <<<COMMIT_MESSAGE_START>>> and <<<COMMIT_MESSAGE_END>>> markers,
+    // removing ALL codex activity logs, user instructions, metadata, etc.
+    // Then removes: AI preambles, code fences, thinking tags
+    const cleaned = super.cleanResponse(response);
 
-    // Remove Codex "User instructions:" section (prompt echo)
-    // This appears between "[timestamp] User instructions:" and the next "[timestamp]"
-    // Example: "[2025-11-12T23:18:29] User instructions:\nGenerate a professional commit message..."
-    cleaned = cleaned.replace(/\[[\d:TZ-]+]\s*User instructions:[\s\S]*?(?=\[[\d:TZ-]+]|$)/gi, '');
-
-    // Remove Codex activity logs (lines starting with timestamps, workdir, etc.)
-    // Example: "[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)"
-    cleaned = cleaned.replaceAll(/^\[[\d:TZ-]+].*$/gm, '');
-    cleaned = cleaned.replaceAll(/^-{3,}$/gm, ''); // Remove separator lines
-    cleaned = cleaned.replaceAll(/^OpenAI Codex.*$/gm, '');
-
-    // Remove specific Codex metadata fields (must be before conventional commit type matching)
-    const metadataFields = [
-      'workdir',
-      'model',
-      'provider',
-      'approval',
-      'sandbox',
-      'reasoning effort',
-      'reasoning summaries',
-      'tokens used',
-    ];
-    for (const field of metadataFields) {
-      cleaned = cleaned.replaceAll(new RegExp(`^${field}:.*$`, 'gmi'), '');
-    }
-
-    // Remove markdown formatting lines (bold, italic, headings)
-    // Examples: "**Composing commit message**", "*thinking*", "# Header"
-    cleaned = cleaned.replaceAll(/^\*{1,2}[^*\n]+\*{1,2}\s*$/gm, ''); // **bold** or *italic*
-    cleaned = cleaned.replaceAll(/^#{1,6}\s+.+$/gm, ''); // # Headings
-
-    // Trim whitespace and remove extra blank lines
-    cleaned = cleaned.trim();
-    cleaned = cleaned.replaceAll(/\n{3,}/g, '\n\n'); // Max 2 consecutive newlines
+    // No Codex-specific cleaning needed - the commit message markers handle everything!
+    // Codex wraps the commit message in markers, so base cleaning extracts just the message
+    // and discards all the surrounding activity logs, metadata, and prompt echoes.
 
     return cleaned;
   }

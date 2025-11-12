@@ -8,31 +8,33 @@ import {
 } from '../agent-utils.js';
 
 describe('cleanCommitMessageMarkers', () => {
-  describe('basic marker removal', () => {
-    it('should remove start and end markers', () => {
+  describe('marker extraction', () => {
+    it('should extract content between start and end markers', () => {
       const input = '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>';
       const result = cleanCommitMessageMarkers(input);
       expect(result).toBe('feat: add feature');
     });
 
-    it('should remove markers with content between them', () => {
-      const input = `<<<COMMIT_MESSAGE_START>>>
+    it('should extract content and discard everything outside markers', () => {
+      const input = `junk before
+<<<COMMIT_MESSAGE_START>>>
 feat: add feature
 
 Detailed description here
-<<<COMMIT_MESSAGE_END>>>`;
+<<<COMMIT_MESSAGE_END>>>
+junk after`;
       const result = cleanCommitMessageMarkers(input);
       expect(result).toBe('feat: add feature\n\nDetailed description here');
     });
 
-    it('should remove start marker with trailing whitespace', () => {
-      const input = '<<<COMMIT_MESSAGE_START>>>   \nfeat: add feature';
+    it('should handle markers with trailing whitespace', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>>   \nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>';
       const result = cleanCommitMessageMarkers(input);
       expect(result).toBe('feat: add feature');
     });
 
-    it('should remove end marker with leading whitespace', () => {
-      const input = 'feat: add feature\n   <<<COMMIT_MESSAGE_END>>>';
+    it('should handle markers with leading whitespace', () => {
+      const input = '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n   <<<COMMIT_MESSAGE_END>>>';
       const result = cleanCommitMessageMarkers(input);
       expect(result).toBe('feat: add feature');
     });
@@ -48,48 +50,41 @@ feat: add feature
     });
   });
 
-  describe('multiple markers', () => {
-    it('should remove multiple start markers', () => {
-      const input = '<<<COMMIT_MESSAGE_START>>><<<COMMIT_MESSAGE_START>>>feat: add feature';
-      const result = cleanCommitMessageMarkers(input);
-      expect(result).toBe('feat: add feature');
-    });
-
-    it('should remove multiple end markers', () => {
-      const input = 'feat: add feature<<<COMMIT_MESSAGE_END>>><<<COMMIT_MESSAGE_END>>>';
-      const result = cleanCommitMessageMarkers(input);
-      expect(result).toBe('feat: add feature');
-    });
-  });
-
   describe('edge cases', () => {
     it('should handle empty string', () => {
       const result = cleanCommitMessageMarkers('');
       expect(result).toBe('');
     });
 
-    it('should handle string without markers', () => {
+    it('should return original when no markers present', () => {
       const input = 'feat: add feature\n\nNo markers here';
       const result = cleanCommitMessageMarkers(input);
       expect(result).toBe(input);
     });
 
-    it('should handle only start marker', () => {
+    it('should return original when only start marker (no matching pair)', () => {
       const input = '<<<COMMIT_MESSAGE_START>>>feat: add feature';
       const result = cleanCommitMessageMarkers(input);
-      expect(result).toBe('feat: add feature');
+      expect(result).toBe(input); // No matching pair, return unchanged
     });
 
-    it('should handle only end marker', () => {
+    it('should return original when only end marker (no matching pair)', () => {
       const input = 'feat: add feature<<<COMMIT_MESSAGE_END>>>';
       const result = cleanCommitMessageMarkers(input);
-      expect(result).toBe('feat: add feature');
+      expect(result).toBe(input); // No matching pair, return unchanged
     });
 
-    it('should be case-sensitive (not remove lowercase)', () => {
+    it('should be case-sensitive (not match lowercase)', () => {
       const input = '<<<commit_message_start>>>\nfeat: add feature\n<<<commit_message_end>>>';
       const result = cleanCommitMessageMarkers(input);
-      expect(result).toBe(input);
+      expect(result).toBe(input); // Wrong case, no match, return unchanged
+    });
+
+    it('should extract from first matching pair (non-greedy)', () => {
+      const input =
+        '<<<COMMIT_MESSAGE_START>>>first message<<<COMMIT_MESSAGE_END>>><<<COMMIT_MESSAGE_START>>>second message<<<COMMIT_MESSAGE_END>>>';
+      const result = cleanCommitMessageMarkers(input);
+      expect(result).toBe('first message'); // Non-greedy match gets first pair
     });
   });
 });

@@ -193,29 +193,44 @@ feat: add feature
 - Implement new functionality`);
     });
 
-    it('should clean Codex activity logs from response', async () => {
+    it('should extract message from markers and discard Codex activity logs', async () => {
       mockSuccessfulGeneration(`[2025-10-22T00:50:28] OpenAI Codex v0.42.0 (research preview)
 --------
 workdir: /Users/user/project
+model: gpt-5-codex
+provider: openai
 
+<<<COMMIT_MESSAGE_START>>>
 feat: add feature
 
-- Implement new functionality`);
+- Implement new functionality
+<<<COMMIT_MESSAGE_END>>>
+
+[2025-10-22T00:50:29] tokens used: 123`);
 
       const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');
     });
 
-    it('should clean Codex configuration metadata from response', async () => {
-      mockSuccessfulGeneration(`model: gpt-5-codex
+    it('should extract message from markers and discard all metadata', async () => {
+      mockSuccessfulGeneration(`[2025-10-22T00:50:28] OpenAI Codex v0.42.0
+--------
+model: gpt-5-codex
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: none
+--------
+[2025-10-22T00:50:28] User instructions:
+Generate a commit message...
 
+<<<COMMIT_MESSAGE_START>>>
 feat: add feature
 
-- Implement new functionality`);
+- Implement new functionality
+<<<COMMIT_MESSAGE_END>>>
+
+[2025-10-22T00:50:29] tokens used: 456`);
 
       const message = await agent.generate('prompt', '/tmp');
       expect(message).toBe('feat: add feature\n\n- Implement new functionality');

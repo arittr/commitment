@@ -30,39 +30,47 @@
  */
 
 /**
- * Remove commit message markers from AI response
+ * Extract content between commit message markers
  *
- * Removes markers like:
+ * Extracts content between markers and discards everything else:
  * - <<<COMMIT_MESSAGE_START>>>
  * - <<<COMMIT_MESSAGE_END>>>
- * - Variations with different spacing
+ *
+ * If markers are present, returns ONLY the content between them.
+ * If markers are not present, returns the original output unchanged.
  *
  * This is a pure function with no side effects.
  *
  * @param output - Raw output from AI agent that may contain commit message markers
- * @returns Output with all commit message markers removed
+ * @returns Content between markers (if present), or original output (if no markers)
  *
  * @example
  * ```typescript
- * const raw = '<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>';
+ * const raw = 'junk\n<<<COMMIT_MESSAGE_START>>>\nfeat: add feature\n<<<COMMIT_MESSAGE_END>>>\nmore junk';
  * const clean = cleanCommitMessageMarkers(raw);
  * // => "feat: add feature"
  *
  * const withSpacing = '<<<COMMIT_MESSAGE_START>>>   \nfeat: add feature\n  <<<COMMIT_MESSAGE_END>>>';
  * const clean2 = cleanCommitMessageMarkers(withSpacing);
  * // => "feat: add feature"
+ *
+ * const noMarkers = 'feat: add feature';
+ * const clean3 = cleanCommitMessageMarkers(noMarkers);
+ * // => "feat: add feature" (unchanged - no markers)
  * ```
  */
 export function cleanCommitMessageMarkers(output: string): string {
-  let cleaned = output;
+  // Extract content between markers (non-greedy match)
+  const match = output.match(/<<<COMMIT_MESSAGE_START>>>\s*([\s\S]*?)\s*<<<COMMIT_MESSAGE_END>>>/);
 
-  // Remove start marker with optional trailing whitespace
-  cleaned = cleaned.replaceAll(/<<<COMMIT_MESSAGE_START>>>\s*/g, '');
+  if (match && match[1] !== undefined) {
+    // Return only the content between markers (captured group 1)
+    return match[1].trim();
+  }
 
-  // Remove end marker with optional leading whitespace
-  cleaned = cleaned.replaceAll(/\s*<<<COMMIT_MESSAGE_END>>>/g, '');
-
-  return cleaned;
+  // No markers found - return original output
+  // This allows agents that don't use markers (like Claude) to work unchanged
+  return output;
 }
 
 /**
