@@ -373,12 +373,12 @@ async function initCommand(options: InitOptions): Promise<void> {
 #!/bin/sh
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment generate --message-only > "$1"
 fi
 
 ❌ Wrong:
 #!/bin/sh
-npx commitment --message-only > "$1"  # ❌ Overrides user messages!
+npx commitment generate --message-only > "$1"  # ❌ Overrides user messages!
 ```
 
 **Why:** `$2` contains commit source:

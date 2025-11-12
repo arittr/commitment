@@ -52,7 +52,7 @@ cat > .husky/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with AI
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || true
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || true
 fi
 EOF
 

@@ -50,27 +50,48 @@ Create a `lefthook.yml` file in your project root:
 
 ```yaml
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 **For Codex:**
 
 ```yaml
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --agent codex --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --agent codex --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 **For Gemini:**
 
 ```yaml
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --agent gemini --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --agent gemini --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ### 3. Add prepare script to package.json
@@ -95,7 +116,7 @@ npm install
 1. You run `git commit` (without `-m` flag)
 2. The `prepare-commit-msg` hook runs before your editor opens
 3. Lefthook executes the configured command
-4. The `[ -z "{2}" ]` check ensures it only runs for regular commits (not merge, squash, etc.)
+4. The `case "{2}" in *"{"*)` check ensures it only runs for regular commits (when lefthook doesn't substitute {2})
 5. `commitment` generates a message based on staged changes
 6. Your editor opens with the AI-generated message pre-filled
 7. You can edit or accept the message
@@ -120,7 +141,11 @@ pre-commit:
 prepare-commit-msg:
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ### Skip on specific branches
@@ -128,11 +153,17 @@ prepare-commit-msg:
 ```yaml
 prepare-commit-msg:
   skip:
+    - merge
+    - rebase
     - ref: main
       run: git rev-parse --abbrev-ref HEAD | grep -q "^main$"
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ### Interactive mode for debugging
@@ -157,9 +188,10 @@ git commit
 
 ## Notes
 
-- The hook only runs for regular commits (not merge, squash, etc.)
+- The hook only runs for regular commits (not merge, rebase, or when message provided via `-m`)
 - `{1}` is replaced with the commit message file path
-- `{2}` is replaced with the commit source (empty for normal commits)
+- `{2}` is replaced with the commit source ("message", "merge", etc.) or left as "{2}" for regular commits
+- The `case` statement checks if `{2}` contains curly braces to detect regular commits
 - You can still use `git commit -m "message"` to bypass the hook
 - Set `LEFTHOOK=0` to temporarily disable all hooks
 

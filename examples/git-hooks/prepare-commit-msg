@@ -4,5 +4,5 @@
 
 # Only run for regular commits
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1" || true
+  npx commitment generate --message-only > "$1" || true
 fi

@@ -93,7 +93,7 @@ Output only the commit message to stdout (no decorations, no commit).
 - **Default**: `false`
 - **Example**:
   ```bash
-  npx commitment --message-only
+  npx commitment generate --message-only
   ```
 
 **Use Cases:**
@@ -103,7 +103,7 @@ Output only the commit message to stdout (no decorations, no commit).
 
 **Output:**
 ```bash
-$ npx commitment --message-only
+$ npx commitment generate --message-only
 feat: add user authentication
 
 - Implement JWT token generation
@@ -223,7 +223,7 @@ Creates `.husky/prepare-commit-msg`:
 #!/bin/sh
 # commitment: AI-powered commit messages
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -234,7 +234,7 @@ Updates `package.json`:
 ```json
 {
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment generate --message-only > $1"
   }
 }
 ```
@@ -247,7 +247,7 @@ Creates `.git/hooks/prepare-commit-msg`:
 #!/bin/sh
 # commitment: AI-powered commit messages
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1" || exit 1
+  npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 

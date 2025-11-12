@@ -133,7 +133,7 @@ npx husky add .husky/prepare-commit-msg
 # commitment: AI-powered commit messages
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -196,7 +196,7 @@ npm install -D simple-git-hooks
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment generate --message-only > $1"
   }
 }
 ```
@@ -213,13 +213,13 @@ npx simple-git-hooks
 
 The hook is a one-liner shell command:
 ```bash
-[ -z "$2" ] && npx commitment --message-only > $1
+[ -z "$2" ] && npx commitment generate --message-only > $1
 ```
 
 **Breakdown:**
 - `[ -z "$2" ]` - Check if `$2` (commit source) is empty
 - `&&` - If true (regular commit), run commitment
-- `npx commitment --message-only` - Generate message
+- `npx commitment generate --message-only` - Generate message
 - `> $1` - Write to commit message file
 
 ### Plain Git Hooks
@@ -253,7 +253,7 @@ chmod +x .git/hooks/prepare-commit-msg
 # commitment: AI-powered commit messages
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1" || exit 1
+  npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -315,7 +315,7 @@ The hook uses git's `$2` parameter (commit source) to decide whether to generate
 ```bash
 if [ -z "$2" ]; then
   # $2 is empty → regular commit → generate
-  npx commitment --message-only > "$1"
+  npx commitment generate --message-only > "$1"
 fi
 ```
 
@@ -377,7 +377,7 @@ fi
 
 # Otherwise generate AI message
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -389,7 +389,7 @@ fi
 
 if [ -z "$2" ]; then
   # Generate message, fail commit if AI fails
-  npx commitment --message-only > "$1"
+  npx commitment generate --message-only > "$1"
 
   if [ $? -ne 0 ]; then
     echo "❌ Failed to generate commit message"
@@ -406,7 +406,7 @@ fi
 
 if [ -z "$2" ]; then
   # Try AI generation
-  if ! npx commitment --message-only > "$1" 2>/dev/null; then
+  if ! npx commitment generate --message-only > "$1" 2>/dev/null; then
     # If AI fails, use template
     cat > "$1" << EOF
 feat:
@@ -440,7 +440,7 @@ Add timeout to prevent hanging:
 
 if [ -z "$2" ]; then
   # 30 second timeout
-  timeout 30 npx commitment --message-only > "$1" || exit 1
+  timeout 30 npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -460,7 +460,7 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
 fi
 
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -474,7 +474,7 @@ fi
 if git diff --cached --name-only | grep -v "\.md$" > /dev/null; then
   # Has non-markdown changes, use AI
   if [ -z "$2" ]; then
-    exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+    exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
   fi
 else
   # Only markdown changes, use simple message
@@ -576,7 +576,7 @@ cat .husky/prepare-commit-msg
 Should have `if [ -z "$2" ]` check:
 ```bash
 if [ -z "$2" ]; then
-  npx commitment --message-only > "$1"
+  npx commitment generate --message-only > "$1"
 fi
 ```
 
@@ -612,7 +612,7 @@ if [ -n "$CI" ]; then
 fi
 
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -705,7 +705,7 @@ npm run lint-staged
 
 # commitment integration
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment --message-only > "$1" || exit 1
+  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
 fi
 ```
 
@@ -741,7 +741,7 @@ Provide template for when AI fails:
 # .husky/prepare-commit-msg
 
 if [ -z "$2" ]; then
-  if ! exec < /dev/tty npx commitment --message-only > "$1" 2>/dev/null; then
+  if ! exec < /dev/tty npx commitment generate --message-only > "$1" 2>/dev/null; then
     # AI failed, use template
     cat > "$1" << 'EOF'
 # Enter commit message following Conventional Commits:
@@ -787,7 +787,7 @@ echo "[$(date)] prepare-commit-msg started" >> "$LOG_FILE"
 echo "  Args: $*" >> "$LOG_FILE"
 
 if [ -z "$2" ]; then
-  if exec < /dev/tty npx commitment --message-only > "$1" 2>> "$LOG_FILE"; then
+  if exec < /dev/tty npx commitment generate --message-only > "$1" 2>> "$LOG_FILE"; then
     echo "  Result: Success" >> "$LOG_FILE"
   else
     echo "  Result: Failed ($?)" >> "$LOG_FILE"

@@ -40,9 +40,16 @@ pre-commit:
       run: npx lint-staged
 
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ## Manual Setup
@@ -89,9 +96,16 @@ pre-commit:
       run: npx lint-staged
 
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 **For Codex:**
@@ -104,9 +118,16 @@ pre-commit:
       run: npx lint-staged
 
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --agent codex --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --agent codex --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 **For Gemini:**
@@ -119,9 +140,16 @@ pre-commit:
       run: npx lint-staged
 
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --agent gemini --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --agent gemini --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ### 4. Install hooks
@@ -163,10 +191,16 @@ pre-commit:
 ```yaml
 prepare-commit-msg:
   skip:
+    - merge
+    - rebase
     - run: git rev-parse --abbrev-ref HEAD | grep -q "^main$"
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ### Add type checking
@@ -182,9 +216,16 @@ pre-commit:
       run: npx lint-staged
 
 prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment --message-only > {1} || true'
+      run: |
+        case "{2}" in
+          *"{"*) npx commitment generate --message-only > "{1}" ;;
+        esac
+      interactive: true
 ```
 
 ## Notes

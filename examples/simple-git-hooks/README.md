@@ -56,7 +56,7 @@ bun add -D commitment simple-git-hooks
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment generate --message-only > $1"
   }
 }
 ```
@@ -108,7 +108,7 @@ git commit  # Opens editor with AI-generated message
 ```json
 {
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment generate --message-only > $1"
   }
 }
 ```

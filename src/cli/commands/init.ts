@@ -32,21 +32,21 @@ function generateHookContent(
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment${agentFlag} --message-only > "$1" || true
+  exec < /dev/tty && npx commitment generate${agentFlag} --message-only > "$1" || true
 fi
 `,
     plain: `#!/bin/sh
 # Git prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1" || true
+  npx commitment generate${agentFlag} --message-only > "$1" || true
 fi
 `,
     simpleGitHooks: `#!/bin/sh
 # simple-git-hooks prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment${agentFlag} --message-only > "$1" || true
+  npx commitment generate${agentFlag} --message-only > "$1" || true
 fi
 `,
   };
@@ -176,7 +176,7 @@ async function installSimpleGitHooks(
     }
     const agentFlag = agent ? ` --agent ${agent}` : '';
     packageJson.simpleGitHooks['prepare-commit-msg'] =
-      `[ -z "$2" ] && npx commitment${agentFlag} --message-only > $1`;
+      `[ -z "$2" ] && npx commitment generate${agentFlag} --message-only > $1`;
 
     // Add prepare script if not present
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -272,9 +272,22 @@ async function installLefthookConfig(
 
   const agentFlag = agent ? ` --agent ${agent}` : '';
   const prepareCommitMsgConfig = `prepare-commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
     commitment:
-      run: '[ -z "{2}" ] && npx commitment${agentFlag} --message-only > {1} || true'
+      # Run for regular commits only
+      # {1} is the commit message file path
+      # {2} is commit source: "message" (from -m), "template", "merge", "squash", or "commit"
+      # When no source (regular git commit), lefthook doesn't substitute {2}
+      run: |
+        # Only run if {2} contains curly braces (unsubstituted = regular commit)
+        # Skip if {2} = "message", "template", etc. (user already provided message)
+        case "{2}" in
+          *"{"*) npx commitment generate${agentFlag} --message-only > "{1}" ;;
+        esac
+      interactive: true
 `;
 
   if (existingConfig !== '') {
