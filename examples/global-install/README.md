@@ -62,7 +62,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Generate commit message with commitment (global install)
 if [ -z "$2" ]; then
-  commitment generate --message-only > "$1" || true
+  commitment --message-only > "$1" || true
 fi
 EOF
 
@@ -204,7 +204,7 @@ mkdir -p ~/.git-templates/hooks
 cat > ~/.git-templates/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 if [ -z "$2" ]; then
-  commitment generate --message-only > "$1" || true
+  commitment --message-only > "$1" || true
 fi
 EOF
 

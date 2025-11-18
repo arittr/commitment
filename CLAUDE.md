@@ -1047,8 +1047,9 @@ npx commitment init [options]
 **Main Command Flags:**
 - `--agent <name>` - AI agent to use: claude, codex, gemini (default: "claude")
 - `--dry-run` - Generate message without creating commit
-- `--message-only` - Output only the commit message (no commit)
+- `--message-only` - Output only the commit message (implies `--quiet`, no commit)
 - `--quiet` - Suppress progress messages (useful for scripting)
+- `--verbose` - Show detailed debug output
 - `--cwd <path>` - Working directory (default: current directory)
 
 **Init Command Flags:**

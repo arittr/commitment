@@ -30,7 +30,7 @@ If you previously used `--no-ai`:
    npx commitment --no-ai --message-only > "$1"
 
    # After
-   npx commitment generate --message-only > "$1"
+   npx @arittr/commitment --message-only > "$1"
    ```
 
 **Why This Change?**

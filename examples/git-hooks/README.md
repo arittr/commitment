@@ -43,7 +43,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Only run for regular commits
 if [ -z "$2" ]; then
-  npx commitment generate --message-only > "$1" || true
+  npx @arittr/commitment --message-only > "$1" || true
 fi
 EOF
 
@@ -57,7 +57,7 @@ cat > .git/hooks/prepare-commit-msg << 'EOF'
 #!/bin/sh
 # Only run for regular commits (using Codex)
 if [ -z "$2" ]; then
-  npx commitment --agent codex --message-only > "$1" || true
+  npx @arittr/commitment --agent codex --message-only > "$1" || true
 fi
 EOF
 
@@ -100,7 +100,7 @@ You can combine multiple prepare-commit-msg behaviors:
 # Only run for regular commits
 if [ -z "$2" ]; then
   # Generate AI commit message
-  npx commitment generate --message-only > "$1" || true
+  npx @arittr/commitment --message-only > "$1" || true
 
   # Add issue number from branch name
   BRANCH_NAME=$(git symbolic-ref --short HEAD)
@@ -123,7 +123,7 @@ BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
 # Only generate for feature branches
 if [[ $BRANCH_NAME == feature/* ]] && [ -z "$2" ]; then
-  npx commitment generate --message-only > "$1" || true
+  npx @arittr/commitment --message-only > "$1" || true
 fi
 ```
 

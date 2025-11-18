@@ -4,5 +4,6 @@
 
 # Only run for regular commits
 if [ -z "$2" ]; then
-  npx commitment generate --message-only > "$1" || true
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  npx @arittr/commitment --message-only > "$1" || true
 fi

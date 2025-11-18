@@ -47,7 +47,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --message-only > "{1}" ;;
         esac
       interactive: true
 ```
@@ -103,7 +103,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --message-only > "{1}" ;;
         esac
       interactive: true
 ```
@@ -125,7 +125,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --agent codex --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --agent codex --message-only > "{1}" ;;
         esac
       interactive: true
 ```
@@ -147,7 +147,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --agent gemini --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --agent gemini --message-only > "{1}" ;;
         esac
       interactive: true
 ```
@@ -198,7 +198,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --message-only > "{1}" ;;
         esac
       interactive: true
 ```
@@ -223,7 +223,7 @@ prepare-commit-msg:
     commitment:
       run: |
         case "{2}" in
-          *"{"*) npx commitment generate --message-only > "{1}" ;;
+          *"{"*) npx @arittr/commitment --message-only > "{1}" ;;
         esac
       interactive: true
 ```

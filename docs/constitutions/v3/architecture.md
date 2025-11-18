@@ -626,7 +626,7 @@ lefthook.yml text eol=lf
 ```bash
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment generate --message-only > "$1"
+  npx @arittr/commitment --message-only > "$1"
 fi
 ```
 

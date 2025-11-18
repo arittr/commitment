@@ -93,7 +93,7 @@ Output only the commit message to stdout (no decorations, no commit).
 - **Default**: `false`
 - **Example**:
   ```bash
-  npx commitment generate --message-only
+  npx @arittr/commitment --message-only
   ```
 
 **Use Cases:**
@@ -103,7 +103,7 @@ Output only the commit message to stdout (no decorations, no commit).
 
 **Output:**
 ```bash
-$ npx commitment generate --message-only
+$ npx @arittr/commitment --message-only
 feat: add user authentication
 
 - Implement JWT token generation
@@ -223,7 +223,8 @@ Creates `.husky/prepare-commit-msg`:
 #!/bin/sh
 # commitment: AI-powered commit messages
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment generate --message-only > "$1" || exit 1
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  exec < /dev/tty && npx @arittr/commitment --message-only > "$1" || exit 1
 fi
 ```
 
@@ -234,7 +235,7 @@ Updates `package.json`:
 ```json
 {
   "simple-git-hooks": {
-    "prepare-commit-msg": "[ -z \"$2\" ] && npx commitment generate --message-only > $1"
+    "prepare-commit-msg": "[ -z \"$2\" ] && npx @arittr/commitment --message-only > $1"
   }
 }
 ```
@@ -247,7 +248,8 @@ Creates `.git/hooks/prepare-commit-msg`:
 #!/bin/sh
 # commitment: AI-powered commit messages
 if [ -z "$2" ]; then
-  npx commitment generate --message-only > "$1" || exit 1
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  npx @arittr/commitment --message-only > "$1" || exit 1
 fi
 ```
 

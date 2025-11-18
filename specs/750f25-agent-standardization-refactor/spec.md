@@ -193,7 +193,7 @@ If you currently use `--no-ai`:
 
 Suppress progress messages (useful for scripting):
 ```bash
-commitment --quiet --message-only > commit-msg.txt
+commitment --message-only > commit-msg.txt
 ```
 
 ### For Git Hooks
@@ -207,7 +207,7 @@ $ git commit
 
 To suppress (if desired):
 ```bash
-npx commitment --quiet --message-only > "$1"
+npx commitment --message-only > "$1"
 ```
 
 ## Open Questions
