@@ -364,8 +364,8 @@ src/
 ```typescript
 import { validateCliOptions } from './cli/schemas.js';
 
-// Boundary: User input from commander
-const rawOptions = program.opts();
+// Boundary: User input from sade CLI
+const rawOptions = /* parsed by sade */;
 
 // Validate immediately
 const options = validateCliOptions(rawOptions);
@@ -1071,9 +1071,7 @@ process.exit(0);
 
 ## Testing
 
-The project uses Vitest for all testing with comprehensive coverage:
-
-- **678 total tests** across 20 test files
+The project uses bun:test for all testing with comprehensive coverage:
 - **Co-located tests**: Unit tests live alongside source files in `__tests__/` directories
 - **Integration tests**: Located in `src/__tests__/integration/`
 - **Test patterns**: All public APIs, edge cases, error handling, and validation

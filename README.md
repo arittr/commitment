@@ -1,6 +1,6 @@
 # commitment
 
-> AI coding assistant-powered commit message generator
+> AI-powered commit message generator using your local CLI tools - no API keys required
 
 <img width="500" height="304" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
 
@@ -10,18 +10,18 @@
 
 We all know we should write better commit messages. But we don't.
 
-**commitment** analyzes your git diffs using your favorite AI coding assistant and generates professional, conventional commit messages automatically.
+**commitment** uses your **local AI CLI** (Claude Code, Codex, or Gemini) to analyze git diffs and generate professional, conventional commit messages automatically. **No API keys or additional services required** - it works with the AI tools you already have installed.
 
 ## Why commitment?
 
-- **No API Keys**: Uses your local AI CLI (Claude, Codex, or Gemini) to generate commit messages
+- **No API Keys Required**: Uses your local AI CLI tools (Claude Code, Codex, or Gemini) - not another API service you need to pay for or configure
 - **Consistency**: Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
 - **Context-aware**: AI understands your changes and adds helpful context
 - **Frictionless**: Just add the hook and stop committing `wip2` and `formatting`
 
 ## Features
 
-- 🤖 **AI-powered generation** using your local AI CLI (Claude, Codex, or Gemini) for accurate, context-aware messages - no extra API keys required!
+- 🤖 **Local AI CLI integration** - Uses Claude Code, Codex, or Gemini CLI tools you already have installed (no API keys, no additional services)
 - 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
 - ✨ **Conventional Commits** for a standard format (feat:, fix:, docs:, etc.)
 - 🚀 **One-command setup** with `commitment init` for automatic hook installation
@@ -75,7 +75,7 @@ bun add -D @arittr/commitment
   - [Gemini CLI](https://geminicli.com/docs/) - Install with `npm install -g @google/gemini-cli`
 
 >[!IMPORTANT]
->commitment is AI-only and requires an AI CLI to function. If you need commit message generation without AI, consider using a traditional commit template instead.
+>commitment uses your **local AI CLI tools** (not OpenAI API or other cloud services). You need one of the CLIs above installed and configured. This means **no additional API keys to manage**.
 
 ## Usage
 
