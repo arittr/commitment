@@ -9,8 +9,7 @@ import { ConsoleLogger } from '../logger';
  * Critical for --message-only mode where stdout is captured for commit message
  * and logger output must go to stderr to avoid polluting the message.
  *
- * Bug: https://github.com/user/commitment/issues/XXX
- * Logger debug/info output was appearing in commit messages when using --message-only
+ * Previously, logger debug/info output was appearing in commit messages when using --message-only.
  */
 describe('Logger output streams', () => {
   let consoleLogSpy: ReturnType<typeof mock>;

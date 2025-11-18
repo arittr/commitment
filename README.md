@@ -12,35 +12,39 @@ We all know we should write better commit messages. But we don't.
 
 **commitment** uses your **local AI CLI** (Claude Code, Codex, or Gemini) to analyze git diffs and generate professional, conventional commit messages automatically. **No API keys or additional services required** - it works with the AI tools you already have installed.
 
-## Why commitment?
-
-- **No API Keys Required**: Uses your local AI CLI tools (Claude Code, Codex, or Gemini) - not another API service you need to pay for or configure
-- **Consistency**: Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
-- **Context-aware**: AI understands your changes and adds helpful context
-- **Frictionless**: Just add the hook and stop committing `wip2` and `formatting`
-
 ## Features
 
-- 🤖 **Local AI CLI integration** - Uses Claude Code, Codex, or Gemini CLI tools you already have installed (no API keys, no additional services)
-- 📊 **Code analysis** detects functions, tests, types, and patterns in your changes
-- ✨ **Conventional Commits** for a standard format (feat:, fix:, docs:, etc.)
-- 🚀 **One-command setup** with `commitment init` for automatic hook installation
-- 🪝 **Hook integration** with lefthook, husky, simple-git-hooks, or plain git hooks
-- 🌍 **Cross-platform** support for macOS, Linux, and Windows
-- 📦 **Zero config** works out of the box with sensible defaults
-- 🔕 **Quiet mode** for suppressing progress messages in scripts
+- 🤖 **No API keys required** - Uses Claude Code, Codex, or Gemini CLI tools you already have installed (no additional setup or services)
+- 📖 **Context-aware** - Agentic coding CLIs understand your codebase context beyond just the diff
+- 🎯 **Conventional Commits** - Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) format
+- 🚀 **Frictionless setup** - One command (`commitment init`) and stop committing `wip2` and `formatting`
+- 🪝 **Hook integration** - Works with lefthook, husky, simple-git-hooks, or plain git hooks
 
 ## Quick Start
 
+### Local Install (Recommended)
+
 ```bash
-# 1. Install
+# 1. Install in your project
 npm install -D @arittr/commitment
 
 # 2. Set up git hooks (automatic)
 npx commitment init
 
-# Or configure with a specific AI agent
-npx commitment init --agent gemini
+# 3. Make changes and commit
+git add .
+git commit  # Message generated automatically!
+```
+
+### Global Install
+
+```bash
+# 1. Install globally
+npm install -g @arittr/commitment
+
+# 2. Set up git hooks in any project
+cd /path/to/your/project
+commitment init
 
 # 3. Make changes and commit
 git add .
@@ -51,19 +55,41 @@ That's it! Every commit now gets an AI-generated, pretty good commit message.
 
 ## Installation
 
+### Local (Per-Project)
+
 ```bash
 # Using npm
 npm install -D @arittr/commitment
-
-# Using yarn
-yarn add -D @arittr/commitment
+# Run with: npx commitment
 
 # Using pnpm
 pnpm add -D @arittr/commitment
+# Run with: pnpm exec commitment
+
+# Using yarn
+yarn add -D @arittr/commitment
+# Run with: yarn commitment
 
 # Using bun
 bun add -D @arittr/commitment
+# Run with: bun commitment
 ```
+
+### Global (System-Wide)
+
+```bash
+npm install -g @arittr/commitment
+# Run with: commitment
+```
+
+### One-Off (No Install)
+
+```bash
+# Try without installing
+npx @arittr/commitment --dry-run
+```
+
+Note: Use full package name `@arittr/commitment` for one-off runs, but just `commitment` when installed locally/globally.
 
 ## Requirements
 
@@ -75,9 +101,11 @@ bun add -D @arittr/commitment
   - [Gemini CLI](https://geminicli.com/docs/) - Install with `npm install -g @google/gemini-cli`
 
 >[!IMPORTANT]
->commitment uses your **local AI CLI tools** (not OpenAI API or other cloud services). You need one of the CLIs above installed and configured. This means **no additional API keys to manage**.
+>commitment uses your **local AI CLI tools** (not the OpenAI API or other cloud services). You need one of the CLIs above installed and configured.
 
 ## Usage
+
+> **Note:** Examples below use `npx commitment` (local install). If installed globally, use `commitment` instead.
 
 ### Automatic (Recommended)
 
@@ -121,12 +149,13 @@ npx commitment --agent gemini
 ## Example
 
 ```bash
-$ git add src/api/ src/types/
-$ npx commitment
+git add src/api/ src/types/
+npx commitment
 ```
 
 **Generated:**
-```
+
+```text
 test: update test naming conventions and mock patterns
 
 - Rename runner tests to reflect unit vs integration scope
@@ -179,6 +208,7 @@ commitment supports multiple hook managers:
 | **Plain Git Hooks** | `npx commitment init --hook-manager plain` | No dependencies |
 
 **Configure default agent:**
+
 ```bash
 npx commitment init --agent gemini  # Use Gemini by default
 npx commitment init --agent codex   # Use Codex by default
@@ -191,6 +221,7 @@ See [docs/HOOKS.md](./docs/HOOKS.md) for detailed hook integration guide.
 ### Hooks Not Running
 
 **Check installation:**
+
 ```bash
 # For lefthook
 cat lefthook.yml
@@ -203,11 +234,13 @@ ls -la .git/hooks/prepare-commit-msg
 ```
 
 **Reinstall:**
+
 ```bash
 npx commitment init
 ```
 
 **Check permissions (Unix-like systems):**
+
 ```bash
 # For lefthook, run:
 npx lefthook install
@@ -233,6 +266,7 @@ If hooks override your messages, please [file an issue](https://github.com/aritt
 ### Windows Issues
 
 **Symptoms:**
+
 - Hooks don't run
 - Line ending errors (`\r` in scripts)
 
@@ -241,6 +275,7 @@ If hooks override your messages, please [file an issue](https://github.com/aritt
 1. **Use Git Bash or WSL** instead of CMD/PowerShell
 2. **Verify line endings** - `commitment init` handles this automatically
 3. **Check git config:**
+
    ```bash
    git config core.autocrlf false
    ```
@@ -262,9 +297,11 @@ Contributions welcome!
 ### For Contributors
 
 **Requirements:**
+
 - Bun 1.1.0+ (development, bundling, testing)
 
 **Development:**
+
 ```bash
 # Install dependencies
 bun install
@@ -289,6 +326,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed instructions.
 **Architecture:**
 
 This project follows a strict layered architecture with schema-first type safety. See [docs/constitutions/current/](./docs/constitutions/current/) for:
+
 - Architecture guidelines
 - Testing patterns
 - Type safety rules
@@ -310,6 +348,7 @@ bun run eval:live
 ```
 
 Results are saved to `.eval-results/` with:
+
 - Per-attempt scores and metrics
 - Meta-evaluation across attempts
 - Success rates and consistency analysis
