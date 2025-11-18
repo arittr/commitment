@@ -53,26 +53,10 @@ export async function createCommit(message: string, cwd: string): Promise<void> 
  * Display staged changes to user
  *
  * @param gitStatus - Git status with staged files
- * @param messageOnly - If true, write to stderr instead of stdout (for hooks)
- * @param logger - Logger instance for output
+ * @param logger - Logger instance for output (respects quiet mode)
  */
-export function displayStagedChanges(
-  gitStatus: GitStatus,
-  messageOnly: boolean,
-  logger: Logger
-): void {
-  if (messageOnly) {
-    // In message-only mode, write to stderr so it appears in terminal while stdout goes to commit file
-    console.error(chalk.cyan('📝 Staged changes:'));
-    for (const line of gitStatus.statusLines) {
-      const status = line.slice(0, 2);
-      const file = line.slice(3);
-      console.error(chalk.gray('  ') + chalk.green(status) + chalk.white(` ${file}`));
-    }
-    console.error('');
-    return;
-  }
-
+export function displayStagedChanges(gitStatus: GitStatus, logger: Logger): void {
+  // Logger handles quiet mode automatically (--message-only implies --quiet)
   logger.info(chalk.cyan('📝 Staged changes:'));
   for (const line of gitStatus.statusLines) {
     const status = line.slice(0, 2);

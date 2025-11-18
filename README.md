@@ -147,7 +147,7 @@ test: update test naming conventions and mock patterns
 |--------|-------------|---------|
 | `--agent <name>` | AI agent to use (`claude`, `codex`, or `gemini`) | `claude` |
 | `--dry-run` | Generate message without creating commit | `false` |
-| `--message-only` | Output only the commit message | `false` |
+| `--message-only` | Output only the commit message (implies `--quiet`) | `false` |
 | `--quiet` | Suppress progress messages (useful for scripting) | `false` |
 | `--cwd <path>` | Working directory | current directory |
 

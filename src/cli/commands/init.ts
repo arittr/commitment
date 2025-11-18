@@ -32,21 +32,24 @@ function generateHookContent(
 
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  exec < /dev/tty && npx commitment generate${agentFlag} --message-only > "$1" || true
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  exec < /dev/tty && npx @arittr/commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
     plain: `#!/bin/sh
 # Git prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, etc.)
 if [ -z "$2" ]; then
-  npx commitment generate${agentFlag} --message-only > "$1" || true
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  npx @arittr/commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
     simpleGitHooks: `#!/bin/sh
 # simple-git-hooks prepare-commit-msg hook for commitment
 # Only run for regular commits (not merge, squash, or when message specified)
 if [ -z "$2" ]; then
-  npx commitment generate${agentFlag} --message-only > "$1" || true
+  echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+  npx @arittr/commitment${agentFlag} --message-only > "$1" || true
 fi
 `,
   };
@@ -176,7 +179,7 @@ async function installSimpleGitHooks(
     }
     const agentFlag = agent ? ` --agent ${agent}` : '';
     packageJson.simpleGitHooks['prepare-commit-msg'] =
-      `[ -z "$2" ] && npx commitment generate${agentFlag} --message-only > $1`;
+      `[ -z "$2" ] && npx @arittr/commitment${agentFlag} --message-only > $1`;
 
     // Add prepare script if not present
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -285,7 +288,10 @@ async function installLefthookConfig(
         # Only run if {2} contains curly braces (unsubstituted = regular commit)
         # Skip if {2} = "message", "template", etc. (user already provided message)
         case "{2}" in
-          *"{"*) npx commitment generate${agentFlag} --message-only > "{1}" ;;
+          *"{"*)
+            echo "🤖 Generating commit message..." > /dev/tty 2>/dev/null || true
+            npx @arittr/commitment${agentFlag} --message-only > "{1}"
+            ;;
         esac
       interactive: true
 `;

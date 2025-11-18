@@ -37,7 +37,8 @@ async function generateCommitCommand(rawOptions: {
 }): Promise<void> {
   const options = validateOptionsOrExit(rawOptions);
   const agentName = options.agent ?? 'claude';
-  const quiet = options.quiet === true;
+  // --message-only implies --quiet (pure message output with no progress)
+  const quiet = options.quiet === true || options.messageOnly === true;
   const verbose = options.verbose === true;
 
   // Create logger based on --quiet and --verbose flags
@@ -45,7 +46,7 @@ async function generateCommitCommand(rawOptions: {
 
   try {
     const gitStatus = await checkGitStatusOrExit(options.cwd, logger);
-    displayStagedChanges(gitStatus, options.messageOnly === true, logger);
+    displayStagedChanges(gitStatus, logger);
     displayGenerationStatus(agentName, logger);
 
     const task = {

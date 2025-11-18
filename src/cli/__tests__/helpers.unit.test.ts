@@ -44,7 +44,7 @@ describe('displayStagedChanges', () => {
     };
     const logger = new SilentLogger();
 
-    displayStagedChanges(gitStatus, false, logger);
+    displayStagedChanges(gitStatus, logger);
 
     // Note: with SilentLogger, nothing is actually logged
     // In real usage, ConsoleLogger would be used
@@ -61,7 +61,7 @@ describe('displayStagedChanges', () => {
     };
     const logger = new SilentLogger();
 
-    displayStagedChanges(gitStatus, false, logger);
+    displayStagedChanges(gitStatus, logger);
 
     expect(true).toBe(true);
   });
