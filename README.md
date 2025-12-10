@@ -2,7 +2,7 @@
 
 > AI-powered commit message generator using your local CLI tools - no API keys required
 
-<img width="500" height="304" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
+<img width="500" height="378" alt="commitment - AI-powered commit messages" src="https://github.com/user-attachments/assets/827862c0-8f1d-4eb0-a989-4ed7f37ea721" />
 
 [![npm version](https://img.shields.io/npm/v/@arittr/commitment)](https://www.npmjs.com/package/@arittr/commitment)
 [![license: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](./LICENSE)
